@@ -1,0 +1,29 @@
+# ---> .NET / build
+bin/
+obj/
+build/
+build-wpf/
+dist/
+TestResults/
+*.user
+*.suo
+.vs/
+_ReSharper*/
+*.DotSettings.user
+
+# ---> single-file publish outputs (165 МБ, в релизы кладёт CI)
+*.exe
+
+# ---> OS / editors
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
+.vscode/
+.idea/
+
+# ---> local secrets / user data (рядом с кодом их быть не должно)
+appsettings.*.json
+*.pfx
+*.snk

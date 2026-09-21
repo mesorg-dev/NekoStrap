@@ -1,0 +1,58 @@
+<UserControl x:Class="NekoStrap.Wpf.Pages.AccountsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <StackPanel>
+    <TextBlock Style="{StaticResource H1}" Text="Аккаунты" Margin="0,0,0,6"/>
+    <TextBlock Style="{StaticResource Body}" Text="Несколько аккаунтов Roblox — переключай в один клик." Margin="0,0,0,10"/>
+
+    <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+      <StackPanel>
+        <TextBlock FontFamily="{StaticResource UiFont}" FontSize="13" FontWeight="Bold"
+                   Foreground="{StaticResource FgDimBrush}" Text="Активный аккаунт" Margin="0,0,0,6"/>
+        <TextBlock x:Name="ActiveLabel" FontFamily="{StaticResource MonoFont}" FontSize="14" FontWeight="Bold"
+                   Foreground="{StaticResource FgBrush}" Text="—" TextTrimming="CharacterEllipsis" Margin="0,0,0,8"/>
+        <StackPanel Orientation="Horizontal">
+          <Button Style="{StaticResource PrimaryButton}" Content="Играть этим" Width="160" Height="38" Click="PlayButton_Click"/>
+          <Button Style="{StaticResource OutlineButton}" Content="Снять выбор" Width="150" Height="38" Margin="10,0,0,0" Click="ClearButton_Click"/>
+        </StackPanel>
+      </StackPanel>
+    </Border>
+
+    <WrapPanel Margin="0,0,0,12">
+      <Button Style="{StaticResource PrimaryButton}" Content="Добавить" Height="38" Padding="16,0" Margin="0,0,10,0" Click="AddButton_Click"/>
+      <Button Style="{StaticResource OutlineButton}" Content="Обновить" Height="38" Padding="16,0" Margin="0,0,10,0" Click="RefreshButton_Click"/>
+      <Button Style="{StaticResource OutlineButton}" Content="Активным" Height="38" Padding="16,0" Margin="0,0,10,0" Click="ActivateButton_Click"/>
+      <Button Style="{StaticResource OutlineButton}" Content="Удалить" Height="38" Padding="16,0" Margin="0,0,10,0" Click="DeleteButton_Click"/>
+      <Button Style="{StaticResource OutlineButton}" Content="Экспорт" Height="38" Padding="16,0" Margin="0,0,10,0" Click="ExportButton_Click"/>
+      <Button Style="{StaticResource OutlineButton}" Content="Импорт" Height="38" Padding="16,0" Click="ImportButton_Click"/>
+    </WrapPanel>
+
+    <Border Style="{StaticResource Card}" Margin="0,0,0,10" Padding="18">
+      <ListView x:Name="AccountsList" Height="260" Background="Transparent" BorderThickness="0"
+                SelectionMode="Single">
+        <ListView.ItemContainerStyle>
+          <Style TargetType="ListViewItem" BasedOn="{StaticResource DarkListRow}">
+            <Setter Property="Foreground" Value="{StaticResource FgDimBrush}"/>
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding IsActive}" Value="True">
+                <Setter Property="Foreground" Value="{StaticResource FgBrush}"/>
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </ListView.ItemContainerStyle>
+        <ListView.View>
+          <GridView ColumnHeaderContainerStyle="{StaticResource DarkGridHeader}">
+            <GridViewColumn Header="Аккаунт" Width="200" DisplayMemberBinding="{Binding Label}"/>
+            <GridViewColumn Header="Ник" Width="150" DisplayMemberBinding="{Binding Name}"/>
+            <GridViewColumn Header="ID" Width="100" DisplayMemberBinding="{Binding IdText}"/>
+            <GridViewColumn Header="Добавлен" Width="130" DisplayMemberBinding="{Binding AddedText}"/>
+            <GridViewColumn Header="Статус" Width="160" DisplayMemberBinding="{Binding Status}"/>
+          </GridView>
+        </ListView.View>
+      </ListView>
+    </Border>
+
+    <TextBlock Style="{StaticResource Mono}" FontStyle="Italic" TextWrapping="Wrap"
+               Text="Кука = полный доступ к аккаунту: никому не показывай. Хранится шифром (DPAPI) только на этом ПК. Бэкап восстанавливается только под тем же пользователем Windows. Перед сменой закрой текущий клиент."/>
+  </StackPanel>
+</UserControl>

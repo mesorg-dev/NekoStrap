@@ -1,0 +1,49 @@
+<UserControl x:Class="NekoStrap.Wpf.Pages.VersionsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <StackPanel>
+    <TextBlock Style="{StaticResource H1}" Text="Версии" Margin="0,0,0,6"/>
+    <TextBlock Style="{StaticResource Body}" Text="Откат клиента и установка Roblox Studio." Margin="0,0,0,10"/>
+
+    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+      <Button Style="{StaticResource PrimaryButton}" Content="Активировать" Width="150" Height="38" Click="ActivateButton_Click"/>
+      <Button Style="{StaticResource OutlineButton}" Content="Удалить" Width="130" Height="38" Margin="10,0,0,0" Click="DeleteButton_Click"/>
+    </StackPanel>
+
+    <Border Style="{StaticResource Card}" Margin="0,0,0,12" Padding="18">
+      <ListView x:Name="VersionsList" Height="220" Background="Transparent" BorderThickness="0"
+                SelectionMode="Single">
+        <ListView.ItemContainerStyle>
+          <Style TargetType="ListViewItem" BasedOn="{StaticResource DarkListRow}">
+            <Setter Property="Foreground" Value="{StaticResource FgDimBrush}"/>
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding IsActive}" Value="True">
+                <Setter Property="Foreground" Value="{StaticResource FgBrush}"/>
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </ListView.ItemContainerStyle>
+        <ListView.View>
+          <GridView ColumnHeaderContainerStyle="{StaticResource DarkGridHeader}">
+            <GridViewColumn Header="Версия" Width="240" DisplayMemberBinding="{Binding Guid}"/>
+            <GridViewColumn Header="Размер" Width="100" DisplayMemberBinding="{Binding SizeText}"/>
+            <GridViewColumn Header="Статус" Width="160" DisplayMemberBinding="{Binding Status}"/>
+            <GridViewColumn Header="Studio" Width="100" DisplayMemberBinding="{Binding Studio}"/>
+          </GridView>
+        </ListView.View>
+      </ListView>
+    </Border>
+
+    <Border Style="{StaticResource Card}">
+      <StackPanel>
+        <TextBlock Style="{StaticResource H2}" FontSize="13" Text="Roblox Studio — ставится по желанию" Margin="0,0,0,8"/>
+        <TextBlock x:Name="StudioStatus" Style="{StaticResource Mono}" FontSize="12" Text="Статус: не установлено" Margin="0,0,0,8"/>
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+          <Button Style="{StaticResource PrimaryButton}" Content="Установить" Width="150" Height="38" Click="InstallButton_Click"/>
+          <Button Style="{StaticResource OutlineButton}" Content="Запустить" Width="150" Height="38" Margin="10,0,0,0" Click="LaunchButton_Click"/>
+        </StackPanel>
+        <TextBlock Style="{StaticResource Mono}" Text="Studio живёт рядом с плеером и обновляется отдельно."/>
+      </StackPanel>
+    </Border>
+  </StackPanel>
+</UserControl>

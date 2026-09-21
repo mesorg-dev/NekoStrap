@@ -1,0 +1,114 @@
+﻿<Window x:Class="NekoStrap.Wpf.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:glass="clr-namespace:NekoStrap.Wpf"
+        Title="NekoStrap" Height="700" Width="1120" MinWidth="980" MinHeight="620"
+        WindowStyle="None" ResizeMode="CanResize" WindowStartupLocation="CenterScreen"
+        Background="{StaticResource BgBrush}">
+  <WindowChrome.WindowChrome>
+    <!-- Нативный хром: drag/даблклик/ресайз/снап работают сами.
+         GlassFrameThickness снизу = DWM-тень без AllowsTransparency
+         (с ним всё окно ушло бы в software-рендер). -->
+    <WindowChrome CaptionHeight="44" ResizeBorderThickness="7"
+                  CornerRadius="0" GlassFrameThickness="0,0,0,1"/>
+  </WindowChrome.WindowChrome>
+  <Grid>
+    <!-- Обои: картинка + GPU-блюр + затемнение (всё на видеокарте) -->
+    <Image x:Name="WallpaperImage" Stretch="UniformToFill" Visibility="Collapsed">
+      <Image.Effect>
+        <BlurEffect x:Name="WallpaperBlur" Radius="0" KernelType="Gaussian"/>
+      </Image.Effect>
+    </Image>
+    <Rectangle x:Name="WallpaperOverlay" Fill="Black" Opacity="0.78" Visibility="Collapsed"/>
+
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="44"/>
+        <RowDefinition Height="*"/>
+      </Grid.RowDefinitions>
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="236"/>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+
+      <!-- Тайтлбар -->
+      <Border Grid.Row="0" Grid.ColumnSpan="2" Background="{DynamicResource ChromeBrush}"
+              BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,0,1"
+              glass:Glass.IsGlass="True" glass:Glass.Tint="Chrome" glass:Glass.CornerRadius="0">
+        <DockPanel LastChildFill="False">
+          <TextBlock Text="NekoStrap" FontFamily="{StaticResource UiFont}" FontSize="13"
+                     FontWeight="Bold" Foreground="{StaticResource FgBrush}"
+                     VerticalAlignment="Center" Margin="18,0,0,0"/>
+          <TextBlock Text="ROBLOX LAUNCHER" FontFamily="{StaticResource MonoFont}" FontSize="10"
+                     Foreground="{StaticResource FgDimmerBrush}"
+                     VerticalAlignment="Center" Margin="8,2,0,0"/>
+          <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+            <Button x:Name="MinButton" Style="{StaticResource TitleBarButton}"
+                    WindowChrome.IsHitTestVisibleInChrome="True" Click="MinButton_Click">
+              <Path Data="M0,0H10" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                    StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Width="10" Height="10"/>
+            </Button>
+            <Button x:Name="CloseButton" Style="{StaticResource TitleBarButton}"
+                    WindowChrome.IsHitTestVisibleInChrome="True" Click="CloseButton_Click">
+              <Path Data="M0,0L10,10 M10,0L0,10" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                    StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Width="10" Height="10"/>
+            </Button>
+          </StackPanel>
+        </DockPanel>
+      </Border>
+
+      <!-- Сайдбар -->
+      <Border Grid.Row="1" Grid.Column="0" Background="{DynamicResource ChromeBrush}"
+              BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,1,0"
+              glass:Glass.IsGlass="True" glass:Glass.Tint="Chrome" glass:Glass.CornerRadius="0">
+        <DockPanel LastChildFill="False">
+          <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="20,20,0,0">
+            <Border Width="34" Height="34" Background="{StaticResource FgBrush}" CornerRadius="2">
+              <TextBlock Text="N" FontFamily="{StaticResource UiFont}" FontSize="17" FontWeight="Bold"
+                         Foreground="{StaticResource BgBrush}"
+                         HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
+              <TextBlock Text="NekoStrap" FontFamily="{StaticResource UiFont}" FontSize="15.5"
+                         FontWeight="Bold" Foreground="{StaticResource FgBrush}"/>
+              <TextBlock Text="R O B L O X" FontFamily="{StaticResource MonoFont}" FontSize="9"
+                         Foreground="{StaticResource FgDimmerBrush}"/>
+            </StackPanel>
+          </StackPanel>
+
+          <StackPanel DockPanel.Dock="Top" Margin="0,14,0,0">
+            <RadioButton x:Name="NavHome" Style="{StaticResource NavRadio}" GroupName="Nav"
+                         Tag="{StaticResource IconHome}" Content="Главная" Checked="Nav_Checked"/>
+            <RadioButton x:Name="NavMods" Style="{StaticResource NavRadio}" GroupName="Nav"
+                         Tag="{StaticResource IconMods}" Content="Моды" Checked="Nav_Checked"/>
+            <RadioButton x:Name="NavFlags" Style="{StaticResource NavRadio}" GroupName="Nav"
+                         Tag="{StaticResource IconFlags}" Content="FastFlags" Checked="Nav_Checked"/>
+            <RadioButton x:Name="NavVersions" Style="{StaticResource NavRadio}" GroupName="Nav"
+                         Tag="{StaticResource IconVersions}" Content="Версии" Checked="Nav_Checked"/>
+            <RadioButton x:Name="NavAccounts" Style="{StaticResource NavRadio}" GroupName="Nav"
+                         Tag="{StaticResource IconAccounts}" Content="Аккаунты" Checked="Nav_Checked"/>
+            <RadioButton x:Name="NavHistory" Style="{StaticResource NavRadio}" GroupName="Nav"
+                         Tag="{StaticResource IconHistory}" Content="История" Checked="Nav_Checked"/>
+            <RadioButton x:Name="NavSettings" Style="{StaticResource NavRadio}" GroupName="Nav"
+                         Tag="{StaticResource IconSettings}" Content="Настройки" Checked="Nav_Checked"/>
+            <RadioButton x:Name="NavAbout" Style="{StaticResource NavRadio}" GroupName="Nav"
+                         Tag="{StaticResource IconAbout}" Content="О программе" Checked="Nav_Checked"/>
+          </StackPanel>
+
+          <Border DockPanel.Dock="Bottom" BorderBrush="{StaticResource LineBrush}" BorderThickness="0,1,0,0"
+                  Padding="20,14,0,14">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="●" FontSize="9" Foreground="{StaticResource GoodBrush}" VerticalAlignment="Center"/>
+              <TextBlock x:Name="FooterText" Style="{StaticResource Mono}" Text="v1.0.0  •  готов" Margin="8,0,0,0"/>
+            </StackPanel>
+          </Border>
+        </DockPanel>
+      </Border>
+
+      <!-- Контент -->
+      <ScrollViewer Grid.Row="1" Grid.Column="1" Style="{StaticResource DarkScrollViewer}">
+        <ContentControl x:Name="PageHost" Margin="32,26,32,32"/>
+      </ScrollViewer>
+    </Grid>
+  </Grid>
+</Window>

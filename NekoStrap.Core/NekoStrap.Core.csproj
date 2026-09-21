@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Неймспейсы кода (NekoStrap.Roblox и т.д.) не меняем — переезд
+         без единой правки исходников. Имя сборки своё: ресурсы wav
+         ClickSound ищет по имени своей сборки динамически. -->
+    <AssemblyName>NekoStrap.Core</AssemblyName>
+    <RootNamespace>NekoStrap</RootNamespace>
+    <Version>1.0.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\*.wav" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DiscordRichPresence" Version="1.6.1.70" />
+    <PackageReference Include="NAudio" Version="2.2.1" />
+  </ItemGroup>
+
+  <!-- Логика использует System.IO / System.Net.Http (plain SDK их не подставляет) -->
+  <ItemGroup>
+    <Using Include="System.IO" />
+    <Using Include="System.Net.Http" />
+  </ItemGroup>
+
+  <!-- internal-логика видна WPF-приложению (сборка NekoStrap) и дымовому тесту -->
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>NekoStrap</_Parameter1>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>NekoStrap.Smoke</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+</Project>

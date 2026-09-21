@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NekoStrap.Wpf", "NekoStrap.Wpf\NekoStrap.Wpf.csproj", "{013CB85E-9074-4764-9E83-BDEAC14E9BCE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NekoStrap.Core", "NekoStrap.Core\NekoStrap.Core.csproj", "{D36CADB3-8A35-49E6-949D-261E3CD8205D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{013CB85E-9074-4764-9E83-BDEAC14E9BCE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{013CB85E-9074-4764-9E83-BDEAC14E9BCE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{013CB85E-9074-4764-9E83-BDEAC14E9BCE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{013CB85E-9074-4764-9E83-BDEAC14E9BCE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D36CADB3-8A35-49E6-949D-261E3CD8205D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D36CADB3-8A35-49E6-949D-261E3CD8205D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D36CADB3-8A35-49E6-949D-261E3CD8205D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D36CADB3-8A35-49E6-949D-261E3CD8205D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

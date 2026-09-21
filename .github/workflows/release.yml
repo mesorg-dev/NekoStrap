@@ -1,0 +1,48 @@
+name: release
+
+# Сборка релизного exe по пушу тега vX.Y.Z.
+# Апдейтер лаунчера ждёт: тег вида v1.2.3 + NekoStrap.exe в ассетах релиза.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Version from tag
+        id: ver
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}".TrimStart("v")
+          "version=$tag" >> $env:GITHUB_OUTPUT
+
+      - name: Publish single-file exe
+        run: >
+          dotnet publish NekoStrap.Wpf/NekoStrap.Wpf.csproj -c Release
+          -r win-x64 --self-contained true
+          /p:PublishSingleFile=true
+          /p:IncludeNativeLibrariesForSelfExtract=true
+          /p:Version=${{ steps.ver.outputs.version }}
+          -o dist
+
+      - name: Rename asset
+        shell: pwsh
+        run: Move-Item dist/NekoStrap.exe "dist/NekoStrap-${{ github.ref_name }}-win-x64.exe"
+
+      - name: GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.exe
+          generate_release_notes: true

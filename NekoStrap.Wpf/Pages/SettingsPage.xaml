@@ -10,25 +10,25 @@
       <StackPanel>
         <CheckBox x:Name="CloseOnLaunchBox" Style="{StaticResource Switch}" Margin="0,0,0,6">
           <StackPanel>
-            <TextBlock FontFamily="{StaticResource UiFont}" FontSize="12.5" Foreground="{StaticResource FgBrush}" Text="Закрывать лаунчер при запуске"/>
+            <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="Закрывать лаунчер при запуске"/>
             <TextBlock Style="{StaticResource Mono}" Text="Окно свернётся после старта игры"/>
           </StackPanel>
         </CheckBox>
         <CheckBox x:Name="DiscordRpcBox" Style="{StaticResource Switch}" Margin="0,0,0,6">
           <StackPanel>
-            <TextBlock FontFamily="{StaticResource UiFont}" FontSize="12.5" Foreground="{StaticResource FgBrush}" Text="Discord Rich Presence"/>
+            <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="Discord Rich Presence"/>
             <TextBlock Style="{StaticResource Mono}" Text="Показывать статус игры в Discord"/>
           </StackPanel>
         </CheckBox>
         <CheckBox x:Name="SoundsBox" Style="{StaticResource Switch}" Margin="0,0,0,6">
           <StackPanel>
-            <TextBlock FontFamily="{StaticResource UiFont}" FontSize="12.5" Foreground="{StaticResource FgBrush}" Text="Звуки интерфейса"/>
+            <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="Звуки интерфейса"/>
             <TextBlock Style="{StaticResource Mono}" Text="Мягкие клики и переходы"/>
           </StackPanel>
         </CheckBox>
         <CheckBox x:Name="AutoUpdateBox" Style="{StaticResource Switch}" Margin="0,0,0,6">
           <StackPanel>
-            <TextBlock FontFamily="{StaticResource UiFont}" FontSize="12.5" Foreground="{StaticResource FgBrush}" Text="Проверять обновления"/>
+            <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="Проверять обновления"/>
             <TextBlock Style="{StaticResource Mono}" Text="Автоматически при запуске лаунчера"/>
           </StackPanel>
         </CheckBox>
@@ -52,12 +52,41 @@
       </StackPanel>
     </Border>
 
+    <!-- Внешний вид: шрифты и цвета текста -->
+    <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+      <StackPanel>
+        <TextBlock Style="{StaticResource H2}" FontSize="13" Text="Внешний вид" Margin="0,0,0,4"/>
+        <TextBlock Style="{StaticResource Body}" TextWrapping="Wrap" Margin="0,0,0,10"
+                   Text="Шрифты и цвета текста. Применяется сразу, без перезапуска."/>
+        <Grid Margin="0,0,0,6">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="150"/>
+            <ColumnDefinition Width="*"/>
+          </Grid.ColumnDefinitions>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+          </Grid.RowDefinitions>
+          <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource Body}" VerticalAlignment="Center" Text="Заголовки"/>
+          <ComboBox x:Name="HeadingFontCombo" Grid.Row="0" Grid.Column="1" Style="{StaticResource DarkCombo}" Margin="0,0,0,8" SelectionChanged="AppearanceControl_Changed"/>
+          <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource Body}" VerticalAlignment="Center" Text="Интерфейс"/>
+          <ComboBox x:Name="BodyFontCombo" Grid.Row="1" Grid.Column="1" Style="{StaticResource DarkCombo}" Margin="0,0,0,8" SelectionChanged="AppearanceControl_Changed"/>
+          <TextBlock Grid.Row="2" Grid.Column="0" Style="{StaticResource Body}" VerticalAlignment="Center" Text="Текст-моно"/>
+          <ComboBox x:Name="MonoFontCombo" Grid.Row="2" Grid.Column="1" Style="{StaticResource DarkCombo}" SelectionChanged="AppearanceControl_Changed"/>
+        </Grid>
+        <StackPanel x:Name="ColorsPanel"/>
+        <Button Style="{StaticResource OutlineButton}" Content="Сбросить оформление" Width="210" Height="36"
+                HorizontalAlignment="Left" Margin="0,4,0,0" Click="AppearanceResetButton_Click"/>
+      </StackPanel>
+    </Border>
+
     <!-- FPS, Discord, трей -->
     <Border Style="{StaticResource Card}" Margin="0,0,0,12">
       <StackPanel>
         <CheckBox x:Name="FpsBox2" Style="{StaticResource Switch}" Margin="0,0,0,6">
           <StackPanel>
-            <TextBlock FontFamily="{StaticResource UiFont}" FontSize="12.5" Foreground="{StaticResource FgBrush}" Text="FPS-анлокер"/>
+            <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="FPS-анлокер"/>
             <TextBlock Style="{StaticResource Mono}" Text="Лимит кадров через флаг (0 = стоковые 60)"/>
           </StackPanel>
         </CheckBox>
@@ -68,31 +97,31 @@
                  VerticalContentAlignment="Center" Margin="0,0,0,8"/>
         <CheckBox x:Name="MinimizeToTrayBox" Style="{StaticResource Switch}" Margin="0,0,0,6">
           <StackPanel>
-            <TextBlock FontFamily="{StaticResource UiFont}" FontSize="12.5" Foreground="{StaticResource FgBrush}" Text="Лаунчер в трей при сворачивании"/>
+            <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="Лаунчер в трей при сворачивании"/>
             <TextBlock Style="{StaticResource Mono}" Text="Иконка в трее вместо панели задач"/>
           </StackPanel>
         </CheckBox>
         <CheckBox x:Name="CloseToTrayBox" Style="{StaticResource Switch}" Margin="0,0,0,6">
           <StackPanel>
-            <TextBlock FontFamily="{StaticResource UiFont}" FontSize="12.5" Foreground="{StaticResource FgBrush}" Text="Лаунчер в трей при закрытии"/>
+            <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="Лаунчер в трей при закрытии"/>
             <TextBlock Style="{StaticResource Mono}" Text="Крестик прячет окно, выход — из трея"/>
           </StackPanel>
         </CheckBox>
         <CheckBox x:Name="NotificationsBox" Style="{StaticResource Switch}" Margin="0,0,0,6">
           <StackPanel>
-            <TextBlock FontFamily="{StaticResource UiFont}" FontSize="12.5" Foreground="{StaticResource FgBrush}" Text="Уведомления лаунчера"/>
+            <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="Уведомления лаунчера"/>
             <TextBlock Style="{StaticResource Mono}" Text="Всплывашки о сервере и трее (по умолч. выкл)"/>
           </StackPanel>
         </CheckBox>
         <CheckBox x:Name="RobloxNoTrayBox" Style="{StaticResource Switch}" Margin="0,0,0,6">
           <StackPanel>
-            <TextBlock FontFamily="{StaticResource UiFont}" FontSize="12.5" Foreground="{StaticResource FgBrush}" Text="Запретить Roblox сворачиваться в трей"/>
+            <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="Запретить Roblox сворачиваться в трей"/>
             <TextBlock Style="{StaticResource Mono}" Text="Фикс через appStorage.json"/>
           </StackPanel>
         </CheckBox>
         <CheckBox x:Name="RobloxNoStartupBox" Style="{StaticResource Switch}">
           <StackPanel>
-            <TextBlock FontFamily="{StaticResource UiFont}" FontSize="12.5" Foreground="{StaticResource FgBrush}" Text="Запретить автозапуск Roblox"/>
+            <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="Запретить автозапуск Roblox"/>
             <TextBlock Style="{StaticResource Mono}" Text="Не запускаться вместе с Windows"/>
           </StackPanel>
         </CheckBox>
@@ -103,7 +132,7 @@
     <Border Style="{StaticResource Card}" Margin="0,0,0,12">
       <CheckBox x:Name="TrackPlaytimeBox" Style="{StaticResource Switch}">
         <StackPanel>
-          <TextBlock FontFamily="{StaticResource UiFont}" FontSize="12.5" Foreground="{StaticResource FgBrush}" Text="Счётчик игрового времени"/>
+          <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="Счётчик игрового времени"/>
           <TextBlock Style="{StaticResource Mono}" Text="Часы в Roblox и по режимам на главной"/>
         </StackPanel>
       </CheckBox>
@@ -115,8 +144,8 @@
         <TextBlock Style="{StaticResource H2}" FontSize="13" Text="Загрузка картинок (CDN)" Margin="0,0,0,6"/>
         <TextBlock Style="{StaticResource Body}" TextWrapping="Wrap" Margin="0,0,0,8"
                    Text="Фикс загрузки картинок и аватаров Roblox для РФ: прописывает рабочий IP CDN в hosts."/>
-        <TextBlock x:Name="CdnStatus" FontFamily="{StaticResource MonoFont}" FontSize="12"
-                   Foreground="{StaticResource FgDimBrush}" Text="Статус: проверка..." Margin="0,0,0,8"/>
+        <TextBlock x:Name="CdnStatus" FontFamily="{DynamicResource MonoFont}" FontSize="12"
+                   Foreground="{DynamicResource FgDimBrush}" Text="Статус: проверка..." Margin="0,0,0,8"/>
         <StackPanel Orientation="Horizontal">
           <Button Style="{StaticResource PrimaryButton}" Content="Включить фикс" Width="170" Height="38" Click="CdnOnButton_Click"/>
           <Button Style="{StaticResource OutlineButton}" Content="Откатить" Width="150" Height="38" Margin="10,0,0,0" Click="CdnOffButton_Click"/>
@@ -132,8 +161,8 @@
           <Grid Width="160" Height="90" DockPanel.Dock="Left" Margin="0,0,12,0">
             <Image x:Name="WallpaperImage" Stretch="UniformToFill"/>
             <Border Background="{StaticResource LineSoftBrush}" Visibility="Collapsed" x:Name="WallpaperFallbackBg">
-              <TextBlock Text="НЕТ" FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="Bold"
-                         Foreground="{StaticResource FgDimmerBrush}"
+              <TextBlock Text="НЕТ" FontFamily="{DynamicResource MonoFont}" FontSize="12" FontWeight="Bold"
+                         Foreground="{DynamicResource FgDimmerBrush}"
                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Border>
           </Grid>
@@ -167,7 +196,7 @@
         <TextBlock Style="{StaticResource H2}" FontSize="13" Text="Стекло" Margin="0,0,0,8"/>
         <CheckBox x:Name="GlassCheckBox" Style="{StaticResource Switch}" Margin="0,0,0,8">
           <StackPanel>
-            <TextBlock FontFamily="{StaticResource UiFont}" FontSize="12.5" Foreground="{StaticResource FgBrush}" Text="Прозрачные панели"/>
+            <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="Прозрачные панели"/>
             <TextBlock Style="{StaticResource Mono}" Text="Карточки, сайдбар и тайтлбар — блюр обоев"/>
           </StackPanel>
         </CheckBox>

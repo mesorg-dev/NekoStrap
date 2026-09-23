@@ -52,4 +52,55 @@ internal static class UiTheme
         get => _glassDim;
         set => _glassDim = Math.Clamp(value, 0, 100);
     }
+
+    private static readonly HashSet<string> EmbeddedFonts = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Unbounded", "Inter", "JetBrains Mono"
+    };
+
+    /// <summary>
+    /// Текст живьём: шрифты по ролям + цвета. Все Foreground/FontFamily
+    /// в XAML смотрят через DynamicResource — замена объектов мгновенно
+    /// перекрашивает весь интерфейс, перезапуск не нужен.
+    /// </summary>
+    internal static void ApplyText(NekoStrap.Roblox.LauncherConfig cfg)
+    {
+        if (Application.Current?.Resources == null) return;
+        var res = Application.Current.Resources;
+        res["UiFont"] = MakeFont(cfg.ThemeFontBody, "Inter", "Segoe UI");
+        res["HeadingFont"] = MakeFont(cfg.ThemeFontHeading, "Unbounded", "Segoe UI");
+        res["MonoFont"] = MakeFont(cfg.ThemeFontMono, "JetBrains Mono", "Consolas");
+        res["FgBrush"] = new SolidColorBrush(ParseColor(cfg.ThemeFg, "#F2F2EF"));
+        res["FgDimBrush"] = new SolidColorBrush(ParseColor(cfg.ThemeDim, "#98989E"));
+        res["FgDimmerBrush"] = new SolidColorBrush(ParseColor(cfg.ThemeDimmer, "#5C5C62"));
+    }
+
+    private static FontFamily MakeFont(string name, string embeddedDefault, string fallback)
+    {
+        if (name.Length == 0) name = embeddedDefault;
+        if (EmbeddedFonts.Contains(name))
+        {
+            return new FontFamily(new Uri("pack://application:,,,/"),
+                $"./Fonts/#{name}, {fallback}");
+        }
+        // Системный шрифт (неизвестное имя не роняет — WPF подставит дефолт).
+        return new FontFamily(name);
+    }
+
+    internal static Color ParseColor(string hex, string fallback)
+    {
+        try
+        {
+            hex = hex.Trim().TrimStart('#');
+            if (hex.Length == 6)
+            {
+                return Color.FromRgb(
+                    Convert.ToByte(hex.Substring(0, 2), 16),
+                    Convert.ToByte(hex.Substring(2, 2), 16),
+                    Convert.ToByte(hex.Substring(4, 2), 16));
+            }
+        }
+        catch { /* ignore — упадём на дефолт */ }
+        return (Color)ColorConverter.ConvertFromString(fallback);
+    }
 }

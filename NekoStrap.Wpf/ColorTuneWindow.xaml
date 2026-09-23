@@ -11,8 +11,8 @@
               BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,0,1"
               MouseLeftButtonDown="TitleBar_MouseDown">
         <DockPanel LastChildFill="False">
-          <TextBlock Text="Цветокоррекция" FontFamily="{StaticResource HeadingFont}" FontSize="13"
-                     FontWeight="Bold" Foreground="{StaticResource FgBrush}"
+          <TextBlock Text="Цветокоррекция" FontFamily="{DynamicResource HeadingFont}" FontSize="13"
+                     FontWeight="Bold" Foreground="{DynamicResource FgBrush}"
                      VerticalAlignment="Center" Margin="14,0,0,0"/>
           <Button Style="{StaticResource TitleBarButton}" Height="36" DockPanel.Dock="Right" Click="CloseButton_Click">
             <Path Data="M0,0L10,10 M10,0L0,10" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
@@ -59,13 +59,13 @@
 
         <CheckBox x:Name="OnToggle" Style="{StaticResource Switch}" Margin="0,10,0,0">
           <StackPanel>
-            <TextBlock FontFamily="{StaticResource UiFont}" FontSize="12.5" Foreground="{StaticResource FgBrush}" Text="Включена"/>
+            <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="Включена"/>
             <TextBlock Style="{StaticResource Mono}" Text="Применять цветокоррекцию"/>
           </StackPanel>
         </CheckBox>
         <CheckBox x:Name="AutoToggle" Style="{StaticResource Switch}" Margin="0,6,0,0">
           <StackPanel>
-            <TextBlock FontFamily="{StaticResource UiFont}" FontSize="12.5" Foreground="{StaticResource FgBrush}" Text="Только в игре"/>
+            <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="Только в игре"/>
             <TextBlock Style="{StaticResource Mono}" Text="На рабочем столе эффект снимается"/>
           </StackPanel>
         </CheckBox>

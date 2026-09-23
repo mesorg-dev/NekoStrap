@@ -31,29 +31,29 @@
 
   <!-- ============ Текст ============ -->
   <Style x:Key="H1" TargetType="TextBlock">
-    <Setter Property="FontFamily" Value="{StaticResource HeadingFont}"/>
+    <Setter Property="FontFamily" Value="{DynamicResource HeadingFont}"/>
     <Setter Property="FontSize" Value="23"/>
     <Setter Property="FontWeight" Value="Bold"/>
-    <Setter Property="Foreground" Value="{StaticResource FgBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource FgBrush}"/>
   </Style>
   <Style x:Key="H2" TargetType="TextBlock">
-    <Setter Property="FontFamily" Value="{StaticResource HeadingFont}"/>
+    <Setter Property="FontFamily" Value="{DynamicResource HeadingFont}"/>
     <Setter Property="FontSize" Value="13.5"/>
     <Setter Property="FontWeight" Value="Bold"/>
-    <Setter Property="Foreground" Value="{StaticResource FgBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource FgBrush}"/>
   </Style>
   <Style x:Key="Body" TargetType="TextBlock">
-    <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
+    <Setter Property="FontFamily" Value="{DynamicResource UiFont}"/>
     <Setter Property="FontSize" Value="12"/>
-    <Setter Property="Foreground" Value="{StaticResource FgDimBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource FgDimBrush}"/>
   </Style>
   <Style x:Key="Mono" TargetType="TextBlock">
-    <Setter Property="FontFamily" Value="{StaticResource MonoFont}"/>
+    <Setter Property="FontFamily" Value="{DynamicResource MonoFont}"/>
     <Setter Property="FontSize" Value="11"/>
-    <Setter Property="Foreground" Value="{StaticResource FgDimmerBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource FgDimmerBrush}"/>
   </Style>
   <Style x:Key="MonoBright" TargetType="TextBlock" BasedOn="{StaticResource Mono}">
-    <Setter Property="Foreground" Value="{StaticResource FgBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource FgBrush}"/>
     <Setter Property="FontWeight" Value="Bold"/>
   </Style>
 
@@ -72,7 +72,7 @@
   <Style x:Key="PrimaryButton" TargetType="Button">
     <Setter Property="Background" Value="{StaticResource FgBrush}"/>
     <Setter Property="Foreground" Value="{StaticResource BgBrush}"/>
-    <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
+    <Setter Property="FontFamily" Value="{DynamicResource UiFont}"/>
     <Setter Property="FontSize" Value="12"/>
     <Setter Property="FontWeight" Value="Bold"/>
     <Setter Property="Padding" Value="18,9"/>
@@ -102,8 +102,8 @@
 
   <Style x:Key="OutlineButton" TargetType="Button">
     <Setter Property="Background" Value="Transparent"/>
-    <Setter Property="Foreground" Value="{StaticResource FgDimBrush}"/>
-    <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
+    <Setter Property="Foreground" Value="{DynamicResource FgDimBrush}"/>
+    <Setter Property="FontFamily" Value="{DynamicResource UiFont}"/>
     <Setter Property="FontSize" Value="12"/>
     <Setter Property="Padding" Value="18,9"/>
     <Setter Property="Cursor" Value="Hand"/>
@@ -118,7 +118,7 @@
           <ControlTemplate.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
               <Setter TargetName="bg" Property="BorderBrush" Value="{StaticResource FgBrush}"/>
-              <Setter Property="Foreground" Value="{StaticResource FgBrush}"/>
+              <Setter Property="Foreground" Value="{DynamicResource FgBrush}"/>
               <Setter TargetName="bg" Property="Background" Value="{StaticResource LineSoftBrush}"/>
             </Trigger>
             <Trigger Property="IsPressed" Value="True">
@@ -132,7 +132,7 @@
 
   <Style x:Key="TitleBarButton" TargetType="Button">
     <Setter Property="Background" Value="Transparent"/>
-    <Setter Property="Foreground" Value="{StaticResource FgDimBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource FgDimBrush}"/>
     <Setter Property="Width" Value="46"/>
     <Setter Property="Height" Value="44"/>
     <Setter Property="Cursor" Value="Hand"/>
@@ -145,7 +145,7 @@
           <ControlTemplate.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
               <Setter TargetName="bg" Property="Background" Value="{StaticResource LineSoftBrush}"/>
-              <Setter Property="Foreground" Value="{StaticResource FgBrush}"/>
+              <Setter Property="Foreground" Value="{DynamicResource FgBrush}"/>
             </Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>
@@ -156,8 +156,8 @@
   <!-- ============ Навигация сайдбара ============ -->
   <Style x:Key="NavRadio" TargetType="RadioButton">
     <Setter Property="Height" Value="46"/>
-    <Setter Property="Foreground" Value="{StaticResource FgDimBrush}"/>
-    <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
+    <Setter Property="Foreground" Value="{DynamicResource FgDimBrush}"/>
+    <Setter Property="FontFamily" Value="{DynamicResource UiFont}"/>
     <Setter Property="FontSize" Value="12.5"/>
     <Setter Property="Cursor" Value="Hand"/>
     <Setter Property="Template">
@@ -180,11 +180,11 @@
             <Trigger Property="IsChecked" Value="True">
               <Setter TargetName="bg" Property="Background" Value="{StaticResource LineSoftBrush}"/>
               <Setter TargetName="pill" Property="Visibility" Value="Visible"/>
-              <Setter Property="Foreground" Value="{StaticResource FgBrush}"/>
+              <Setter Property="Foreground" Value="{DynamicResource FgBrush}"/>
             </Trigger>
             <Trigger Property="IsMouseOver" Value="True">
               <Setter TargetName="bg" Property="Background" Value="{StaticResource LineSoftBrush}"/>
-              <Setter Property="Foreground" Value="{StaticResource FgBrush}"/>
+              <Setter Property="Foreground" Value="{DynamicResource FgBrush}"/>
             </Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>
@@ -224,8 +224,8 @@
 
   <!-- ============ Тумблер (CheckBox) ============ -->
   <Style x:Key="Switch" TargetType="CheckBox">
-    <Setter Property="Foreground" Value="{StaticResource FgBrush}"/>
-    <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
+    <Setter Property="Foreground" Value="{DynamicResource FgBrush}"/>
+    <Setter Property="FontFamily" Value="{DynamicResource UiFont}"/>
     <Setter Property="Cursor" Value="Hand"/>
     <Setter Property="Template">
       <Setter.Value>
@@ -326,10 +326,10 @@
        местах (диалоги без стекла) под ним сплошной фон окна — вид тот же. -->
   <Style x:Key="DarkInput" TargetType="TextBox">
     <Setter Property="Background" Value="Transparent"/>
-    <Setter Property="Foreground" Value="{StaticResource FgBrush}"/>
-    <Setter Property="CaretBrush" Value="{StaticResource FgBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource FgBrush}"/>
+    <Setter Property="CaretBrush" Value="{DynamicResource FgBrush}"/>
     <Setter Property="SelectionBrush" Value="{StaticResource LineBrush}"/>
-    <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
+    <Setter Property="FontFamily" Value="{DynamicResource UiFont}"/>
     <Setter Property="FontSize" Value="12"/>
     <Setter Property="Padding" Value="12,8"/>
     <Setter Property="BorderThickness" Value="0"/>
@@ -430,8 +430,8 @@
   <!-- ============ Таблицы (ListView + GridView) ============ -->
   <Style x:Key="DarkGridHeader" TargetType="GridViewColumnHeader">
     <Setter Property="Background" Value="Transparent"/>
-    <Setter Property="Foreground" Value="{StaticResource FgDimBrush}"/>
-    <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
+    <Setter Property="Foreground" Value="{DynamicResource FgDimBrush}"/>
+    <Setter Property="FontFamily" Value="{DynamicResource UiFont}"/>
     <Setter Property="FontSize" Value="11"/>
     <Setter Property="FontWeight" Value="Bold"/>
     <Setter Property="Padding" Value="8,8"/>
@@ -451,8 +451,8 @@
     </Setter>
   </Style>
   <Style x:Key="DarkListRow" TargetType="ListViewItem">
-    <Setter Property="Foreground" Value="{StaticResource FgBrush}"/>
-    <Setter Property="FontFamily" Value="{StaticResource MonoFont}"/>
+    <Setter Property="Foreground" Value="{DynamicResource FgBrush}"/>
+    <Setter Property="FontFamily" Value="{DynamicResource MonoFont}"/>
     <Setter Property="FontSize" Value="12"/>
     <Setter Property="Padding" Value="8,6"/>
     <Setter Property="Template">
@@ -470,7 +470,7 @@
             </Trigger>
             <Trigger Property="IsSelected" Value="True">
               <Setter TargetName="bg" Property="Background" Value="{StaticResource LineSoftBrush}"/>
-              <Setter Property="Foreground" Value="{StaticResource FgBrush}"/>
+              <Setter Property="Foreground" Value="{DynamicResource FgBrush}"/>
             </Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>
@@ -481,8 +481,8 @@
   <!-- ============ DataGrid (FastFlags) ============ -->
   <Style x:Key="DarkGridColumnHeader" TargetType="DataGridColumnHeader">
     <Setter Property="Background" Value="Transparent"/>
-    <Setter Property="Foreground" Value="{StaticResource FgDimBrush}"/>
-    <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
+    <Setter Property="Foreground" Value="{DynamicResource FgDimBrush}"/>
+    <Setter Property="FontFamily" Value="{DynamicResource UiFont}"/>
     <Setter Property="FontSize" Value="11"/>
     <Setter Property="FontWeight" Value="Bold"/>
     <Setter Property="Padding" Value="8,0"/>
@@ -507,8 +507,8 @@
     <Setter Property="Background" Value="Transparent"/>
     <Setter Property="BorderThickness" Value="0"/>
     <Setter Property="Padding" Value="8,6"/>
-    <Setter Property="Foreground" Value="{StaticResource FgBrush}"/>
-    <Setter Property="FontFamily" Value="{StaticResource MonoFont}"/>
+    <Setter Property="Foreground" Value="{DynamicResource FgBrush}"/>
+    <Setter Property="FontFamily" Value="{DynamicResource MonoFont}"/>
     <Setter Property="FontSize" Value="12"/>
     <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
     <Setter Property="Template">
@@ -521,7 +521,7 @@
           <ControlTemplate.Triggers>
             <Trigger Property="IsSelected" Value="True">
               <Setter TargetName="bg" Property="Background" Value="{StaticResource LineSoftBrush}"/>
-              <Setter Property="Foreground" Value="{StaticResource FgBrush}"/>
+              <Setter Property="Foreground" Value="{DynamicResource FgBrush}"/>
             </Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>
@@ -549,11 +549,11 @@
   </Style>
   <Style x:Key="DarkGridEdit" TargetType="TextBox">
     <Setter Property="Background" Value="{StaticResource BgPanelBrush}"/>
-    <Setter Property="Foreground" Value="{StaticResource FgBrush}"/>
-    <Setter Property="CaretBrush" Value="{StaticResource FgBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource FgBrush}"/>
+    <Setter Property="CaretBrush" Value="{DynamicResource FgBrush}"/>
     <Setter Property="BorderBrush" Value="{StaticResource LineBrush}"/>
     <Setter Property="BorderThickness" Value="1"/>
-    <Setter Property="FontFamily" Value="{StaticResource MonoFont}"/>
+    <Setter Property="FontFamily" Value="{DynamicResource MonoFont}"/>
     <Setter Property="FontSize" Value="12"/>
     <Setter Property="Padding" Value="6,2"/>
   </Style>
@@ -573,16 +573,16 @@
     <Setter Property="CanUserResizeRows" Value="False"/>
     <Setter Property="AutoGenerateColumns" Value="False"/>
     <Setter Property="CanUserAddRows" Value="True"/>
-    <Setter Property="Foreground" Value="{StaticResource FgBrush}"/>
-    <Setter Property="FontFamily" Value="{StaticResource MonoFont}"/>
+    <Setter Property="Foreground" Value="{DynamicResource FgBrush}"/>
+    <Setter Property="FontFamily" Value="{DynamicResource MonoFont}"/>
     <Setter Property="FontSize" Value="12"/>
   </Style>
 
   <!-- ============ Контекстное меню ============ -->
   <Style x:Key="DarkMenuItem" TargetType="MenuItem">
     <Setter Property="Background" Value="{StaticResource BgPanelBrush}"/>
-    <Setter Property="Foreground" Value="{StaticResource FgBrush}"/>
-    <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
+    <Setter Property="Foreground" Value="{DynamicResource FgBrush}"/>
+    <Setter Property="FontFamily" Value="{DynamicResource UiFont}"/>
     <Setter Property="FontSize" Value="12"/>
     <Setter Property="Padding" Value="12,7"/>
     <Setter Property="Template">
@@ -595,6 +595,92 @@
           <ControlTemplate.Triggers>
             <Trigger Property="IsHighlighted" Value="True">
               <Setter TargetName="bg" Property="Background" Value="{StaticResource LineSoftBrush}"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- ============ Тёмный ComboBox ============ -->
+  <Style x:Key="DarkComboItem" TargetType="ComboBoxItem">
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="Foreground" Value="{DynamicResource FgDimBrush}"/>
+    <Setter Property="FontFamily" Value="{DynamicResource UiFont}"/>
+    <Setter Property="FontSize" Value="12"/>
+    <Setter Property="Padding" Value="12,7"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ComboBoxItem">
+          <Border x:Name="bg" Background="{TemplateBinding Background}"
+                  Padding="{TemplateBinding Padding}">
+            <ContentPresenter/>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsHighlighted" Value="True">
+              <Setter TargetName="bg" Property="Background" Value="{StaticResource LineSoftBrush}"/>
+              <Setter Property="Foreground" Value="{DynamicResource FgBrush}"/>
+            </Trigger>
+            <Trigger Property="IsSelected" Value="True">
+              <Setter TargetName="bg" Property="Background" Value="{StaticResource LineSoftBrush}"/>
+              <Setter Property="Foreground" Value="{DynamicResource FgBrush}"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style x:Key="DarkCombo" TargetType="ComboBox">
+    <Setter Property="Foreground" Value="{DynamicResource FgBrush}"/>
+    <Setter Property="FontFamily" Value="{DynamicResource UiFont}"/>
+    <Setter Property="FontSize" Value="12"/>
+    <Setter Property="Padding" Value="12,7"/>
+    <Setter Property="MinHeight" Value="38"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="ItemContainerStyle" Value="{StaticResource DarkComboItem}"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ComboBox">
+          <Grid>
+            <ToggleButton x:Name="ToggleButton" Focusable="False" ClickMode="Press"
+                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+              <ToggleButton.Template>
+                <ControlTemplate TargetType="ToggleButton">
+                  <Border Background="Transparent"
+                          BorderBrush="{StaticResource LineBrush}" BorderThickness="1"
+                          CornerRadius="2" Padding="{TemplateBinding Padding}">
+                    <Grid>
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                      </Grid.ColumnDefinitions>
+                      <Path Grid.Column="1" Data="M0,0L6,6L12,0"
+                            Stroke="{DynamicResource FgDimBrush}" StrokeThickness="1.6"
+                            StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                            Width="12" Height="12" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                    </Grid>
+                  </Border>
+                </ControlTemplate>
+              </ToggleButton.Template>
+            </ToggleButton>
+            <ContentPresenter Name="ContentSite" IsHitTestVisible="False"
+                              Content="{TemplateBinding SelectionBoxItem}"
+                              Margin="12,0,34,0" VerticalAlignment="Center"/>
+            <Popup Name="Popup" Placement="Bottom"
+                   IsOpen="{TemplateBinding IsDropDownOpen}"
+                   AllowsTransparency="True" Focusable="False" PopupAnimation="Slide">
+              <Border Background="{StaticResource BgPanelBrush}"
+                      BorderBrush="{StaticResource LineBrush}" BorderThickness="1"
+                      CornerRadius="2" MinWidth="{TemplateBinding ActualWidth}" MaxHeight="240">
+                <ScrollViewer Style="{StaticResource DarkScrollViewer}">
+                  <StackPanel IsItemsHost="True"/>
+                </ScrollViewer>
+              </Border>
+            </Popup>
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter Property="Foreground" Value="{DynamicResource FgDimmerBrush}"/>
             </Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>

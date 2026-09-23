@@ -80,6 +80,16 @@ namespace NekoStrap.Roblox
         // Нет записи — 1 (как раньше).
         public Dictionary<string, float> SoundVolumes { get; set; } = new();
 
+        // Внешний вид: шрифты по ролям (пусто = встроенные по умолчанию).
+        public string ThemeFontHeading { get; set; } = "Unbounded";
+        public string ThemeFontBody { get; set; } = "Inter";
+        public string ThemeFontMono { get; set; } = "JetBrains Mono";
+
+        // Цвета текста hex (#RRGGBB, пусто = дефолт палитры).
+        public string ThemeFg { get; set; } = "";
+        public string ThemeDim { get; set; } = "";
+        public string ThemeDimmer { get; set; } = "";
+
         // «Стекло»: прозрачные панели с блюром подложки (liquid glass).
         // Выкл — вид как раньше, без единого лишнего действия на кадр.
         public bool GlassEnabled { get; set; }

@@ -25,6 +25,8 @@ public partial class SettingsPage : UserControl
     public event Action<string>? SoundPickClicked;
     public event Action<string>? SoundResetClicked;
     public event Action<string, int>? SoundVolumeChanged;
+    public event Action? AppearanceChanged;
+    public event Action? AppearanceResetClicked;
 
     private bool _sync;
     private readonly Dictionary<string, TextBlock> _soundFiles = new();
@@ -37,6 +39,165 @@ public partial class SettingsPage : UserControl
         SoundsBox.Checked += (_, _) => ClickSound.Enabled = SoundsBox.IsChecked == true;
         SoundsBox.Unchecked += (_, _) => ClickSound.Enabled = SoundsBox.IsChecked == true;
         BuildSoundRows();
+        BuildFontBoxes();
+        BuildColorRows();
+    }
+
+    // ================= Внешний вид =================
+
+    public static readonly string[] HeadingFonts = { "Unbounded", "Segoe UI", "Verdana", "Trebuchet MS" };
+    public static readonly string[] BodyFonts = { "Inter", "Segoe UI", "Verdana" };
+    public static readonly string[] MonoFonts = { "JetBrains Mono", "Consolas", "Courier New" };
+
+    private static readonly string[] Palette =
+    {
+        "#F2F2EF", "#FFFFFF", "#98989E", "#5C5C62", "#78DC82",
+        "#E06C5B", "#6BA8E0", "#E8C85B", "#E09A5B", "#A78BFA"
+    };
+
+    private readonly Dictionary<string, TextBox> _colorBoxes = new();
+
+    private void BuildFontBoxes()
+    {
+        FillFontBox(HeadingFontCombo, HeadingFonts);
+        FillFontBox(BodyFontCombo, BodyFonts);
+        FillFontBox(MonoFontCombo, MonoFonts);
+    }
+
+    private static void FillFontBox(ComboBox box, string[] families)
+    {
+        box.Items.Clear();
+        foreach (var f in families)
+            box.Items.Add(new ComboBoxItem { Content = f, Tag = f });
+        box.SelectedIndex = 0;
+    }
+
+    private static string SelectedFont(ComboBox box, string[] known, string fallback)
+    {
+        string name = (box.SelectedItem as ComboBoxItem)?.Tag as string ?? "";
+        foreach (var k in known)
+            if (k.Equals(name, StringComparison.OrdinalIgnoreCase))
+                return k;
+        return fallback;
+    }
+
+    public string HeadingFontName => SelectedFont(HeadingFontCombo, HeadingFonts, HeadingFonts[0]);
+    public string BodyFontName => SelectedFont(BodyFontCombo, BodyFonts, BodyFonts[0]);
+    public string MonoFontName => SelectedFont(MonoFontCombo, MonoFonts, MonoFonts[0]);
+
+    public string FgHex => _colorBoxes.TryGetValue("fg", out var b) ? b.Text.Trim() : "";
+    public string DimHex => _colorBoxes.TryGetValue("dim", out var b2) ? b2.Text.Trim() : "";
+    public string DimmerHex => _colorBoxes.TryGetValue("dimmer", out var b3) ? b3.Text.Trim() : "";
+
+    private void AppearanceControl_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (!_sync)
+            AppearanceChanged?.Invoke();
+    }
+
+    private void AppearanceResetButton_Click(object sender, RoutedEventArgs e)
+    {
+        AppearanceResetClicked?.Invoke();
+    }
+
+    private void BuildColorRows()
+    {
+        var roles = new (string key, string title)[]
+        {
+            ("fg", "Основной текст"),
+            ("dim", "Вторичный текст"),
+            ("dimmer", "Приглушённый текст"),
+        };
+        foreach (var (key, title) in roles)
+        {
+            var wrap = new StackPanel { Margin = new Thickness(0, 0, 0, 8) };
+            var caption = new TextBlock { Text = title, Margin = new Thickness(0, 0, 0, 4) };
+            caption.SetResourceReference(TextBlock.FontFamilyProperty, "UiFont");
+            caption.SetResourceReference(TextBlock.ForegroundProperty, "FgDimBrush");
+            caption.FontSize = 12;
+            wrap.Children.Add(caption);
+
+            var line = new DockPanel { LastChildFill = true };
+            var swatches = new WrapPanel { MaxWidth = 340 };
+            foreach (var hex in Palette)
+            {
+                var sw = new Border
+                {
+                    Width = 26,
+                    Height = 26,
+                    CornerRadius = new CornerRadius(2),
+                    Margin = new Thickness(0, 0, 8, 8),
+                    Cursor = System.Windows.Input.Cursors.Hand,
+                    Tag = (key, hex)
+                };
+                sw.SetResourceReference(Border.BorderBrushProperty, "LineBrush");
+                sw.BorderThickness = new Thickness(1);
+                try
+                {
+                    sw.Background = new System.Windows.Media.SolidColorBrush(
+                        (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(hex));
+                }
+                catch { /* ignore */ }
+                sw.MouseLeftButtonUp += (_, _) =>
+                {
+                    if (_colorBoxes.TryGetValue(key, out var box))
+                        box.Text = hex;
+                    // TextChanged дёрнет AppearanceChanged сам.
+                };
+                swatches.Children.Add(sw);
+            }
+            var hexBox = new TextBox
+            {
+                Style = (Style)FindResource("DarkInput"),
+                Width = 100,
+                Height = 34,
+                VerticalContentAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 0, 0, 8),
+                Tag = key
+            };
+            hexBox.TextChanged += (_, _) =>
+            {
+                if (!_sync)
+                    AppearanceChanged?.Invoke();
+            };
+            DockPanel.SetDock(hexBox, Dock.Right);
+            line.Children.Add(hexBox);
+            line.Children.Add(swatches);
+            wrap.Children.Add(line);
+
+            _colorBoxes[key] = hexBox;
+            ColorsPanel.Children.Add(wrap);
+        }
+    }
+
+    /// <summary>Выставить оформление из конфига (без срабатывания события).</summary>
+    public void SetAppearance(string heading, string body, string mono,
+        string fg, string dim, string dimmer)
+    {
+        _sync = true;
+        try
+        {
+            SelectFont(HeadingFontCombo, HeadingFonts, heading);
+            SelectFont(BodyFontCombo, BodyFonts, body);
+            SelectFont(MonoFontCombo, MonoFonts, mono);
+            if (_colorBoxes.TryGetValue("fg", out var f)) f.Text = fg;
+            if (_colorBoxes.TryGetValue("dim", out var d)) d.Text = dim;
+            if (_colorBoxes.TryGetValue("dimmer", out var m)) m.Text = dimmer;
+        }
+        finally { _sync = false; }
+    }
+
+    private static void SelectFont(ComboBox box, string[] known, string want)
+    {
+        for (int i = 0; i < box.Items.Count; i++)
+        {
+            if ((box.Items[i] as ComboBoxItem)?.Tag as string == want)
+            {
+                box.SelectedIndex = i;
+                return;
+            }
+        }
+        box.SelectedIndex = 0;
     }
 
     /// <summary>
@@ -45,8 +206,6 @@ public partial class SettingsPage : UserControl
     /// </summary>
     private void BuildSoundRows()
     {
-        var uiFont = (System.Windows.Media.FontFamily)FindResource("UiFont");
-        var fg = (System.Windows.Media.Brush)FindResource("FgBrush");
         foreach (var (key, title) in ClickSound.Sounds)
         {
             var wrap = new StackPanel { Margin = new Thickness(0, 0, 0, 10) };
@@ -55,21 +214,21 @@ public partial class SettingsPage : UserControl
             var name = new TextBlock
             {
                 Text = title,
-                FontFamily = uiFont,
                 FontSize = 12.5,
-                Foreground = fg,
                 VerticalAlignment = VerticalAlignment.Center
             };
+            name.SetResourceReference(TextBlock.FontFamilyProperty, "UiFont");
+            name.SetResourceReference(TextBlock.ForegroundProperty, "FgBrush");
             var val = new TextBlock
             {
                 Text = "100%",
-                FontFamily = (System.Windows.Media.FontFamily)FindResource("MonoFont"),
                 FontSize = 11,
                 FontWeight = FontWeights.Bold,
-                Foreground = fg,
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(10, 0, 0, 0)
             };
+            val.SetResourceReference(TextBlock.FontFamilyProperty, "MonoFont");
+            val.SetResourceReference(TextBlock.ForegroundProperty, "FgBrush");
             DockPanel.SetDock(val, Dock.Right);
             head.Children.Add(val);
             head.Children.Add(name);
@@ -96,12 +255,12 @@ public partial class SettingsPage : UserControl
             var file = new TextBlock
             {
                 Text = "встроенный",
-                FontFamily = (System.Windows.Media.FontFamily)FindResource("MonoFont"),
                 FontSize = 11,
-                Foreground = (System.Windows.Media.Brush)FindResource("FgDimmerBrush"),
                 VerticalAlignment = VerticalAlignment.Center,
                 TextTrimming = TextTrimming.CharacterEllipsis
             };
+            file.SetResourceReference(TextBlock.FontFamilyProperty, "MonoFont");
+            file.SetResourceReference(TextBlock.ForegroundProperty, "FgDimmerBrush");
             var btns = new StackPanel { Orientation = Orientation.Horizontal };
             var pick = new Button
             {

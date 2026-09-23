@@ -30,8 +30,8 @@
 
     <Border Style="{StaticResource Card}">
       <StackPanel>
-        <TextBlock FontFamily="{StaticResource UiFont}" FontSize="13" FontWeight="Bold"
-                   Foreground="{StaticResource FgDimBrush}"
+        <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="13" FontWeight="Bold"
+                   Foreground="{DynamicResource FgDimBrush}"
                    Text="Пресеты — нажми, чтобы добавить или убрать флаг" Margin="0,0,0,10"/>
         <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="120"
                       Style="{StaticResource DarkScrollViewer}">
@@ -42,8 +42,8 @@
 
     <Border Style="{StaticResource Card}" Margin="0,12,0,0">
       <StackPanel>
-        <TextBlock FontFamily="{StaticResource UiFont}" FontSize="13" FontWeight="Bold"
-                   Foreground="{StaticResource FgDimBrush}"
+        <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="13" FontWeight="Bold"
+                   Foreground="{DynamicResource FgDimBrush}"
                    Text="Профили — целые наборы флагов в один клик" Margin="0,0,0,10"/>
         <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="80"
                       Style="{StaticResource DarkScrollViewer}">

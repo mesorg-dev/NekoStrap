@@ -157,6 +157,8 @@ public partial class MainWindow : Window
             _config.SoundVolumes[key] = v / 100f;
             SaveQuiet();
         };
+        _settingsPage.AppearanceChanged += () => ApplyAppearanceFromUi(save: true);
+        _settingsPage.AppearanceResetClicked += () => ResetAppearance();
         _settingsPage.CdnApplyClicked += (_, _) => CdnApply();
         _settingsPage.CdnRollbackClicked += (_, _) => CdnRollback();
         _settingsPage.WallpaperPickClicked += (_, _) => PickWallpaper();
@@ -227,6 +229,8 @@ public partial class MainWindow : Window
             ApplyConfigToUi();
             RefreshFavorites();
             ApplySoundsFromConfig();
+            RefreshAppearanceSettings();
+            UiTheme.ApplyText(_config);
             RefreshWallpaperSettings();
             RefreshGlassSettings();
             InitTray();
@@ -827,6 +831,62 @@ public partial class MainWindow : Window
     private void SaveQuiet()
     {
         try { _config.Save(RobloxPaths.ConfigPath); } catch { /* ignore */ }
+    }
+
+    // ================= Внешний вид =================
+
+    /// <summary>Прочитать карточку в конфиг и применить живьём.</summary>
+    private void ApplyAppearanceFromUi(bool save)
+    {
+        _config.ThemeFontHeading = _settingsPage.HeadingFontName;
+        _config.ThemeFontBody = _settingsPage.BodyFontName;
+        _config.ThemeFontMono = _settingsPage.MonoFontName;
+        _config.ThemeFg = NormHex(_settingsPage.FgHex);
+        _config.ThemeDim = NormHex(_settingsPage.DimHex);
+        _config.ThemeDimmer = NormHex(_settingsPage.DimmerHex);
+        if (save) SaveQuiet();
+        UiTheme.ApplyText(_config);
+    }
+
+    /// <summary>Пусто или мусор → пусто (дефолт палитры). Иначе #RRGGBB.</summary>
+    private static string NormHex(string hex)
+    {
+        hex = hex.Trim().TrimStart('#');
+        if (hex.Length == 6 && hex.All(c =>
+                (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')))
+            return "#" + hex.ToUpperInvariant();
+        return "";
+    }
+
+    private void RefreshAppearanceSettings()
+    {
+        _settingsPage.SetAppearance(
+            PickFont(_config.ThemeFontHeading, SettingsPage.HeadingFonts),
+            PickFont(_config.ThemeFontBody, SettingsPage.BodyFonts),
+            PickFont(_config.ThemeFontMono, SettingsPage.MonoFonts),
+            _config.ThemeFg, _config.ThemeDim, _config.ThemeDimmer);
+    }
+
+    private static string PickFont(string want, string[] known)
+    {
+        foreach (var k in known)
+            if (k.Equals(want, StringComparison.OrdinalIgnoreCase))
+                return k;
+        return known[0];
+    }
+
+    private void ResetAppearance()
+    {
+        _config.ThemeFontHeading = SettingsPage.HeadingFonts[0];
+        _config.ThemeFontBody = SettingsPage.BodyFonts[0];
+        _config.ThemeFontMono = SettingsPage.MonoFonts[0];
+        _config.ThemeFg = "";
+        _config.ThemeDim = "";
+        _config.ThemeDimmer = "";
+        SaveQuiet();
+        RefreshAppearanceSettings();
+        UiTheme.ApplyText(_config);
+        _homePage.SetStatus("Оформление сброшено", true);
     }
 
     // ================= Кастомные звуки =================

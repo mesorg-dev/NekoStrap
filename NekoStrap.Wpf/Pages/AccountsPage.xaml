@@ -7,10 +7,10 @@
 
     <Border Style="{StaticResource Card}" Margin="0,0,0,12">
       <StackPanel>
-        <TextBlock FontFamily="{StaticResource HeadingFont}" FontSize="13" FontWeight="Bold"
-                   Foreground="{StaticResource FgDimBrush}" Text="Активный аккаунт" Margin="0,0,0,6"/>
-        <TextBlock x:Name="ActiveLabel" FontFamily="{StaticResource MonoFont}" FontSize="14" FontWeight="Bold"
-                   Foreground="{StaticResource FgBrush}" Text="—" TextTrimming="CharacterEllipsis" Margin="0,0,0,8"/>
+        <TextBlock FontFamily="{DynamicResource HeadingFont}" FontSize="13" FontWeight="Bold"
+                   Foreground="{DynamicResource FgDimBrush}" Text="Активный аккаунт" Margin="0,0,0,6"/>
+        <TextBlock x:Name="ActiveLabel" FontFamily="{DynamicResource MonoFont}" FontSize="14" FontWeight="Bold"
+                   Foreground="{DynamicResource FgBrush}" Text="—" TextTrimming="CharacterEllipsis" Margin="0,0,0,8"/>
         <StackPanel Orientation="Horizontal">
           <Button Style="{StaticResource PrimaryButton}" Content="Играть этим" Width="160" Height="38" Click="PlayButton_Click"/>
           <Button Style="{StaticResource OutlineButton}" Content="Снять выбор" Width="150" Height="38" Margin="10,0,0,0" Click="ClearButton_Click"/>
@@ -32,10 +32,10 @@
                 SelectionMode="Single">
         <ListView.ItemContainerStyle>
           <Style TargetType="ListViewItem" BasedOn="{StaticResource DarkListRow}">
-            <Setter Property="Foreground" Value="{StaticResource FgDimBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource FgDimBrush}"/>
             <Style.Triggers>
               <DataTrigger Binding="{Binding IsActive}" Value="True">
-                <Setter Property="Foreground" Value="{StaticResource FgBrush}"/>
+                <Setter Property="Foreground" Value="{DynamicResource FgBrush}"/>
               </DataTrigger>
             </Style.Triggers>
           </Style>

@@ -15,10 +15,10 @@
                 SelectionMode="Single">
         <ListView.ItemContainerStyle>
           <Style TargetType="ListViewItem" BasedOn="{StaticResource DarkListRow}">
-            <Setter Property="Foreground" Value="{StaticResource FgDimBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource FgDimBrush}"/>
             <Style.Triggers>
               <DataTrigger Binding="{Binding IsActive}" Value="True">
-                <Setter Property="Foreground" Value="{StaticResource FgBrush}"/>
+                <Setter Property="Foreground" Value="{DynamicResource FgBrush}"/>
               </DataTrigger>
             </Style.Triggers>
           </Style>

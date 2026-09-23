@@ -19,7 +19,7 @@
           <Style TargetType="ListViewItem" BasedOn="{StaticResource DarkListRow}">
             <Style.Triggers>
               <DataTrigger Binding="{Binding Active}" Value="False">
-                <Setter Property="Foreground" Value="{StaticResource FgDimmerBrush}"/>
+                <Setter Property="Foreground" Value="{DynamicResource FgDimmerBrush}"/>
               </DataTrigger>
             </Style.Triggers>
           </Style>
@@ -40,7 +40,7 @@
         <TextBlock Style="{StaticResource H2}" FontSize="13" Text="Fleasion — замена текстур, звуков и шейдеров" Margin="0,0,0,8"/>
         <CheckBox x:Name="FleasionCheckBox" Style="{StaticResource Switch}">
           <StackPanel>
-            <TextBlock FontFamily="{StaticResource UiFont}" FontSize="12.5" Foreground="{StaticResource FgBrush}"
+            <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}"
                        Text="Запускать Fleasion вместе с игрой"/>
             <TextBlock Style="{StaticResource Mono}" Text="Качается с GitHub, стартует рядом с Roblox"/>
           </StackPanel>

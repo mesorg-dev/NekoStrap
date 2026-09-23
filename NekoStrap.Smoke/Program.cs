@@ -411,6 +411,37 @@ internal static class Program
                 }
             });
 
+            Check("Оформление: шрифты и цвета живьём", () =>
+            {
+                settings.SetAppearance("Segoe UI", "Verdana", "Consolas",
+                    "#FFFFFF", "#888888", "#444444");
+                var cfg = new NekoStrap.Roblox.LauncherConfig
+                {
+                    ThemeFontHeading = "Segoe UI",
+                    ThemeFontBody = "Verdana",
+                    ThemeFontMono = "Consolas",
+                    ThemeFg = "#FFFFFF",
+                    ThemeDim = "#888888",
+                    ThemeDimmer = "#444444"
+                };
+                NekoStrap.Wpf.UiTheme.ApplyText(cfg);
+                var res = Application.Current.Resources;
+                var fg = (System.Windows.Media.SolidColorBrush)res["FgBrush"];
+                if (fg.Color != System.Windows.Media.Colors.White)
+                    throw new Exception("цвет не применился");
+                var ui = (System.Windows.Media.FontFamily)res["UiFont"];
+                if (!ui.Source.Contains("Verdana"))
+                    throw new Exception("шрифт не применился: " + ui.Source);
+                // Мусор не роняет, падают дефолты.
+                cfg.ThemeFg = "мусор";
+                cfg.ThemeFontBody = "НетТакогоШрифта";
+                NekoStrap.Wpf.UiTheme.ApplyText(cfg);
+                fg = (System.Windows.Media.SolidColorBrush)res["FgBrush"];
+                if (fg.Color != (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#F2F2EF"))
+                    throw new Exception("дефолт цвета не вернулся");
+                NekoStrap.Wpf.UiTheme.ApplyText(new NekoStrap.Roblox.LauncherConfig());
+            });
+
             Check("Апдейтер: сравнение версий (без сети)", () =>
             {
                 string cur = NekoStrap.Roblox.AppUpdater.CurrentVersion;

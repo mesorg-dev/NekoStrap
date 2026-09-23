@@ -14,11 +14,12 @@ internal static class UiTheme
     public static void Apply(bool hasWallpaper, bool glassEnabled, int glassOpacity)
     {
         if (Application.Current?.Resources == null) return;
-        bool glass = hasWallpaper && glassEnabled && glassOpacity < 100;
+        // Чистое стекло: тинт не нужен вообще, но блюр рисуем всегда.
+        bool glass = hasWallpaper && glassEnabled && (GlassPure || glassOpacity < 100);
         // Затемнение элементов отдельно от фона: итоговая альфа тинта =
         // непрозрачность × затемнение. Хочешь светлые панели — убавь затемнение,
         // хочешь тёмные — подними (фон при этом крутится своим слайдером).
-        double alphaF = 255 * Math.Clamp(glassOpacity, 0, 100) / 100.0
+        double alphaF = GlassPure ? 0 : 255 * Math.Clamp(glassOpacity, 0, 100) / 100.0
             * Math.Clamp(_glassDim, 0, 100) / 100.0;
         byte alpha = (byte)Math.Clamp(alphaF, 0, 255);
 
@@ -52,6 +53,9 @@ internal static class UiTheme
         get => _glassDim;
         set => _glassDim = Math.Clamp(value, 0, 100);
     }
+
+    /// <summary>Чистое стекло без тинта (пишет MainWindow из конфига).</summary>
+    internal static bool GlassPure { get; set; }
 
     private static readonly HashSet<string> EmbeddedFonts = new(StringComparer.OrdinalIgnoreCase)
     {

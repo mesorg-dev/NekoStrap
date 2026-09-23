@@ -86,8 +86,6 @@
                          Tag="{StaticResource IconFlags}" Content="FastFlags" Checked="Nav_Checked"/>
             <RadioButton x:Name="NavVersions" Style="{StaticResource NavRadio}" GroupName="Nav"
                          Tag="{StaticResource IconVersions}" Content="Версии" Checked="Nav_Checked"/>
-            <RadioButton x:Name="NavAccounts" Style="{StaticResource NavRadio}" GroupName="Nav"
-                         Tag="{StaticResource IconAccounts}" Content="Аккаунты" Checked="Nav_Checked"/>
             <RadioButton x:Name="NavHistory" Style="{StaticResource NavRadio}" GroupName="Nav"
                          Tag="{StaticResource IconHistory}" Content="История" Checked="Nav_Checked"/>
             <RadioButton x:Name="NavSettings" Style="{StaticResource NavRadio}" GroupName="Nav"

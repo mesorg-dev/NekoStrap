@@ -21,6 +21,7 @@ public partial class SettingsPage : UserControl
     public event Action<int>? GlassOpacityChanged;
     public event Action<int>? GlassBlurChanged;
     public event Action<int>? GlassDimChanged;
+    public event Action<bool>? GlassPureChanged;
 
     public event Action<string>? SoundPickClicked;
     public event Action<string>? SoundResetClicked;
@@ -413,6 +414,29 @@ public partial class SettingsPage : UserControl
             GlassDimChanged?.Invoke(v);
     }
 
+    private void GlassTintedButton_Click(object sender, RoutedEventArgs e)
+    {
+        SetGlassPure(false);
+        GlassPureChanged?.Invoke(false);
+    }
+
+    private void GlassClearButton_Click(object sender, RoutedEventArgs e)
+    {
+        SetGlassPure(true);
+        GlassPureChanged?.Invoke(true);
+    }
+
+    /// <summary>Режим стекла + доступность слайдеров тинта (в чистом не нужны).</summary>
+    public void SetGlassPure(bool pure)
+    {
+        var on = (Style)FindResource("PrimaryButton");
+        var off = (Style)FindResource("OutlineButton");
+        GlassTintedButton.Style = pure ? off : on;
+        GlassClearButton.Style = pure ? on : off;
+        GlassOpacityBar.IsEnabled = !pure;
+        GlassDimBar.IsEnabled = !pure;
+    }
+
     private void GlassBlurBar_Changed(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
         int v = (int)GlassBlurBar.Value;
@@ -459,7 +483,7 @@ public partial class SettingsPage : UserControl
     }
 
     /// <summary>Состояние стекла: тумблер + слайдеры (без срабатывания событий).</summary>
-    public void SetGlassInfo(bool enabled, int opacity, int blur, int dim)
+    public void SetGlassInfo(bool enabled, int opacity, int blur, int dim, bool pure)
     {
         _sync = true;
         try
@@ -471,6 +495,7 @@ public partial class SettingsPage : UserControl
             GlassBlurValue.Text = ((int)GlassBlurBar.Value) + "%";
             GlassDimBar.Value = Math.Clamp(dim, 0, 100);
             GlassDimValue.Text = ((int)GlassDimBar.Value) + "%";
+            SetGlassPure(pure);
         }
         finally { _sync = false; }
     }

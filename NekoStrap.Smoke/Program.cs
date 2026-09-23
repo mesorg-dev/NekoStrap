@@ -53,9 +53,9 @@ internal static class Program
             // Раскладка всех страниц = применение всех шаблонов.
             var host = (ContentControl)GetField(win, "PageHost")!;
             var pages = (System.Collections.IDictionary)GetField(win, "_pages")!;
-            Check("Страниц в навигации: 8", () =>
+            Check("Страниц в навигации: 7", () =>
             {
-                if (pages.Count != 8) throw new Exception("нашлось " + pages.Count);
+                if (pages.Count != 7) throw new Exception("нашлось " + pages.Count);
             });
             win.Measure(new Size(1120, 700));
             win.Arrange(new Rect(0, 0, 1120, 700));
@@ -124,17 +124,6 @@ internal static class Program
                 if (versions.SelectedVersion() != null) throw new Exception("пустой выбор врёт");
             });
 
-            var accounts = (AccountsPage)GetField(win, "_accountsPage")!;
-            Check("Accounts: таблица", () =>
-            {
-                accounts.SetActive("Не выбран");
-                accounts.SetAccounts(new List<(AccountEntry, string, bool)>
-                {
-                    (new AccountEntry { UserId = 1, Name = "nick", DisplayName = "Nick", AddedAt = DateTime.UtcNow }, "готов", true),
-                });
-                if (accounts.SelectedEntry() != null) throw new Exception("пустой выбор врёт");
-            });
-
             var history = (HistoryPage)GetField(win, "_historyPage")!;
             Check("History: таблицы+сортировка", () =>
             {
@@ -161,7 +150,7 @@ internal static class Program
                 settings.SetCdnStatus(false, "");
                 settings.SetWallpaperInfo("bg.png", null, 30);
                 settings.SetWallpaperDim(50);
-                settings.SetGlassInfo(true, 50, 50, 80);
+                settings.SetGlassInfo(true, 50, 50, 80, false);
             });
 
             Check("UiTheme: все комбинации", () =>
@@ -355,10 +344,6 @@ internal static class Program
 
             Check("Диалоги конструируются", () =>
             {
-                var add = new AddAccountDialog();
-                add.Measure(new Size(480, 360));
-                add.Arrange(new Rect(0, 0, 480, 360));
-                add.Close();
                 var tune = new ColorTuneWindow(new LauncherConfig(), () => { }, () => { });
                 tune.Measure(new Size(360, 500));
                 tune.Arrange(new Rect(0, 0, 360, 500));

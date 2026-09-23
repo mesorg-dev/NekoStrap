@@ -21,8 +21,6 @@ namespace NekoStrap.Wpf;
 public partial class MainWindow : Window
 {
     private LauncherConfig _config = new();
-    private AccountStore _accounts = new();
-    private readonly Dictionary<long, string> _accountStatus = new();
     private PlaytimeStore _playtime = PlaytimeStore.Load();
     private RecentSessionStore _recent = RecentSessionStore.Load();
     private bool _busy;
@@ -57,7 +55,6 @@ public partial class MainWindow : Window
     private readonly ModsPage _modsPage = new();
     private readonly FastFlagsPage _flagsPage = new();
     private readonly VersionsPage _versionsPage = new();
-    private readonly AccountsPage _accountsPage = new();
     private readonly HistoryPage _historyPage = new();
     private readonly SettingsPage _settingsPage = new();
     private readonly AboutPage _aboutPage = new();
@@ -72,7 +69,6 @@ public partial class MainWindow : Window
         _pages[NavMods] = _modsPage;
         _pages[NavFlags] = _flagsPage;
         _pages[NavVersions] = _versionsPage;
-        _pages[NavAccounts] = _accountsPage;
         _pages[NavHistory] = _historyPage;
         _pages[NavSettings] = _settingsPage;
         _pages[NavAbout] = _aboutPage;
@@ -113,20 +109,6 @@ public partial class MainWindow : Window
         _versionsPage.DeleteClicked += (_, _) => DeleteSelectedVersion();
         _versionsPage.StudioInstallClicked += async (_, _) => await InstallStudioAsync();
         _versionsPage.StudioLaunchClicked += (_, _) => LaunchStudio();
-
-        _accountsPage.AddClicked += async (_, _) => await AddAccountAsync();
-        _accountsPage.RefreshClicked += async (_, _) => await ValidateAccountsAsync();
-        _accountsPage.ActivateClicked += (_, _) => ActivateSelectedAccount();
-        _accountsPage.DeleteClicked += (_, _) => DeleteSelectedAccount();
-        _accountsPage.ExportClicked += (_, _) => ExportAccounts();
-        _accountsPage.ImportClicked += (_, _) => ImportAccounts();
-        _accountsPage.PlayAsActiveClicked += async (_, _) => await PlayFlowAsync();
-        _accountsPage.ClearActiveClicked += (_, _) =>
-        {
-            _accounts.SetActive(null);
-            RefreshAccounts();
-            RefreshHomeMeta();
-        };
 
         _historyPage.PlayClicked += (_, _) => PlayHistorySelected();
         _historyPage.FavoriteAddClicked += (_, _) => AddFavoriteFromHistory();
@@ -202,6 +184,12 @@ public partial class MainWindow : Window
         _settingsPage.GlassDimChanged += (v) =>
         {
             _config.GlassDim = v;
+            SaveQuiet();
+            ApplyGlassToUi();
+        };
+        _settingsPage.GlassPureChanged += (pure) =>
+        {
+            _config.GlassPure = pure;
             SaveQuiet();
             ApplyGlassToUi();
         };
@@ -294,10 +282,6 @@ public partial class MainWindow : Window
             {
                 RefreshVersions();
             }
-            else if (btn == NavAccounts)
-            {
-                RefreshAccounts();
-            }
             else if (btn == NavHistory)
             {
                 RefreshHistory();
@@ -333,7 +317,6 @@ public partial class MainWindow : Window
             RobloxPaths.Configure(_config.RobloxPath);
             _config = LauncherConfig.Load(RobloxPaths.ConfigPath);
         }
-        _accounts = AccountStore.Load();
         _playtime = PlaytimeStore.Load();
         _recent = RecentSessionStore.Load();
         ClickSound.Enabled = _config.Sounds;
@@ -452,10 +435,7 @@ public partial class MainWindow : Window
         string? v = EffectiveVersion();
         _homePage.SetVersionInfo($"Лаунчер {AppInfo.Version}   •   Roblox: " + (v ?? "не установлен"));
         _homePage.SetLastGame(FormatLastGame(), _config.LastGamePlaceId);
-        var active = _accounts.Active;
-        _homePage.SetAccount("Аккаунт: " + (active != null
-            ? $"{active.Label} (@{active.Name})"
-            : "клиент (не выбран)"));
+        _homePage.SetAccount("Аккаунт: клиент");
     }
 
     private string FormatLastGame()
@@ -532,22 +512,12 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Тикет активного аккаунта для запуска. Пусто — запускаемся
-    /// под залогиненным в клиенте.
+    /// Раздел аккаунтов убран: запускаемся всегда под залогиненным в клиенте.
+    /// Заглушка оставлена, чтобы не трогать три места запуска.
     /// </summary>
-    private async Task<(string ticket, AccountEntry? acc)> GetActiveTicketAsync()
+    private static Task<(string ticket, AccountEntry? acc)> GetActiveTicketAsync()
     {
-        var acc = _accounts.Active;
-        if (acc == null) return ("", null);
-        if (!_accounts.TryGetCookie(acc, out string cookie, out string _))
-            return ("", null);
-        _homePage.SetStatus("Вход: " + acc.Label + "...", false);
-        var (ticket, _) = await RobloxAuth.GetAuthTicketAsync(cookie, CancellationToken.None);
-        if (ticket.Length == 0)
-            return ("", null);
-        acc.LastUsedAt = DateTime.UtcNow;
-        _accounts.Save();
-        return (ticket, acc);
+        return Task.FromResult<(string, AccountEntry?)>(("", null));
     }
 
     /// <summary>Общее после любого запуска игры: трекинг, моды, Discord, таймеры.</summary>
@@ -1444,154 +1414,6 @@ public partial class MainWindow : Window
         }
     }
 
-    // ================= Аккаунты =================
-
-    private void RefreshAccounts()
-    {
-        if (_closed) return;
-        var active = _accounts.Active;
-        _accountsPage.SetActive(active != null
-            ? $"{active.Label}  •  @{active.Name}  •  id {active.UserId}"
-            : "Не выбран — запуск идёт под залогиненным в клиенте.");
-        _accountsPage.SetAccounts(_accounts.Accounts.Select(a =>
-        {
-            string st = _accountStatus.TryGetValue(a.UserId, out var s) ? s : "—";
-            return (a, st, a.UserId == _accounts.ActiveId);
-        }).ToList());
-    }
-
-    private async Task AddAccountAsync()
-    {
-        var dlg = new AddAccountDialog { Owner = this };
-        if (dlg.ShowDialog() != true) return;
-        _homePage.SetStatus("Проверяю куку...", false);
-        var (entry, error) = await _accounts.AddAsync(dlg.CookieText, dlg.AliasText, CancellationToken.None);
-        if (entry == null)
-        {
-            MessageBox.Show("Не вышло добавить аккаунт:\n" + error,
-                "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Warning);
-            _homePage.SetStatus("Готов к запуску", true);
-            return;
-        }
-        _accountStatus[entry.UserId] = "готов";
-        RefreshAccounts();
-        RefreshHomeMeta();
-        _homePage.SetStatus("Аккаунт добавлен: " + entry.Label, true);
-    }
-
-    /// <summary>Проверка всех кук через users API (имена могли смениться).</summary>
-    private async Task ValidateAccountsAsync()
-    {
-        if (_accounts.Accounts.Count == 0)
-        {
-            MessageBox.Show("Список пуст — добавь аккаунт.", "NekoStrap",
-                MessageBoxButton.OK, MessageBoxImage.Information);
-            return;
-        }
-        _homePage.SetStatus("Проверяю аккаунты...", false);
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
-        foreach (var a in _accounts.Accounts.ToList())
-        {
-            if (!_accounts.TryGetCookie(a, out string cookie, out string decErr))
-            {
-                _accountStatus[a.UserId] = "ошибка: " + decErr;
-                continue;
-            }
-            var (id, name, display, err) = await RobloxAuth.GetAuthenticatedUserAsync(cookie, cts.Token);
-            if (err.Length > 0)
-            {
-                _accountStatus[a.UserId] = "ошибка: кука протухла";
-                continue;
-            }
-            a.Name = name;
-            a.DisplayName = display;
-            _accountStatus[a.UserId] = "готов";
-        }
-        _accounts.Save();
-        RefreshAccounts();
-        RefreshHomeMeta();
-        _homePage.SetStatus("Проверка аккаунтов готова", true);
-    }
-
-    private void ActivateSelectedAccount()
-    {
-        var entry = _accountsPage.SelectedEntry();
-        if (entry == null)
-        {
-            MessageBox.Show("Выбери аккаунт в списке.", "NekoStrap",
-                MessageBoxButton.OK, MessageBoxImage.Information);
-            return;
-        }
-        _accounts.SetActive(entry);
-        RefreshAccounts();
-        RefreshHomeMeta();
-        _homePage.SetStatus("Активен: " + entry.Label, true);
-    }
-
-    private void DeleteSelectedAccount()
-    {
-        var entry = _accountsPage.SelectedEntry();
-        if (entry == null)
-        {
-            MessageBox.Show("Выбери аккаунт в списке.", "NekoStrap",
-                MessageBoxButton.OK, MessageBoxImage.Information);
-            return;
-        }
-        if (MessageBox.Show($"Удалить «{entry.Label}»?\nКука сотрётся с этого ПК.",
-                "NekoStrap", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
-            return;
-        _accountStatus.Remove(entry.UserId);
-        _accounts.Remove(entry);
-        RefreshAccounts();
-        RefreshHomeMeta();
-    }
-
-    private void ExportAccounts()
-    {
-        var dlg = new Microsoft.Win32.SaveFileDialog
-        {
-            Title = "Бэкап аккаунтов",
-            Filter = "JSON (*.json)|*.json",
-            FileName = "nekostrap-accounts.json"
-        };
-        if (dlg.ShowDialog(this) != true) return;
-        try
-        {
-            _accounts.Save();
-            File.Copy(AccountStore.FilePath, dlg.FileName, overwrite: true);
-            MessageBox.Show(
-                "Готово. Бэкап восстановится только под тем же пользователем Windows\n(шифр DPAPI привязан к нему).",
-                "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show("Не вышло экспортировать:\n" + ex.Message,
-                "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Warning);
-        }
-    }
-
-    private void ImportAccounts()
-    {
-        var dlg = new Microsoft.Win32.OpenFileDialog
-        {
-            Title = "Импорт бэкапа аккаунтов",
-            Filter = "JSON (*.json)|*.json|Все файлы (*.*)|*.*"
-        };
-        if (dlg.ShowDialog(this) != true) return;
-        try
-        {
-            var (added, updated) = _accounts.Import(dlg.FileName);
-            RefreshAccounts();
-            RefreshHomeMeta();
-            _homePage.SetStatus($"Импорт: новых {added}, обновлено {updated}", true);
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show("Не вышло импортировать:\n" + ex.Message,
-                "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Warning);
-        }
-    }
-
     // ================= История =================
 
     private void RefreshHistory()
@@ -1851,8 +1673,6 @@ public partial class MainWindow : Window
         {
             RobloxPaths.Configure(newBase);
             _config.InstalledVersion = RobloxPaths.FindInstalledVersion() ?? "";
-            _accounts = AccountStore.Load();
-            _accountStatus.Clear();
         }
         _config.Save(RobloxPaths.ConfigPath);
         RefreshHomeMeta();
@@ -2102,6 +1922,7 @@ public partial class MainWindow : Window
     {
         UiTheme.GlassBlur = _config.GlassBlur;
         UiTheme.GlassDim = _config.GlassDim;
+        UiTheme.GlassPure = _config.GlassPure;
         UiTheme.Apply(_hasWallpaper, _config.GlassEnabled, _config.GlassOpacity);
         UpdateWallpaperBlur();
         // Страховка сходимости: раз в секунду дотягиваем сэмплы, если стекло
@@ -2132,7 +1953,7 @@ public partial class MainWindow : Window
 
     private void RefreshGlassSettings()
     {
-        _settingsPage.SetGlassInfo(_config.GlassEnabled, _config.GlassOpacity, _config.GlassBlur, _config.GlassDim);
+        _settingsPage.SetGlassInfo(_config.GlassEnabled, _config.GlassOpacity, _config.GlassBlur, _config.GlassDim, _config.GlassPure);
     }
 
     // ================= Обновления лаунчера =================

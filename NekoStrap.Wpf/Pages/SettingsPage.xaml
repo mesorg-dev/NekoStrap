@@ -196,10 +196,14 @@
         <TextBlock Style="{StaticResource H2}" FontSize="13" Text="Стекло" Margin="0,0,0,8"/>
         <CheckBox x:Name="GlassCheckBox" Style="{StaticResource Switch}" Margin="0,0,0,8">
           <StackPanel>
-            <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="Прозрачные панели"/>
+            <TextBlock FontFamily="{StaticResource UiFont}" FontSize="12.5" Foreground="{StaticResource FgBrush}" Text="Прозрачные панели"/>
             <TextBlock Style="{StaticResource Mono}" Text="Карточки, сайдбар и тайтлбар — блюр обоев"/>
           </StackPanel>
         </CheckBox>
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+          <Button x:Name="GlassTintedButton" Style="{StaticResource PrimaryButton}" Content="Тонированное" Width="150" Height="34" Click="GlassTintedButton_Click"/>
+          <Button x:Name="GlassClearButton" Style="{StaticResource OutlineButton}" Content="Чистое" Width="150" Height="34" Margin="10,0,0,0" Click="GlassClearButton_Click"/>
+        </StackPanel>
         <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
           <TextBlock Style="{StaticResource Body}" Text="Непрозрачность" Margin="0,0,10,0"/>
           <TextBlock x:Name="GlassOpacityValue" Style="{StaticResource MonoBright}" Text="85%"/>

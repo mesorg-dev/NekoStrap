@@ -102,6 +102,10 @@ namespace NekoStrap.Roblox
         // отдельно (WallpaperDim) — можно светлый фон + тёмные панели и наоборот.
         public int GlassDim { get; set; } = 100;
 
+        // Чистое стекло: блюр без тинта вообще (рамки остаются для чёткости).
+        // false = тонированное (тинт + блюр).
+        public bool GlassPure { get; set; }
+
         public static LauncherConfig Load(string path)
         {
             try

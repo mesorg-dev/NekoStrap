@@ -9,7 +9,7 @@
          ClickSound ищет по имени своей сборки динамически. -->
     <AssemblyName>NekoStrap.Core</AssemblyName>
     <RootNamespace>NekoStrap</RootNamespace>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>

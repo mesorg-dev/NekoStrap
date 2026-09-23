@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:glass="clr-namespace:NekoStrap.Wpf"
         Title="NekoStrap" Height="700" Width="1120" MinWidth="980" MinHeight="620"
+        Icon="Assets/app.ico"
         WindowStyle="None" ResizeMode="CanResize" WindowStartupLocation="CenterScreen"
         Background="{StaticResource BgBrush}">
   <WindowChrome.WindowChrome>
@@ -36,7 +37,7 @@
               BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,0,1"
               glass:Glass.IsGlass="True" glass:Glass.Tint="Chrome" glass:Glass.CornerRadius="0">
         <DockPanel LastChildFill="False">
-          <TextBlock Text="NekoStrap" FontFamily="{StaticResource UiFont}" FontSize="13"
+          <TextBlock Text="NekoStrap" FontFamily="{StaticResource HeadingFont}" FontSize="13"
                      FontWeight="Bold" Foreground="{StaticResource FgBrush}"
                      VerticalAlignment="Center" Margin="18,0,0,0"/>
           <TextBlock Text="ROBLOX LAUNCHER" FontFamily="{StaticResource MonoFont}" FontSize="10"
@@ -64,12 +65,12 @@
         <DockPanel LastChildFill="False">
           <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="20,20,0,0">
             <Border Width="34" Height="34" Background="{StaticResource FgBrush}" CornerRadius="2">
-              <TextBlock Text="N" FontFamily="{StaticResource UiFont}" FontSize="17" FontWeight="Bold"
+              <TextBlock Text="N" FontFamily="{StaticResource HeadingFont}" FontSize="17" FontWeight="Bold"
                          Foreground="{StaticResource BgBrush}"
                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Border>
             <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
-              <TextBlock Text="NekoStrap" FontFamily="{StaticResource UiFont}" FontSize="15.5"
+              <TextBlock Text="NekoStrap" FontFamily="{StaticResource HeadingFont}" FontSize="15.5"
                          FontWeight="Bold" Foreground="{StaticResource FgBrush}"/>
               <TextBlock Text="R O B L O X" FontFamily="{StaticResource MonoFont}" FontSize="9"
                          Foreground="{StaticResource FgDimmerBrush}"/>

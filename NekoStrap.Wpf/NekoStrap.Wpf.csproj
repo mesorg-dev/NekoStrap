@@ -12,7 +12,15 @@
     <AssemblyName>NekoStrap</AssemblyName>
     <RootNamespace>NekoStrap</RootNamespace>
     <Version>1.0.0</Version>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\app.ico" />
+    <!-- Встроенные шрифты (OFL, лицензии рядом). Фолбэк — системные,
+         поэтому без файлов тоже собирается и работает. -->
+    <Resource Include="Fonts\*.ttf" />
+  </ItemGroup>
 
   <!-- Общая логика — отдельным проектом (раньше были линки на исходники) -->
   <ItemGroup>

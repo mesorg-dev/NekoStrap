@@ -11,7 +11,7 @@
               BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,0,1"
               MouseLeftButtonDown="TitleBar_MouseDown">
         <DockPanel LastChildFill="False">
-          <TextBlock Text="Цветокоррекция" FontFamily="{StaticResource UiFont}" FontSize="13"
+          <TextBlock Text="Цветокоррекция" FontFamily="{StaticResource HeadingFont}" FontSize="13"
                      FontWeight="Bold" Foreground="{StaticResource FgBrush}"
                      VerticalAlignment="Center" Margin="14,0,0,0"/>
           <Button Style="{StaticResource TitleBarButton}" Height="36" DockPanel.Dock="Right" Click="CloseButton_Click">

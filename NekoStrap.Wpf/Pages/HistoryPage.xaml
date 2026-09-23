@@ -10,7 +10,8 @@
       <Button x:Name="SortRecentButton" Style="{StaticResource PrimaryButton}" Content="Недавние" Height="38" Padding="16,0" Margin="0,0,10,0" Click="SortRecentButton_Click"/>
       <Button x:Name="SortTopButton" Style="{StaticResource OutlineButton}" Content="По времени" Height="38" Padding="16,0" Margin="0,0,10,0" Click="SortTopButton_Click"/>
       <Button Style="{StaticResource OutlineButton}" Content="Удалить" Height="38" Padding="16,0" Margin="0,0,10,0" Click="DeleteButton_Click"/>
-      <Button Style="{StaticResource OutlineButton}" Content="Очистить" Height="38" Padding="16,0" Click="ClearButton_Click"/>
+      <Button Style="{StaticResource OutlineButton}" Content="Очистить" Height="38" Padding="16,0" Margin="0,0,10,0" Click="ClearButton_Click"/>
+      <Button Style="{StaticResource OutlineButton}" Content="★ В избранное" Height="38" Padding="16,0" Click="FavoriteButton_Click"/>
     </WrapPanel>
 
     <Border Style="{StaticResource Card}" Margin="0,0,0,10" Padding="18">
@@ -30,7 +31,7 @@
     <TextBlock Style="{StaticResource Mono}" FontStyle="Italic" Margin="0,0,0,6"
                Text="Время пишется, пока игра запущена через лаунчер."/>
 
-    <TextBlock FontFamily="{StaticResource UiFont}" FontSize="15" FontWeight="Bold"
+    <TextBlock FontFamily="{StaticResource HeadingFont}" FontSize="15" FontWeight="Bold"
                Foreground="{StaticResource FgBrush}" Margin="0,6,0,10"
                Text="Последние заходы — выбери и вернись на тот же сервер"/>
 

@@ -39,5 +39,25 @@
         </ScrollViewer>
       </StackPanel>
     </Border>
+
+    <Border Style="{StaticResource Card}" Margin="0,12,0,0">
+      <StackPanel>
+        <TextBlock FontFamily="{StaticResource UiFont}" FontSize="13" FontWeight="Bold"
+                   Foreground="{StaticResource FgDimBrush}"
+                   Text="Профили — целые наборы флагов в один клик" Margin="0,0,0,10"/>
+        <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="80"
+                      Style="{StaticResource DarkScrollViewer}">
+          <WrapPanel x:Name="ProfilesPanel"/>
+        </ScrollViewer>
+        <TextBlock x:Name="ProfilesEmpty" Style="{StaticResource Mono}" FontStyle="Italic"
+                   Text="Пока пусто — собери флаги выше и сохрани как профиль." Margin="0,2,0,8"/>
+        <StackPanel Orientation="Horizontal">
+          <TextBox x:Name="ProfileNameBox" Style="{StaticResource DarkInput}" Width="200" Height="38"
+                   VerticalContentAlignment="Center"/>
+          <Button Style="{StaticResource PrimaryButton}" Content="Сохранить набор" Height="38" Padding="16,0" Margin="10,0,0,0" Click="ProfileSaveButton_Click"/>
+          <Button Style="{StaticResource OutlineButton}" Content="Удалить" Height="38" Padding="16,0" Margin="10,0,0,0" Click="ProfileDeleteButton_Click"/>
+        </StackPanel>
+      </StackPanel>
+    </Border>
   </StackPanel>
 </UserControl>

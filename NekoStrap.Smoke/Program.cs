@@ -372,6 +372,45 @@ internal static class Program
                 finally { try { music.Dispose(); } catch { /* ignore */ } }
             });
 
+            Check("Профили/избранное: roundtrip в песочнице", () =>
+            {
+                string dir = Path.Combine(Path.GetTempPath(), "nekostores");
+                Directory.CreateDirectory(dir);
+                string prev = NekoStrap.Roblox.RobloxPaths.BaseDir;
+                try
+                {
+                    NekoStrap.Roblox.RobloxPaths.Configure(dir);
+                    NekoStrap.Roblox.FlagProfiles.SaveProfile("FPS",
+                        new Dictionary<string, string> { { "A", "1" } });
+                    if (!NekoStrap.Roblox.FlagProfiles.List().Contains("FPS"))
+                        throw new Exception("профиль не сохранился");
+                    var got = NekoStrap.Roblox.FlagProfiles.Get("FPS");
+                    if (got == null || got["A"] != "1")
+                        throw new Exception("профиль не читается");
+                    NekoStrap.Roblox.FlagProfiles.Delete("FPS");
+                    if (NekoStrap.Roblox.FlagProfiles.List().Count != 0)
+                        throw new Exception("профиль не удалился");
+                    NekoStrap.Roblox.FavoritesStore.Add(123, "Тест");
+                    if (!NekoStrap.Roblox.FavoritesStore.Contains(123))
+                        throw new Exception("фаворит не добавился");
+                    var favs = NekoStrap.Roblox.FavoritesStore.Load();
+                    if (favs.Count != 1 || favs[0].Name != "Тест")
+                        throw new Exception("фаворит не читается");
+                    NekoStrap.Roblox.FavoritesStore.Remove(123);
+                    if (NekoStrap.Roblox.FavoritesStore.Load().Count != 0)
+                        throw new Exception("фаворит не удалился");
+                    flags.SetProfiles(new[] { "FPS" });
+                    home.SetFavorites(new List<(long, string)> { (123, "Тест") });
+                    home.SetFavorites(new List<(long, string)>());
+                    win.UpdateLayout();
+                }
+                finally
+                {
+                    NekoStrap.Roblox.RobloxPaths.Configure(prev);
+                    try { Directory.Delete(dir, true); } catch { /* ignore */ }
+                }
+            });
+
             Check("Апдейтер: сравнение версий (без сети)", () =>
             {
                 string cur = NekoStrap.Roblox.AppUpdater.CurrentVersion;

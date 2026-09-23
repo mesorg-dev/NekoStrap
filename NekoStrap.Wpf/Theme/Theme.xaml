@@ -25,18 +25,19 @@
   <SolidColorBrush x:Key="FgDimmerBrush" Color="{StaticResource FgDimmer}"/>
   <SolidColorBrush x:Key="GoodBrush" Color="{StaticResource Good}"/>
 
-  <FontFamily x:Key="UiFont">Segoe UI</FontFamily>
-  <FontFamily x:Key="MonoFont">Consolas</FontFamily>
+  <FontFamily x:Key="UiFont">./Fonts/#Inter, Segoe UI</FontFamily>
+  <FontFamily x:Key="HeadingFont">./Fonts/#Unbounded, Segoe UI</FontFamily>
+  <FontFamily x:Key="MonoFont">./Fonts/#JetBrains Mono, Consolas</FontFamily>
 
   <!-- ============ Текст ============ -->
   <Style x:Key="H1" TargetType="TextBlock">
-    <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
+    <Setter Property="FontFamily" Value="{StaticResource HeadingFont}"/>
     <Setter Property="FontSize" Value="23"/>
     <Setter Property="FontWeight" Value="Bold"/>
     <Setter Property="Foreground" Value="{StaticResource FgBrush}"/>
   </Style>
   <Style x:Key="H2" TargetType="TextBlock">
-    <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
+    <Setter Property="FontFamily" Value="{StaticResource HeadingFont}"/>
     <Setter Property="FontSize" Value="13.5"/>
     <Setter Property="FontWeight" Value="Bold"/>
     <Setter Property="Foreground" Value="{StaticResource FgBrush}"/>
@@ -575,6 +576,30 @@
     <Setter Property="Foreground" Value="{StaticResource FgBrush}"/>
     <Setter Property="FontFamily" Value="{StaticResource MonoFont}"/>
     <Setter Property="FontSize" Value="12"/>
+  </Style>
+
+  <!-- ============ Контекстное меню ============ -->
+  <Style x:Key="DarkMenuItem" TargetType="MenuItem">
+    <Setter Property="Background" Value="{StaticResource BgPanelBrush}"/>
+    <Setter Property="Foreground" Value="{StaticResource FgBrush}"/>
+    <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
+    <Setter Property="FontSize" Value="12"/>
+    <Setter Property="Padding" Value="12,7"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="MenuItem">
+          <Border x:Name="bg" Background="{TemplateBinding Background}"
+                  Padding="{TemplateBinding Padding}">
+            <ContentPresenter ContentSource="Header" VerticalAlignment="Center"/>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsHighlighted" Value="True">
+              <Setter TargetName="bg" Property="Background" Value="{StaticResource LineSoftBrush}"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
   </Style>
 
 </ResourceDictionary>

@@ -12,6 +12,8 @@ public partial class HomePage : UserControl
 {
     public event EventHandler? PlayClicked;
     public event EventHandler? PlayAgainClicked;
+    public event Action<long>? FavoritePlayClicked;
+    public event Action<long>? FavoriteRemoveClicked;
 
     private double _progress = -1;
 
@@ -85,6 +87,46 @@ public partial class HomePage : UserControl
     {
         LastGameLabel.Text = text.Length > 0 ? text : "—";
         AgainButton.Visibility = placeId > 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    /// <summary>Кнопки избранного (клик = играть, правый клик = убрать).</summary>
+    public void SetFavorites(IEnumerable<(long placeId, string name)> favorites)
+    {
+        FavoritesPanel.Children.Clear();
+        var list = favorites.ToList();
+        FavoritesEmpty.Visibility = list.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        var btnStyle = (Style)FindResource("OutlineButton");
+        var itemStyle = (Style)FindResource("DarkMenuItem");
+        foreach (var (placeId, name) in list)
+        {
+            var btn = new Button
+            {
+                Content = "★ " + (name.Length > 0 ? name : "Place " + placeId),
+                ToolTip = "PlaceId " + placeId,
+                Style = btnStyle,
+                MinWidth = 160,
+                Height = 34,
+                Margin = new Thickness(0, 6, 10, 0),
+                Tag = placeId
+            };
+            btn.Click += (_, _) => FavoritePlayClicked?.Invoke(placeId);
+            var menu = new ContextMenu
+            {
+                Background = (System.Windows.Media.Brush)FindResource("BgPanelBrush"),
+                BorderBrush = (System.Windows.Media.Brush)FindResource("LineBrush"),
+                BorderThickness = new Thickness(1)
+            };
+            var remove = new MenuItem
+            {
+                Header = "Убрать из избранного",
+                Style = itemStyle,
+                Tag = placeId
+            };
+            remove.Click += (_, _) => FavoriteRemoveClicked?.Invoke(placeId);
+            menu.Items.Add(remove);
+            btn.ContextMenu = menu;
+            FavoritesPanel.Children.Add(btn);
+        }
     }
 
     public void SetServer(string ip, string geo, string ping)

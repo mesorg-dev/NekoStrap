@@ -10,10 +10,10 @@
       <StackPanel>
         <Border Background="{StaticResource FgBrush}" CornerRadius="2" Padding="12,3"
                 HorizontalAlignment="Left" Margin="0,0,0,8">
-          <TextBlock Text="NEKO" FontFamily="{StaticResource UiFont}" FontSize="13" FontWeight="Bold"
+          <TextBlock Text="NEKO" FontFamily="{StaticResource HeadingFont}" FontSize="13" FontWeight="Bold"
                      Foreground="{StaticResource BgBrush}"/>
         </Border>
-        <TextBlock FontFamily="{StaticResource UiFont}" FontSize="34" FontWeight="Bold"
+        <TextBlock FontFamily="{StaticResource HeadingFont}" FontSize="34" FontWeight="Bold"
                    Foreground="{StaticResource FgBrush}" Text="NekoStrap" Margin="0,0,0,6"/>
         <Border Background="{StaticResource LineSoftBrush}" CornerRadius="2" Padding="10,2"
                 HorizontalAlignment="Left" Margin="0,0,0,10">
@@ -57,21 +57,21 @@
       <Border Grid.Column="0" Background="{DynamicResource CardBrush}" CornerRadius="2" Padding="24,14" Margin="0,0,1,0"
               glass:Glass.IsGlass="True" glass:Glass.CornerRadius="2">
         <StackPanel>
-          <TextBlock FontFamily="{StaticResource UiFont}" FontSize="17" FontWeight="Bold" Foreground="{StaticResource FgBrush}" Text=".NET 8"/>
+          <TextBlock FontFamily="{StaticResource HeadingFont}" FontSize="17" FontWeight="Bold" Foreground="{StaticResource FgBrush}" Text=".NET 8"/>
           <TextBlock Style="{StaticResource Mono}" Text="WPF, один exe" Margin="0,4,0,0"/>
         </StackPanel>
       </Border>
       <Border Grid.Column="1" Background="{DynamicResource CardBrush}" CornerRadius="2" Padding="24,14" Margin="0,0,1,0"
               glass:Glass.IsGlass="True" glass:Glass.CornerRadius="2">
         <StackPanel>
-          <TextBlock FontFamily="{StaticResource UiFont}" FontSize="17" FontWeight="Bold" Foreground="{StaticResource FgBrush}" Text="ЧБ тема"/>
+          <TextBlock FontFamily="{StaticResource HeadingFont}" FontSize="17" FontWeight="Bold" Foreground="{StaticResource FgBrush}" Text="ЧБ тема"/>
           <TextBlock Style="{StaticResource Mono}" Text="Строгая палитра" Margin="0,4,0,0"/>
         </StackPanel>
       </Border>
       <Border Grid.Column="2" Background="{DynamicResource CardBrush}" CornerRadius="2" Padding="24,14"
               glass:Glass.IsGlass="True" glass:Glass.CornerRadius="2">
         <StackPanel>
-          <TextBlock FontFamily="{StaticResource UiFont}" FontSize="17" FontWeight="Bold" Foreground="{StaticResource FgBrush}" Text="Open Source"/>
+          <TextBlock FontFamily="{StaticResource HeadingFont}" FontSize="17" FontWeight="Bold" Foreground="{StaticResource FgBrush}" Text="Open Source"/>
           <TextBlock Style="{StaticResource Mono}" Text="MIT лицензия" Margin="0,4,0,0"/>
         </StackPanel>
       </Border>

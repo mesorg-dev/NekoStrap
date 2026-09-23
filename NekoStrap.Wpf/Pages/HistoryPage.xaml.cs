@@ -35,6 +35,7 @@ public partial class HistoryPage : UserControl
     public event EventHandler? DeleteClicked;
     public event EventHandler? ClearClicked;
     public event EventHandler? SortChanged;
+    public event EventHandler? FavoriteAddClicked;
 
     public event EventHandler? SessionRejoinClicked;
     public event EventHandler? SessionJoinClicked;
@@ -64,6 +65,7 @@ public partial class HistoryPage : UserControl
     private void PlayButton_Click(object sender, RoutedEventArgs e) => PlayClicked?.Invoke(this, EventArgs.Empty);
     private void DeleteButton_Click(object sender, RoutedEventArgs e) => DeleteClicked?.Invoke(this, EventArgs.Empty);
     private void ClearButton_Click(object sender, RoutedEventArgs e) => ClearClicked?.Invoke(this, EventArgs.Empty);
+    private void FavoriteButton_Click(object sender, RoutedEventArgs e) => FavoriteAddClicked?.Invoke(this, EventArgs.Empty);
     private void RejoinButton_Click(object sender, RoutedEventArgs e) => SessionRejoinClicked?.Invoke(this, EventArgs.Empty);
     private void JoinButton_Click(object sender, RoutedEventArgs e) => SessionJoinClicked?.Invoke(this, EventArgs.Empty);
     private void CopyPlaceButton_Click(object sender, RoutedEventArgs e) => SessionCopyPlaceClicked?.Invoke(this, EventArgs.Empty);
@@ -127,6 +129,14 @@ public partial class HistoryPage : UserControl
     public long SelectedPlaceId()
     {
         return HistoryList.SelectedItem is GameRow r ? r.PlaceId : 0;
+    }
+
+    /// <summary>Выбранная игра: id + отображаемое имя (для избранного).</summary>
+    public (long placeId, string name) SelectedGame()
+    {
+        if (HistoryList.SelectedItem is GameRow r)
+            return (r.PlaceId, r.Name);
+        return (0, "");
     }
 
     public RecentSession? SelectedSession()

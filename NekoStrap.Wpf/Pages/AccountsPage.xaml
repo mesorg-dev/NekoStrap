@@ -7,7 +7,7 @@
 
     <Border Style="{StaticResource Card}" Margin="0,0,0,12">
       <StackPanel>
-        <TextBlock FontFamily="{StaticResource UiFont}" FontSize="13" FontWeight="Bold"
+        <TextBlock FontFamily="{StaticResource HeadingFont}" FontSize="13" FontWeight="Bold"
                    Foreground="{StaticResource FgDimBrush}" Text="Активный аккаунт" Margin="0,0,0,6"/>
         <TextBlock x:Name="ActiveLabel" FontFamily="{StaticResource MonoFont}" FontSize="14" FontWeight="Bold"
                    Foreground="{StaticResource FgBrush}" Text="—" TextTrimming="CharacterEllipsis" Margin="0,0,0,8"/>

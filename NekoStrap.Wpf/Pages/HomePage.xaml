@@ -42,7 +42,7 @@
       <Border Grid.Column="0" Background="{DynamicResource CardBrush}" CornerRadius="2" Padding="24,16" Margin="1"
               glass:Glass.IsGlass="True" glass:Glass.CornerRadius="2">
         <StackPanel VerticalAlignment="Center">
-          <TextBlock x:Name="ModsValue" FontFamily="{StaticResource UiFont}" FontSize="26"
+          <TextBlock x:Name="ModsValue" FontFamily="{StaticResource HeadingFont}" FontSize="26"
                      FontWeight="Bold" Foreground="{StaticResource FgBrush}" Text="0"/>
           <TextBlock Style="{StaticResource Mono}" Text="Модов установлено" Margin="0,6,0,0"/>
         </StackPanel>
@@ -50,7 +50,7 @@
       <Border Grid.Column="1" Background="{DynamicResource CardBrush}" CornerRadius="2" Padding="24,16" Margin="0,1,1,1"
               glass:Glass.IsGlass="True" glass:Glass.CornerRadius="2">
         <StackPanel VerticalAlignment="Center">
-          <TextBlock x:Name="FlagsValue" FontFamily="{StaticResource UiFont}" FontSize="26"
+          <TextBlock x:Name="FlagsValue" FontFamily="{StaticResource HeadingFont}" FontSize="26"
                      FontWeight="Bold" Foreground="{StaticResource FgBrush}" Text="0"/>
           <TextBlock Style="{StaticResource Mono}" Text="FastFlags активно" Margin="0,6,0,0"/>
         </StackPanel>
@@ -58,17 +58,28 @@
       <Border Grid.Column="2" Background="{DynamicResource CardBrush}" CornerRadius="2" Padding="24,16" Margin="0,1,1,1"
               glass:Glass.IsGlass="True" glass:Glass.CornerRadius="2">
         <StackPanel VerticalAlignment="Center">
-          <TextBlock x:Name="HoursValue" FontFamily="{StaticResource UiFont}" FontSize="20"
+          <TextBlock x:Name="HoursValue" FontFamily="{StaticResource HeadingFont}" FontSize="20"
                      FontWeight="Bold" Foreground="{StaticResource FgBrush}" Text="0"/>
           <TextBlock Style="{StaticResource Mono}" Text="Часов в Roblox" Margin="0,6,0,0"/>
         </StackPanel>
       </Border>
     </Grid>
 
-    <!-- Последняя игра -->
+    <!-- Избранное -->
     <Border Style="{StaticResource Card}" Margin="0,0,0,16">
       <StackPanel>
         <TextBlock FontFamily="{StaticResource UiFont}" FontSize="13" FontWeight="Bold"
+                   Foreground="{StaticResource FgDimBrush}" Text="Избранное" Margin="0,0,0,6"/>
+        <TextBlock x:Name="FavoritesEmpty" Style="{StaticResource Mono}" FontStyle="Italic"
+                   Text="Пока пусто — добавь из Истории кнопкой «★ В избранное»." Margin="0,0,0,2"/>
+        <WrapPanel x:Name="FavoritesPanel"/>
+      </StackPanel>
+    </Border>
+
+    <!-- Последняя игра -->
+    <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+      <StackPanel>
+        <TextBlock FontFamily="{StaticResource HeadingFont}" FontSize="13" FontWeight="Bold"
                    Foreground="{StaticResource FgDimBrush}" Text="Последняя игра" Margin="0,0,0,6"/>
         <TextBlock x:Name="LastGameLabel" FontFamily="{StaticResource UiFont}" FontSize="15"
                    FontWeight="Bold" Foreground="{StaticResource FgBrush}" Text="—"
@@ -82,7 +93,7 @@
     <!-- Сервер -->
     <Border Style="{StaticResource Card}">
       <StackPanel>
-        <TextBlock FontFamily="{StaticResource UiFont}" FontSize="13" FontWeight="Bold"
+        <TextBlock FontFamily="{StaticResource HeadingFont}" FontSize="13" FontWeight="Bold"
                    Foreground="{StaticResource FgDimBrush}" Text="Сервер" Margin="0,0,0,6"/>
         <Grid Margin="0,0,0,6">
           <Grid.ColumnDefinitions>

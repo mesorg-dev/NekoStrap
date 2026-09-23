@@ -59,6 +59,9 @@ public partial class FastFlagsPage : UserControl
     public event EventHandler? SaveClicked;
     public event EventHandler? ImportClicked;
     public event EventHandler? ExportClicked;
+    public event Action<string>? ProfileApplyClicked;
+    public event EventHandler? ProfileSaveClicked;
+    public event EventHandler? ProfileDeleteClicked;
     public event EventHandler? DeleteAllClicked;
 
     private readonly ObservableCollection<FlagRow> _rows = new();
@@ -121,6 +124,50 @@ public partial class FastFlagsPage : UserControl
     private void DeleteButton_Click(object sender, RoutedEventArgs e)
     {
         DeleteSelectedRows();
+    }
+
+    private void ProfileSaveButton_Click(object sender, RoutedEventArgs e)
+    {
+        ProfileSaveClicked?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void ProfileDeleteButton_Click(object sender, RoutedEventArgs e)
+    {
+        ProfileDeleteClicked?.Invoke(this, EventArgs.Empty);
+    }
+
+    public string ProfileNameText
+    {
+        get => ProfileNameBox.Text.Trim();
+        set => ProfileNameBox.Text = value;
+    }
+
+    public void ClearProfileName()
+    {
+        ProfileNameBox.Text = "";
+    }
+
+    /// <summary>Кнопки профилей (клик = применить).</summary>
+    public void SetProfiles(IEnumerable<string> names)
+    {
+        ProfilesPanel.Children.Clear();
+        var list = names.ToList();
+        ProfilesEmpty.Visibility = list.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        var style = (Style)FindResource("OutlineButton");
+        foreach (var name in list)
+        {
+            var btn = new Button
+            {
+                Content = name,
+                Style = style,
+                MinWidth = 120,
+                Height = 34,
+                Margin = new Thickness(0, 0, 10, 10),
+                Tag = name
+            };
+            btn.Click += (_, _) => ProfileApplyClicked?.Invoke(name);
+            ProfilesPanel.Children.Add(btn);
+        }
     }
 
     private void DeleteAllButton_Click(object sender, RoutedEventArgs e)

@@ -79,6 +79,8 @@ public partial class MainWindow : Window
 
         _homePage.PlayClicked += async (_, _) => await PlayFlowAsync();
         _homePage.PlayAgainClicked += (_, _) => PlayAgain();
+        _homePage.FavoritePlayClicked += (placeId) => LaunchPlaceById(placeId);
+        _homePage.FavoriteRemoveClicked += (placeId) => RemoveFavorite(placeId);
 
         _modsPage.AddModClicked += (_, _) => AddMods();
         _modsPage.RefreshClicked += (_, _) => RefreshMods();
@@ -99,6 +101,9 @@ public partial class MainWindow : Window
         };
 
         _flagsPage.AddFlagClicked += (_, _) => _flagsPage.AddNewFlag();
+        _flagsPage.ProfileApplyClicked += (name) => ApplyFlagProfile(name);
+        _flagsPage.ProfileSaveClicked += (_, _) => SaveFlagProfile();
+        _flagsPage.ProfileDeleteClicked += (_, _) => DeleteFlagProfile();
         _flagsPage.DeleteAllClicked += (_, _) => DeleteAllFlags();
         _flagsPage.SaveClicked += (_, _) => SaveFlags();
         _flagsPage.ImportClicked += (_, _) => ImportFlags();
@@ -124,6 +129,7 @@ public partial class MainWindow : Window
         };
 
         _historyPage.PlayClicked += (_, _) => PlayHistorySelected();
+        _historyPage.FavoriteAddClicked += (_, _) => AddFavoriteFromHistory();
         _historyPage.DeleteClicked += (_, _) => DeleteHistorySelected();
         _historyPage.ClearClicked += (_, _) => ClearHistory();
         _historyPage.SortChanged += (_, _) => RefreshHistory();
@@ -219,6 +225,7 @@ public partial class MainWindow : Window
             CheckForUpdatesQuiet();
             CheckForAppUpdatesQuiet();
             ApplyConfigToUi();
+            RefreshFavorites();
             ApplySoundsFromConfig();
             RefreshWallpaperSettings();
             RefreshGlassSettings();
@@ -277,6 +284,7 @@ public partial class MainWindow : Window
             else if (btn == NavFlags)
             {
                 _flagsPage.SetFlags(FastFlagStore.Load(EffectiveVersion()));
+                RefreshFlagProfiles();
             }
             else if (btn == NavVersions)
             {
@@ -1070,7 +1078,105 @@ public partial class MainWindow : Window
         }
     }
 
+    // ================= Избранное =================
+
+    private void RefreshFavorites()
+    {
+        if (_closed) return;
+        _homePage.SetFavorites(FavoritesStore.Load()
+            .Select(f => (f.PlaceId, f.Display)));
+    }
+
+    private void AddFavoriteFromHistory()
+    {
+        var (placeId, name) = _historyPage.SelectedGame();
+        if (placeId <= 0)
+        {
+            MessageBox.Show("Выбери игру в списке.", "NekoStrap",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        bool existed = FavoritesStore.Contains(placeId);
+        FavoritesStore.Add(placeId, name);
+        RefreshFavorites();
+        _homePage.SetStatus(existed
+            ? "Уже в избранном — название обновил"
+            : $"В избранном: {(name.Length > 0 ? name : "Place " + placeId)}", true);
+    }
+
+    private void RemoveFavorite(long placeId)
+    {
+        FavoritesStore.Remove(placeId);
+        RefreshFavorites();
+        _homePage.SetStatus("Убрал из избранного", true);
+    }
+
     // ================= FastFlags =================
+
+    private void RefreshFlagProfiles()
+    {
+        _flagsPage.SetProfiles(FlagProfiles.List());
+    }
+
+    private void ApplyFlagProfile(string name)
+    {
+        var flags = FlagProfiles.Get(name);
+        if (flags == null) return;
+        if (_flagsPage.CollectFlags().Count > 0)
+        {
+            if (MessageBox.Show($"Применить профиль «{name}»? Таблица заменится целиком.",
+                    "NekoStrap", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+                return;
+        }
+        _flagsPage.SetFlags(new Dictionary<string, string>(flags));
+        _homePage.SetStatus($"Профиль «{name}»: {flags.Count} флагов (нажми «Сохранить»)", false);
+    }
+
+    private void SaveFlagProfile()
+    {
+        string name = _flagsPage.ProfileNameText;
+        if (name.Length == 0)
+        {
+            MessageBox.Show("Введи название профиля.", "NekoStrap",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        var flags = _flagsPage.CollectFlags();
+        if (flags.Count == 0)
+        {
+            MessageBox.Show("Таблица пустая — нечего сохранять.", "NekoStrap",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        FlagProfiles.SaveProfile(name, flags);
+        _flagsPage.ClearProfileName();
+        RefreshFlagProfiles();
+        _homePage.SetStatus($"Профиль «{name}» сохранён", true);
+    }
+
+    private void DeleteFlagProfile()
+    {
+        string name = _flagsPage.ProfileNameText;
+        if (name.Length == 0)
+        {
+            MessageBox.Show("Введи название профиля для удаления.", "NekoStrap",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        if (FlagProfiles.Get(name) == null)
+        {
+            MessageBox.Show($"Профиля «{name}» нет.", "NekoStrap",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        if (MessageBox.Show($"Удалить профиль «{name}»?", "NekoStrap",
+                MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+            return;
+        FlagProfiles.Delete(name);
+        _flagsPage.ClearProfileName();
+        RefreshFlagProfiles();
+        _homePage.SetStatus($"Профиль «{name}» удалён", true);
+    }
 
     private void DeleteAllFlags()
     {

@@ -98,9 +98,10 @@ public partial class HistoryPage : UserControl
         {
             _games.Add(new GameRow
             {
-                Name = name.Length > 0 ? name : "Place " + placeId,
-                Played = PlaytimeStore.Format(seconds),
-                Last = last == default ? "—" : last.ToLocalTime().ToString("d MMM yyyy, HH:mm"),
+                Name = name.Length > 0 ? name : Lang.Format("Common_PlaceFmt", placeId),
+                Played = PlaytimeStore.Format(seconds,
+                    Lang.Get("Time_LessMinute"), Lang.Get("Time_Min"), Lang.Get("Time_Hour")),
+                Last = last == default ? "—" : last.ToLocalTime().ToString("d MMM yyyy, HH:mm", Lang.Culture),
                 PlaceText = placeId > 0 ? placeId.ToString() : "—",
                 PlaceId = placeId
             });
@@ -117,9 +118,12 @@ public partial class HistoryPage : UserControl
                 Game = s.DisplayName,
                 PlaceText = s.PlaceId > 0 ? s.PlaceId.ToString() : "—",
                 Job = s.ShortJob,
-                When = s.JoinedAt == default ? "—" : RecentSessionStore.FormatWhen(s.JoinedAt),
+                When = s.JoinedAt == default ? "—" : RecentSessionStore.FormatWhen(s.JoinedAt,
+                    Lang.Get("Time_Now"), Lang.Get("Time_MinAgoFmt"), Lang.Get("Time_HourAgoFmt"),
+                    Lang.Get("Time_DayAgoFmt"), Lang.Culture),
                 Duration = s.JoinedAt == default ? "—"
-                    : (s.LeftAt == null ? "сейчас в игре…" : RecentSessionStore.FormatDuration(s.Duration)),
+                    : (s.LeftAt == null ? Lang.Get("Hist_PlayingNow") : RecentSessionStore.FormatDuration(s.Duration,
+                        Lang.Get("Time_LessMinute"), Lang.Get("Time_Min"), Lang.Get("Time_Hour"))),
                 Ip = s.ServerIp.Length > 0 ? s.ServerIp : "—",
                 Session = s
             });

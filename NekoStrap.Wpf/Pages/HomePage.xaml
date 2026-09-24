@@ -1,22 +1,23 @@
 <UserControl x:Class="NekoStrap.Wpf.Pages.HomePage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="clr-namespace:NekoStrap.Wpf"
              xmlns:glass="clr-namespace:NekoStrap.Wpf">
   <StackPanel>
-    <TextBlock Style="{StaticResource H1}" Text="Главная" Margin="0,0,0,6"/>
-    <TextBlock Style="{StaticResource Body}" Text="Кастомный лаунчер Roblox — быстрый, лёгкий, стильный." Margin="0,0,0,10"/>
+    <TextBlock Style="{StaticResource H1}" Text="{l:L Nav_Home}" Margin="0,0,0,6"/>
+    <TextBlock Style="{StaticResource Body}" Text="{l:L Home_Sub}" Margin="0,0,0,10"/>
 
     <!-- Hero: запуск -->
     <Border Style="{StaticResource Card}" Margin="0,0,0,16">
       <StackPanel>
-        <TextBlock Style="{StaticResource H2}" Text="Запуск игры" Margin="0,0,0,12"/>
+        <TextBlock Style="{StaticResource H2}" Text="{l:L Home_LaunchTitle}" Margin="0,0,0,12"/>
         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
           <TextBlock x:Name="StatusDot" Text="●" FontSize="9" Foreground="{StaticResource GoodBrush}" VerticalAlignment="Center"/>
-          <TextBlock x:Name="StatusLabel" Style="{StaticResource Body}" Text="Готов к запуску" Margin="8,0,0,0"/>
+          <TextBlock x:Name="StatusLabel" Style="{StaticResource Body}" Text="{l:L Status_Ready}" Margin="8,0,0,0"/>
         </StackPanel>
-        <TextBlock x:Name="AccountLabel" Style="{StaticResource Mono}" Text="Аккаунт: —"
+        <TextBlock x:Name="AccountLabel" Style="{StaticResource Mono}" Text="{l:L Home_AccountInit}"
                    TextTrimming="CharacterEllipsis" Margin="0,0,0,8"/>
-        <Button x:Name="PlayButton" Style="{StaticResource PrimaryButton}" Content="Играть"
+        <Button x:Name="PlayButton" Style="{StaticResource PrimaryButton}" Content="{l:L Btn_Play}"
                 Width="190" Height="48" FontSize="14" HorizontalAlignment="Left" Click="PlayButton_Click"/>
         <Border x:Name="ProgressTrack" Height="6" CornerRadius="2" Margin="0,12,0,0"
                 Background="{StaticResource LineBrush}" Visibility="Collapsed">
@@ -25,7 +26,7 @@
         </Border>
         <Rectangle Height="1" Fill="{StaticResource LineBrush}" Margin="0,14,0,8"/>
         <TextBlock x:Name="VersionLabel" Style="{StaticResource Mono}"
-                   Text="Лаунчер 1.0.0   •   Roblox: не определено" TextTrimming="CharacterEllipsis"/>
+                   Text="{l:L Home_VersionInit}" TextTrimming="CharacterEllipsis"/>
       </StackPanel>
     </Border>
 
@@ -44,7 +45,7 @@
         <StackPanel VerticalAlignment="Center">
           <TextBlock x:Name="ModsValue" FontFamily="{DynamicResource HeadingFont}" FontSize="26"
                      FontWeight="Bold" Foreground="{DynamicResource FgBrush}" Text="0"/>
-          <TextBlock Style="{StaticResource Mono}" Text="Модов установлено" Margin="0,6,0,0"/>
+          <TextBlock Style="{StaticResource Mono}" Text="{l:L Stats_Mods}" Margin="0,6,0,0"/>
         </StackPanel>
       </Border>
       <Border Grid.Column="1" Background="{DynamicResource CardBrush}" CornerRadius="2" Padding="24,16" Margin="0,1,1,1"
@@ -52,7 +53,7 @@
         <StackPanel VerticalAlignment="Center">
           <TextBlock x:Name="FlagsValue" FontFamily="{DynamicResource HeadingFont}" FontSize="26"
                      FontWeight="Bold" Foreground="{DynamicResource FgBrush}" Text="0"/>
-          <TextBlock Style="{StaticResource Mono}" Text="FastFlags активно" Margin="0,6,0,0"/>
+          <TextBlock Style="{StaticResource Mono}" Text="{l:L Stats_Flags}" Margin="0,6,0,0"/>
         </StackPanel>
       </Border>
       <Border Grid.Column="2" Background="{DynamicResource CardBrush}" CornerRadius="2" Padding="24,16" Margin="0,1,1,1"
@@ -60,7 +61,7 @@
         <StackPanel VerticalAlignment="Center">
           <TextBlock x:Name="HoursValue" FontFamily="{DynamicResource HeadingFont}" FontSize="20"
                      FontWeight="Bold" Foreground="{DynamicResource FgBrush}" Text="0"/>
-          <TextBlock Style="{StaticResource Mono}" Text="Часов в Roblox" Margin="0,6,0,0"/>
+          <TextBlock Style="{StaticResource Mono}" Text="{l:L Stats_Hours}" Margin="0,6,0,0"/>
         </StackPanel>
       </Border>
     </Grid>
@@ -69,9 +70,9 @@
     <Border Style="{StaticResource Card}" Margin="0,0,0,16">
       <StackPanel>
         <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="13" FontWeight="Bold"
-                   Foreground="{DynamicResource FgDimBrush}" Text="Избранное" Margin="0,0,0,6"/>
+                   Foreground="{DynamicResource FgDimBrush}" Text="{l:L Fav_Title}" Margin="0,0,0,6"/>
         <TextBlock x:Name="FavoritesEmpty" Style="{StaticResource Mono}" FontStyle="Italic"
-                   Text="Пока пусто — добавь из Истории кнопкой «★ В избранное»." Margin="0,0,0,2"/>
+                   Text="{l:L Fav_Empty}" Margin="0,0,0,2"/>
         <WrapPanel x:Name="FavoritesPanel"/>
       </StackPanel>
     </Border>
@@ -80,11 +81,11 @@
     <Border Style="{StaticResource Card}" Margin="0,0,0,16">
       <StackPanel>
         <TextBlock FontFamily="{DynamicResource HeadingFont}" FontSize="13" FontWeight="Bold"
-                   Foreground="{DynamicResource FgDimBrush}" Text="Последняя игра" Margin="0,0,0,6"/>
+                   Foreground="{DynamicResource FgDimBrush}" Text="{l:L Home_LastGame}" Margin="0,0,0,6"/>
         <TextBlock x:Name="LastGameLabel" FontFamily="{DynamicResource UiFont}" FontSize="15"
                    FontWeight="Bold" Foreground="{DynamicResource FgBrush}" Text="—"
                    TextTrimming="CharacterEllipsis" Margin="0,0,0,8"/>
-        <Button x:Name="AgainButton" Style="{StaticResource PrimaryButton}" Content="Играть снова"
+        <Button x:Name="AgainButton" Style="{StaticResource PrimaryButton}" Content="{l:L Btn_PlayAgain}"
                 Width="170" Height="34" HorizontalAlignment="Left"
                 Visibility="Collapsed" Click="AgainButton_Click"/>
       </StackPanel>
@@ -94,7 +95,7 @@
     <Border Style="{StaticResource Card}">
       <StackPanel>
         <TextBlock FontFamily="{DynamicResource HeadingFont}" FontSize="13" FontWeight="Bold"
-                   Foreground="{DynamicResource FgDimBrush}" Text="Сервер" Margin="0,0,0,6"/>
+                   Foreground="{DynamicResource FgDimBrush}" Text="{l:L Home_Server}" Margin="0,0,0,6"/>
         <Grid Margin="0,0,0,6">
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
@@ -105,7 +106,7 @@
           <TextBlock x:Name="ServerGeo" Grid.Column="1" Style="{StaticResource MonoBright}" FontSize="14" Text="—"/>
           <TextBlock x:Name="ServerPing" Grid.Column="2" Style="{StaticResource MonoBright}" FontSize="14" Text="—"/>
         </Grid>
-        <TextBlock Style="{StaticResource Mono}" Text="IP  •  город, страна  •  пинг — обновляется во время игры"/>
+        <TextBlock Style="{StaticResource Mono}" Text="{l:L Home_ServerHint}"/>
       </StackPanel>
     </Border>
   </StackPanel>

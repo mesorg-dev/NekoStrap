@@ -55,7 +55,7 @@ public partial class HomePage : UserControl
     public void SetBusy(bool busy)
     {
         PlayButton.IsEnabled = !busy;
-        PlayButton.Content = busy ? "Работаю..." : "Играть";
+        PlayButton.Content = busy ? Lang.Get("Home_Busy") : Lang.Get("Btn_Play");
     }
 
     /// <summary>Прогресс 0..1; null — скрыть полосу.</summary>
@@ -118,7 +118,7 @@ public partial class HomePage : UserControl
             };
             var remove = new MenuItem
             {
-                Header = "Убрать из избранного",
+                Header = Lang.Get("Fav_RemoveCtx"),
                 Style = itemStyle,
                 Tag = placeId
             };

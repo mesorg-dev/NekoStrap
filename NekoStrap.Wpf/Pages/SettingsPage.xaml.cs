@@ -28,6 +28,7 @@ public partial class SettingsPage : UserControl
     public event Action<string, int>? SoundVolumeChanged;
     public event Action? AppearanceChanged;
     public event Action? AppearanceResetClicked;
+    public event Action<string>? LanguagePicked;
 
     private bool _sync;
     private readonly Dictionary<string, TextBlock> _soundFiles = new();
@@ -101,18 +102,44 @@ public partial class SettingsPage : UserControl
         AppearanceResetClicked?.Invoke();
     }
 
+    private void LangAutoButton_Click(object sender, RoutedEventArgs e)
+    {
+        LanguagePicked?.Invoke("auto");
+    }
+
+    private void LangRuButton_Click(object sender, RoutedEventArgs e)
+    {
+        LanguagePicked?.Invoke("ru");
+    }
+
+    private void LangEnButton_Click(object sender, RoutedEventArgs e)
+    {
+        LanguagePicked?.Invoke("en");
+    }
+
+    /// <summary>Подсветка активной кнопки языка (auto/ru/en).</summary>
+    public void SetLanguage(string lang)
+    {
+        var on = (Style)FindResource("PrimaryButton");
+        var off = (Style)FindResource("OutlineButton");
+        LangAutoButton.Style = lang == "auto" ? on : off;
+        LangRuButton.Style = lang == "ru" ? on : off;
+        LangEnButton.Style = lang == "en" ? on : off;
+    }
+
     private void BuildColorRows()
     {
-        var roles = new (string key, string title)[]
+        ColorsPanel.Children.Clear();
+        var roles = new (string key, string langKey)[]
         {
-            ("fg", "Основной текст"),
-            ("dim", "Вторичный текст"),
-            ("dimmer", "Приглушённый текст"),
+            ("fg", "Set_ColFg"),
+            ("dim", "Set_ColDim"),
+            ("dimmer", "Set_ColDimmer"),
         };
-        foreach (var (key, title) in roles)
+        foreach (var (key, langKey) in roles)
         {
             var wrap = new StackPanel { Margin = new Thickness(0, 0, 0, 8) };
-            var caption = new TextBlock { Text = title, Margin = new Thickness(0, 0, 0, 4) };
+            var caption = new TextBlock { Text = Lang.Get(langKey), Margin = new Thickness(0, 0, 0, 4) };
             caption.SetResourceReference(TextBlock.FontFamilyProperty, "UiFont");
             caption.SetResourceReference(TextBlock.ForegroundProperty, "FgDimBrush");
             caption.FontSize = 12;
@@ -205,16 +232,31 @@ public partial class SettingsPage : UserControl
     /// Ряды звуков строим кодом по списку движка: подпись + громкость +
     /// файл + кнопки. Новый звук в движке = новый ряд без правок XAML.
     /// </summary>
+    /// <summary>Перестроить ряды звуков (смена языка). Значения/файлы
+    /// восстанавливает MainWindow.RefreshSoundsSettings следом.</summary>
+    public void RefreshSoundRows()
+    {
+        BuildSoundRows();
+    }
+
+    /// <summary>Перестроить ряды цветов (смена языка). Hex восстанавливает
+    /// MainWindow.RefreshAppearanceSettings следом.</summary>
+    public void RefreshColorRows()
+    {
+        BuildColorRows();
+    }
+
     private void BuildSoundRows()
     {
-        foreach (var (key, title) in ClickSound.Sounds)
+        SoundsPanel.Children.Clear();
+        foreach (var (key, _) in ClickSound.Sounds)
         {
             var wrap = new StackPanel { Margin = new Thickness(0, 0, 0, 10) };
 
             var head = new DockPanel { LastChildFill = true };
             var name = new TextBlock
             {
-                Text = title,
+                Text = Lang.SoundTitle(key),
                 FontSize = 12.5,
                 VerticalAlignment = VerticalAlignment.Center
             };
@@ -255,7 +297,7 @@ public partial class SettingsPage : UserControl
             var row = new DockPanel { LastChildFill = true, Margin = new Thickness(0, 4, 0, 0) };
             var file = new TextBlock
             {
-                Text = "встроенный",
+                Text = Lang.Get("Sound_Builtin"),
                 FontSize = 11,
                 VerticalAlignment = VerticalAlignment.Center,
                 TextTrimming = TextTrimming.CharacterEllipsis
@@ -265,7 +307,7 @@ public partial class SettingsPage : UserControl
             var btns = new StackPanel { Orientation = Orientation.Horizontal };
             var pick = new Button
             {
-                Content = "Выбрать",
+                Content = Lang.Get("Btn_Pick"),
                 Style = (Style)FindResource("OutlineButton"),
                 Width = 110,
                 Height = 30,
@@ -274,7 +316,7 @@ public partial class SettingsPage : UserControl
             pick.Click += (_, _) => SoundPickClicked?.Invoke(key);
             var reset = new Button
             {
-                Content = "Сброс",
+                Content = Lang.Get("Btn_Reset"),
                 Style = (Style)FindResource("OutlineButton"),
                 Width = 80,
                 Height = 30,
@@ -300,7 +342,7 @@ public partial class SettingsPage : UserControl
     public void SetSoundFile(string key, string display)
     {
         if (_soundFiles.TryGetValue(key, out var label))
-            label.Text = display.Length > 0 ? display : "встроенный";
+            label.Text = display.Length > 0 ? display : Lang.Get("Sound_Builtin");
     }
 
     /// <summary>Громкость звука 0..100 (без срабатывания события).</summary>
@@ -351,7 +393,7 @@ public partial class SettingsPage : UserControl
     {
         var dlg = new Microsoft.Win32.OpenFolderDialog
         {
-            Title = "Где хранить Roblox и моды NekoStrap"
+            Title = Lang.Get("Set_BrowseTitle")
         };
         if (dlg.ShowDialog() == true)
             PathBox.Text = dlg.FolderName;
@@ -447,7 +489,8 @@ public partial class SettingsPage : UserControl
 
     public void SetCdnStatus(bool active, string detail)
     {
-        CdnStatus.Text = "Статус: " + (active ? "включён" : "выключен")
+        CdnStatus.Text = Lang.Format("Common_StatusFmt",
+            Lang.Get(active ? "Cdn_On" : "Cdn_Off"))
             + (detail.Length > 0 ? "  •  " + detail : "");
         CdnStatus.Foreground = active
             ? (Brush)FindResource("GoodBrush")
@@ -463,7 +506,7 @@ public partial class SettingsPage : UserControl
             WallpaperImage.Source = thumb;
             WallpaperFallbackBg.Visibility = thumb == null && fileName.Length > 0
                 ? Visibility.Visible : Visibility.Collapsed;
-            WallpaperPathLabel.Text = fileName.Length > 0 ? fileName : "Не выбран — сплошной фон";
+            WallpaperPathLabel.Text = fileName.Length > 0 ? fileName : Lang.Get("Set_WallEmpty");
             WallpaperBlurBar.Value = Math.Clamp(blur, 0, 100);
             WallpaperBlurValue.Text = ((int)WallpaperBlurBar.Value) + "%";
         }

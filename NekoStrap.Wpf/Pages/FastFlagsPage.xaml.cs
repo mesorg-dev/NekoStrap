@@ -28,7 +28,7 @@ public sealed class FlagRow : INotifyPropertyChanged
     public event PropertyChangedEventHandler? PropertyChanged;
 }
 
-public sealed record FlagPreset(string Title, string Flag, string Value);
+public sealed record FlagPreset(string Title, string TitleEn, string Flag, string Value);
 
 /// <summary>
 /// FastFlags: таблица + живой поиск, кликабельные пресеты, импорт/экспорт.
@@ -37,22 +37,22 @@ public partial class FastFlagsPage : UserControl
 {
     public static readonly FlagPreset[] BuiltinPresets =
     {
-        new("FPS 60 (сток)", "DFIntTaskSchedulerTargetFps", "60"),
-        new("FPS 144", "DFIntTaskSchedulerTargetFps", "144"),
-        new("FPS 240", "DFIntTaskSchedulerTargetFps", "240"),
-        new("Свет: Future", "FFlagDebugForceFutureIsBrightPhase3", "true"),
-        new("Свет: ShadowMap", "FFlagDebugForceFutureIsBrightPhase2", "true"),
-        new("Свет: Voxel (быстро)", "DFFlagDebugRenderForceTechnologyVoxel", "true"),
-        new("Без блюма", "FFlagRenderNoLowFrmBloom", "true"),
-        new("Без пост-эффектов", "FFlagDisablePostFx", "true"),
-        new("MSAA x4", "FIntDebugForceMSAASamples", "4"),
-        new("MSAA x8", "FIntDebugForceMSAASamples", "8"),
-        new("Детали далеко", "DFIntCSGLevelOfDetailSwitchingDistance", "5000"),
-        new("Без травы", "FIntFRMMaxGrassDistance", "0"),
-        new("Дальний зум", "FIntCameraMaxZoomDistance", "1000"),
-        new("Без DPI-скейла", "DFFlagDisableDPIScale", "true"),
-        new("Рендер: Vulkan", "FFlagDebugGraphicsPreferVulkan", "true"),
-        new("Пинг в лог", "DFFlagDebugPrintDataPingBreakDown", "true"),
+        new("FPS 60 (сток)", "FPS 60 (stock)", "DFIntTaskSchedulerTargetFps", "60"),
+        new("FPS 144", "FPS 144", "DFIntTaskSchedulerTargetFps", "144"),
+        new("FPS 240", "FPS 240", "DFIntTaskSchedulerTargetFps", "240"),
+        new("Свет: Future", "Light: Future", "FFlagDebugForceFutureIsBrightPhase3", "true"),
+        new("Свет: ShadowMap", "Light: ShadowMap", "FFlagDebugForceFutureIsBrightPhase2", "true"),
+        new("Свет: Voxel (быстро)", "Light: Voxel (fast)", "DFFlagDebugRenderForceTechnologyVoxel", "true"),
+        new("Без блюма", "No bloom", "FFlagRenderNoLowFrmBloom", "true"),
+        new("Без пост-эффектов", "No post FX", "FFlagDisablePostFx", "true"),
+        new("MSAA x4", "MSAA x4", "FIntDebugForceMSAASamples", "4"),
+        new("MSAA x8", "MSAA x8", "FIntDebugForceMSAASamples", "8"),
+        new("Детали далеко", "Far details", "DFIntCSGLevelOfDetailSwitchingDistance", "5000"),
+        new("Без травы", "No grass", "FIntFRMMaxGrassDistance", "0"),
+        new("Дальний зум", "Far zoom", "FIntCameraMaxZoomDistance", "1000"),
+        new("Без DPI-скейла", "No DPI scale", "DFFlagDisableDPIScale", "true"),
+        new("Рендер: Vulkan", "Render: Vulkan", "FFlagDebugGraphicsPreferVulkan", "true"),
+        new("Пинг в лог", "Ping to log", "DFFlagDebugPrintDataPingBreakDown", "true"),
     };
 
     public event EventHandler? AddFlagClicked;
@@ -78,11 +78,27 @@ public partial class FastFlagsPage : UserControl
             (_filter.Length == 0 || r.Name.Contains(_filter, StringComparison.OrdinalIgnoreCase));
         _rows.CollectionChanged += (_, _) => RefreshPresetStates();
 
+        BuildPresetButtons();
+    }
+
+    /// <summary>Перестроить кнопки пресетов (смена языка). Состояния
+    /// подсветки восстанавливает RefreshPresetStates следом.</summary>
+    public void RefreshPresetButtons()
+    {
+        BuildPresetButtons();
+        RefreshPresetStates();
+    }
+
+    private void BuildPresetButtons()
+    {
+        PresetsPanel.Children.Clear();
+        _presetButtons.Clear();
+        bool en = Lang.Current == "en";
         foreach (var p in BuiltinPresets)
         {
             var btn = new Button
             {
-                Content = p.Title,
+                Content = en ? p.TitleEn : p.Title,
                 Style = (Style)FindResource("OutlineButton"),
                 Width = 165,
                 Height = 34,

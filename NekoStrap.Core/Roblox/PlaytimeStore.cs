@@ -115,13 +115,16 @@ namespace NekoStrap.Roblox
             catch { /* ignore */ }
         }
 
-        public static string Format(long seconds)
+        public static string Format(long seconds) => Format(seconds, "меньше минуты", "мин", "ч");
+
+        /// <summary>То же с явными единицами (для локализации UI).</summary>
+        public static string Format(long seconds, string lessMinute, string minUnit, string hourUnit)
         {
-            if (seconds < 60) return "меньше минуты";
-            if (seconds < 3600) return $"{seconds / 60} мин";
+            if (seconds < 60) return lessMinute;
+            if (seconds < 3600) return $"{seconds / 60} {minUnit}";
             long h = seconds / 3600;
             long m = seconds % 3600 / 60;
-            return m > 0 ? $"{h} ч {m} мин" : $"{h} ч";
+            return m > 0 ? $"{h} {hourUnit} {m} {minUnit}" : $"{h} {hourUnit}";
         }
     }
 }

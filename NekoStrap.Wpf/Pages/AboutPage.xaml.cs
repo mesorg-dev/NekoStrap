@@ -14,7 +14,7 @@ public partial class AboutPage : UserControl
     {
         InitializeComponent();
         VersionPill.Text = "v" + AppInfo.Version;
-        UpdateStatus.Text = $"Текущая версия: v{AppInfo.Version}. Релизы: github.com/mesorg-dev/NekoStrap";
+        UpdateStatus.Text = Lang.Format("About_CurFmt", AppInfo.Version);
     }
 
     private void CheckUpdatesButton_Click(object sender, RoutedEventArgs e)

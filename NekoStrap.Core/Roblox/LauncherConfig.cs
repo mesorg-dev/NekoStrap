@@ -84,11 +84,13 @@ namespace NekoStrap.Roblox
         public string ThemeFontHeading { get; set; } = "Unbounded";
         public string ThemeFontBody { get; set; } = "Inter";
         public string ThemeFontMono { get; set; } = "JetBrains Mono";
-
         // Цвета текста hex (#RRGGBB, пусто = дефолт палитры).
         public string ThemeFg { get; set; } = "";
         public string ThemeDim { get; set; } = "";
         public string ThemeDimmer { get; set; } = "";
+
+        // Язык интерфейса: auto (по системе), ru, en.
+        public string Language { get; set; } = "auto";
 
         // «Стекло»: прозрачные панели с блюром подложки (liquid glass).
         // Выкл — вид как раньше, без единого лишнего действия на кадр.

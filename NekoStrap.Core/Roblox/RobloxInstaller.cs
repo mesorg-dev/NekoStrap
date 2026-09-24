@@ -2,7 +2,13 @@ using System.IO.Compression;
 
 namespace NekoStrap.Roblox
 {
-    public sealed record InstallProgress(string Phase, string Detail, double? Fraction);
+    /// <summary>
+    /// Прогресс установки: Phase — код фазы (check/done/download/extract/setup),
+    /// Detail — либо null, либо код детали (already/installed + Arg), либо
+    /// техническая строка как есть (имя пакета, счётчик). Тексты собирает UI
+    /// по кодам — поэтому установщик не тащит русских строк (локализация).
+    /// </summary>
+    public sealed record InstallProgress(string Phase, string? Detail, double? Fraction, string? Arg = null);
 
     /// <summary>
     /// Установка/обновление клиента и Studio: версия → манифест → зипы →
@@ -121,7 +127,7 @@ namespace NekoStrap.Roblox
             IProgress<InstallProgress>? progress, CancellationToken ct,
             string? installed, Action<string> onInstalled)
         {
-            progress?.Report(new InstallProgress("Проверка обновлений", "Запрос версии Roblox...", null));
+            progress?.Report(new InstallProgress("check", null, null));
             var latest = await Deployment.GetLatestVersionAsync(binaryType, ct);
 
             if (installed == latest.VersionGuid)
@@ -129,11 +135,11 @@ namespace NekoStrap.Roblox
                 onInstalled(installed);
                 if (applyMods)
                     ModManager.ApplyTo(Path.Combine(RobloxPaths.VersionsDir, installed));
-                progress?.Report(new InstallProgress("Готово", $"Актуальная версия уже стоит ({installed})", 1));
+                progress?.Report(new InstallProgress("done", "already", 1, installed));
                 return installed;
             }
 
-            progress?.Report(new InstallProgress("Загрузка", "Манифест пакетов...", null));
+            progress?.Report(new InstallProgress("download", null, null));
             string manifest = await Deployment.DownloadManifestAsync(latest.VersionGuid, ct);
             var packages = PackageManifest.Parse(manifest);
 
@@ -153,7 +159,7 @@ namespace NekoStrap.Roblox
                     double frac = totalPacked > 0
                         ? 0.85 * (donePacked + t.done) / totalPacked
                         : 0;
-                    progress?.Report(new InstallProgress("Загрузка",
+                    progress?.Report(new InstallProgress("download",
                         $"{pkg.Name} ({i + 1}/{packages.Count})", frac));
                 });
 
@@ -161,7 +167,7 @@ namespace NekoStrap.Roblox
                     Deployment.PackageUrl(latest.VersionGuid, pkg.Name), zipPath, fileProg, ct);
                 donePacked += new FileInfo(zipPath).Length;
 
-                progress?.Report(new InstallProgress("Распаковка",
+                progress?.Report(new InstallProgress("extract",
                     $"{pkg.Name} ({i + 1}/{packages.Count})", 0.85 + 0.15 * (i + 1) / packages.Count));
 
                 string sub = dirMap.GetValueOrDefault(pkg.Name) ?? "";
@@ -170,13 +176,13 @@ namespace NekoStrap.Roblox
                 ExtractZipSafe(zipPath, dest);
             }
 
-            progress?.Report(new InstallProgress("Настройка", "AppSettings, моды, чистка...", 1));
+            progress?.Report(new InstallProgress("setup", null, 1));
             await File.WriteAllTextAsync(Path.Combine(versionDir, "AppSettings.xml"), AppSettingsXml, ct);
             if (applyMods)
                 ModManager.ApplyTo(versionDir);
             onInstalled(latest.VersionGuid);
 
-            progress?.Report(new InstallProgress("Готово", $"Установлено {latest.VersionGuid}", 1));
+            progress?.Report(new InstallProgress("done", "installed", 1, latest.VersionGuid));
             return latest.VersionGuid;
         }
 

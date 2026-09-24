@@ -1,6 +1,7 @@
 ﻿<Window x:Class="NekoStrap.Wpf.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="clr-namespace:NekoStrap.Wpf"
         xmlns:glass="clr-namespace:NekoStrap.Wpf"
         Title="NekoStrap" Height="700" Width="1120" MinWidth="980" MinHeight="620"
         Icon="Assets/app.ico"
@@ -79,26 +80,26 @@
 
           <StackPanel DockPanel.Dock="Top" Margin="0,14,0,0">
             <RadioButton x:Name="NavHome" Style="{StaticResource NavRadio}" GroupName="Nav"
-                         Tag="{StaticResource IconHome}" Content="Главная" Checked="Nav_Checked"/>
+                         Tag="{StaticResource IconHome}" Content="{l:L Nav_Home}" Checked="Nav_Checked"/>
             <RadioButton x:Name="NavMods" Style="{StaticResource NavRadio}" GroupName="Nav"
-                         Tag="{StaticResource IconMods}" Content="Моды" Checked="Nav_Checked"/>
+                         Tag="{StaticResource IconMods}" Content="{l:L Nav_Mods}" Checked="Nav_Checked"/>
             <RadioButton x:Name="NavFlags" Style="{StaticResource NavRadio}" GroupName="Nav"
                          Tag="{StaticResource IconFlags}" Content="FastFlags" Checked="Nav_Checked"/>
             <RadioButton x:Name="NavVersions" Style="{StaticResource NavRadio}" GroupName="Nav"
-                         Tag="{StaticResource IconVersions}" Content="Версии" Checked="Nav_Checked"/>
+                         Tag="{StaticResource IconVersions}" Content="{l:L Nav_Versions}" Checked="Nav_Checked"/>
             <RadioButton x:Name="NavHistory" Style="{StaticResource NavRadio}" GroupName="Nav"
-                         Tag="{StaticResource IconHistory}" Content="История" Checked="Nav_Checked"/>
+                         Tag="{StaticResource IconHistory}" Content="{l:L Nav_History}" Checked="Nav_Checked"/>
             <RadioButton x:Name="NavSettings" Style="{StaticResource NavRadio}" GroupName="Nav"
-                         Tag="{StaticResource IconSettings}" Content="Настройки" Checked="Nav_Checked"/>
+                         Tag="{StaticResource IconSettings}" Content="{l:L Nav_Settings}" Checked="Nav_Checked"/>
             <RadioButton x:Name="NavAbout" Style="{StaticResource NavRadio}" GroupName="Nav"
-                         Tag="{StaticResource IconAbout}" Content="О программе" Checked="Nav_Checked"/>
+                         Tag="{StaticResource IconAbout}" Content="{l:L Nav_About}" Checked="Nav_Checked"/>
           </StackPanel>
 
           <Border DockPanel.Dock="Bottom" BorderBrush="{StaticResource LineBrush}" BorderThickness="0,1,0,0"
                   Padding="20,14,0,14">
             <StackPanel Orientation="Horizontal">
               <TextBlock Text="●" FontSize="9" Foreground="{StaticResource GoodBrush}" VerticalAlignment="Center"/>
-              <TextBlock x:Name="FooterText" Style="{StaticResource Mono}" Text="v1.0.0  •  готов" Margin="8,0,0,0"/>
+              <TextBlock x:Name="FooterText" Style="{StaticResource Mono}" Text="{l:L Footer_ReadyInit}" Margin="8,0,0,0"/>
             </StackPanel>
           </Border>
         </DockPanel>

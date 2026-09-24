@@ -1,15 +1,16 @@
 <UserControl x:Class="NekoStrap.Wpf.Pages.ModsPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="clr-namespace:NekoStrap.Wpf">
   <StackPanel>
-    <TextBlock Style="{StaticResource H1}" Text="Моды" Margin="0,0,0,6"/>
-    <TextBlock Style="{StaticResource Body}" Text="Файлы, Fleasion и шейдеры для клиента Roblox." Margin="0,0,0,10"/>
+    <TextBlock Style="{StaticResource H1}" Text="{l:L Nav_Mods}" Margin="0,0,0,6"/>
+    <TextBlock Style="{StaticResource Body}" Text="{l:L Mods_Sub}" Margin="0,0,0,10"/>
 
     <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-      <Button Style="{StaticResource PrimaryButton}" Content="+  Добавить" Height="38" Padding="16,0" Click="AddButton_Click"/>
-      <Button Style="{StaticResource OutlineButton}" Content="Обновить" Height="38" Padding="16,0" Margin="10,0,0,0" Click="RefreshButton_Click"/>
-      <Button Style="{StaticResource OutlineButton}" Content="Вкл / Выкл" Height="38" Padding="16,0" Margin="10,0,0,0" Click="ToggleButton_Click"/>
-      <Button Style="{StaticResource OutlineButton}" Content="Удалить" Height="38" Padding="16,0" Margin="10,0,0,0" Click="DeleteButton_Click"/>
+      <Button Style="{StaticResource PrimaryButton}" Content="{l:L Btn_Add}" Height="38" Padding="16,0" Click="AddButton_Click"/>
+      <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_Refresh}" Height="38" Padding="16,0" Margin="10,0,0,0" Click="RefreshButton_Click"/>
+      <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_Toggle}" Height="38" Padding="16,0" Margin="10,0,0,0" Click="ToggleButton_Click"/>
+      <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_Delete}" Height="38" Padding="16,0" Margin="10,0,0,0" Click="DeleteButton_Click"/>
     </StackPanel>
 
     <Border Style="{StaticResource Card}" Margin="0,0,0,12" Padding="18">
@@ -26,10 +27,10 @@
         </ListView.ItemContainerStyle>
         <ListView.View>
           <GridView ColumnHeaderContainerStyle="{StaticResource DarkGridHeader}">
-            <GridViewColumn Header="Файл (путь = место в клиенте)" Width="320" DisplayMemberBinding="{Binding Path}"/>
-            <GridViewColumn Header="Статус" Width="110" DisplayMemberBinding="{Binding Status}"/>
-            <GridViewColumn Header="Размер" Width="100" DisplayMemberBinding="{Binding SizeText}"/>
-            <GridViewColumn Header="Автор" Width="120" DisplayMemberBinding="{Binding Author}"/>
+            <GridViewColumn Header="{l:L Mods_ColFile}" Width="320" DisplayMemberBinding="{Binding Path}"/>
+            <GridViewColumn Header="{l:L Col_Status}" Width="110" DisplayMemberBinding="{Binding Status}"/>
+            <GridViewColumn Header="{l:L Col_Size}" Width="100" DisplayMemberBinding="{Binding SizeText}"/>
+            <GridViewColumn Header="{l:L Col_Author}" Width="120" DisplayMemberBinding="{Binding Author}"/>
           </GridView>
         </ListView.View>
       </ListView>
@@ -37,23 +38,23 @@
 
     <Border Style="{StaticResource Card}" Margin="0,0,0,10">
       <StackPanel>
-        <TextBlock Style="{StaticResource H2}" FontSize="13" Text="Fleasion — замена текстур, звуков и шейдеров" Margin="0,0,0,8"/>
+        <TextBlock Style="{StaticResource H2}" FontSize="13" Text="{l:L Mods_FleasionTitle}" Margin="0,0,0,8"/>
         <CheckBox x:Name="FleasionCheckBox" Style="{StaticResource Switch}">
           <StackPanel>
             <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}"
-                       Text="Запускать Fleasion вместе с игрой"/>
-            <TextBlock Style="{StaticResource Mono}" Text="Качается с GitHub, стартует рядом с Roblox"/>
+                       Text="{l:L Mods_FleasionRun}"/>
+            <TextBlock Style="{StaticResource Mono}" Text="{l:L Mods_FleasionDesc}"/>
           </StackPanel>
         </CheckBox>
-        <TextBlock x:Name="FleasionStatus" Style="{StaticResource Mono}" Text="Статус: проверка..." Margin="0,10,0,8"/>
+        <TextBlock x:Name="FleasionStatus" Style="{StaticResource Mono}" Text="{l:L Common_StatusCheck}" Margin="0,10,0,8"/>
         <StackPanel Orientation="Horizontal">
-          <Button Style="{StaticResource PrimaryButton}" Content="Скачать" Width="140" Height="36" Click="DownloadButton_Click"/>
-          <Button Style="{StaticResource OutlineButton}" Content="Папка" Width="120" Height="36" Margin="10,0,0,0" Click="FolderButton_Click"/>
+          <Button Style="{StaticResource PrimaryButton}" Content="{l:L Btn_Download}" Width="140" Height="36" Click="DownloadButton_Click"/>
+          <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_Folder}" Width="120" Height="36" Margin="10,0,0,0" Click="FolderButton_Click"/>
         </StackPanel>
       </StackPanel>
     </Border>
 
     <TextBlock Style="{StaticResource Mono}" FontStyle="Italic" TextWrapping="Wrap"
-               Text="Подпапки в Mods повторяют путь внутри клиента: например Mods\content\sounds\ouch.ogg заменит звук смерти."/>
+               Text="{l:L Mods_Hint}"/>
   </StackPanel>
 </UserControl>

@@ -59,11 +59,14 @@ namespace NekoStrap.Roblox
             }
         }
 
-        public static string FormatSize(long bytes)
+        public static string FormatSize(long bytes) => FormatSize(bytes, "ГБ", "МБ", "КБ");
+
+        /// <summary>То же с явными единицами (для локализации UI).</summary>
+        public static string FormatSize(long bytes, string gbUnit, string mbUnit, string kbUnit)
         {
-            if (bytes >= 1073741824) return $"{bytes / 1073741824.0:F1} ГБ";
-            if (bytes >= 1048576) return $"{bytes / 1048576.0:F0} МБ";
-            return $"{Math.Max(1, bytes / 1024)} КБ";
+            if (bytes >= 1073741824) return $"{bytes / 1073741824.0:F1} {gbUnit}";
+            if (bytes >= 1048576) return $"{bytes / 1048576.0:F0} {mbUnit}";
+            return $"{Math.Max(1, bytes / 1024)} {kbUnit}";
         }
     }
 }

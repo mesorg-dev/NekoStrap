@@ -247,24 +247,34 @@ namespace NekoStrap.Roblox
 
         // ---------- Форматирование для таблицы ----------
 
-        public static string FormatWhen(DateTime utc)
+        public static string FormatWhen(DateTime utc) => FormatWhen(utc,
+            "только что", "{0} мин назад", "{0} ч назад", "{0} дн назад",
+            System.Globalization.CultureInfo.CurrentCulture);
+
+        /// <summary>То же с явными словами/культурой (для локализации UI).</summary>
+        public static string FormatWhen(DateTime utc, string justNow,
+            string minAgoFmt, string hourAgoFmt, string dayAgoFmt,
+            System.Globalization.CultureInfo culture)
         {
             if (utc == default) return "—";
             var ago = DateTime.UtcNow - utc;
-            if (ago.TotalMinutes < 1) return "только что";
-            if (ago.TotalMinutes < 60) return $"{(int)ago.TotalMinutes} мин назад";
-            if (ago.TotalHours < 24) return $"{(int)ago.TotalHours} ч назад";
-            if (ago.TotalDays < 7) return $"{(int)ago.TotalDays} дн назад";
-            return utc.ToLocalTime().ToString("d MMM yyyy, HH:mm");
+            if (ago.TotalMinutes < 1) return justNow;
+            if (ago.TotalMinutes < 60) return string.Format(culture, minAgoFmt, (int)ago.TotalMinutes);
+            if (ago.TotalHours < 24) return string.Format(culture, hourAgoFmt, (int)ago.TotalHours);
+            if (ago.TotalDays < 7) return string.Format(culture, dayAgoFmt, (int)ago.TotalDays);
+            return utc.ToLocalTime().ToString("d MMM yyyy, HH:mm", culture);
         }
 
-        public static string FormatDuration(TimeSpan d)
+        public static string FormatDuration(TimeSpan d) => FormatDuration(d, "меньше минуты", "мин", "ч");
+
+        /// <summary>То же с явными единицами (для локализации UI).</summary>
+        public static string FormatDuration(TimeSpan d, string lessMinute, string minUnit, string hourUnit)
         {
-            if (d.TotalSeconds < 60) return "меньше минуты";
-            if (d.TotalHours < 1) return $"{(int)d.TotalMinutes} мин";
+            if (d.TotalSeconds < 60) return lessMinute;
+            if (d.TotalHours < 1) return $"{(int)d.TotalMinutes} {minUnit}";
             long h = (long)d.TotalHours;
             long m = d.Minutes;
-            return m > 0 ? $"{h} ч {m} мин" : $"{h} ч";
+            return m > 0 ? $"{h} {hourUnit} {m} {minUnit}" : $"{h} {hourUnit}";
         }
     }
 }

@@ -56,14 +56,15 @@ public partial class VersionsPage : UserControl
         _rows.Clear();
         foreach (var v in versions)
         {
-            string status = v.Guid == activeGuid ? "Активна"
-                : v.Guid == previousGuid ? "Предыдущая (откат)" : "—";
+            string status = v.Guid == activeGuid ? Lang.Get("Ver_Active")
+                : v.Guid == previousGuid ? Lang.Get("Ver_Previous") : "—";
             _rows.Add(new VersionRow
             {
                 Guid = v.Guid,
-                SizeText = VersionManager.FormatSize(v.SizeBytes),
+                SizeText = VersionManager.FormatSize(v.SizeBytes,
+                    Lang.Get("Size_Gb"), Lang.Get("Size_Mb"), Lang.Get("Size_Kb")),
                 Status = status,
-                Studio = v.HasStudio ? "да" : "нет",
+                Studio = v.HasStudio ? Lang.Get("Ver_Yes") : Lang.Get("Ver_No"),
                 IsActive = v.Guid == activeGuid
             });
         }
@@ -76,6 +77,6 @@ public partial class VersionsPage : UserControl
 
     public void SetStudioStatus(string text)
     {
-        StudioStatus.Text = "Статус: " + text;
+        StudioStatus.Text = Lang.Format("Common_StatusFmt", text);
     }
 }

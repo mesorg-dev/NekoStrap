@@ -90,7 +90,7 @@ public partial class App : Application
         _lastErrorShown = DateTime.UtcNow;
         try
         {
-            MessageBox.Show(Describe(e.Exception), "NekoStrap — ошибка",
+            MessageBox.Show(Describe(e.Exception), Lang.Get("App_CrashTitle"),
                 MessageBoxButton.OK, MessageBoxImage.Error);
         }
         catch { /* ignore */ }
@@ -100,8 +100,8 @@ public partial class App : Application
     {
         try
         {
-            string text = e.ExceptionObject is Exception ex ? Describe(ex) : "Неизвестная ошибка.";
-            MessageBox.Show(text, "NekoStrap — ошибка",
+            string text = e.ExceptionObject is Exception ex ? Describe(ex) : Lang.Get("Common_UnknownErr");
+            MessageBox.Show(text, Lang.Get("App_CrashTitle"),
                 MessageBoxButton.OK, MessageBoxImage.Error);
         }
         catch { /* ignore */ }

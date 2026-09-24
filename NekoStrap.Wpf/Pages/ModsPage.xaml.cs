@@ -72,12 +72,12 @@ public partial class ModsPage : UserControl
         foreach (var m in mods)
         {
             string size = m.Size >= 1048576
-                ? $"{m.Size / 1048576.0:F1} МБ"
-                : $"{Math.Max(1, m.Size / 1024)} КБ";
+                ? Lang.Format("Size_MbFmt", m.Size / 1048576.0)
+                : Lang.Format("Size_KbFmt", Math.Max(1, m.Size / 1024));
             _rows.Add(new ModRow
             {
                 Path = m.RelativePath,
-                Status = m.Active ? "Активен" : "Выключен",
+                Status = m.Active ? Lang.Get("Mod_Active") : Lang.Get("Mod_Disabled"),
                 SizeText = size,
                 Active = m.Active
             });
@@ -86,7 +86,7 @@ public partial class ModsPage : UserControl
 
     public void SetFleasionStatus(string text)
     {
-        FleasionStatus.Text = "Статус: " + text;
+        FleasionStatus.Text = Lang.Format("Common_StatusFmt", text);
     }
 
     public List<string> SelectedModPaths()

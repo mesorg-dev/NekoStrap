@@ -3,6 +3,7 @@
 [![Release](https://img.shields.io/github/v/release/mesorg-dev/NekoStrap?style=flat-square)](https://github.com/mesorg-dev/NekoStrap/releases)
 ![.NET 8](https://img.shields.io/badge/.NET-8-512BD4?style=flat-square)
 ![WPF](https://img.shields.io/badge/UI-WPF-000000?style=flat-square)
+![RU/EN](https://img.shields.io/badge/lang-RU%20%7C%20EN-blue?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
 
 Лаунчер, который выглядит как надо и помнит, где ты играл. Чёрно-белый,
@@ -24,7 +25,8 @@ Telegram-канал: https://t.me/mesorgdev
 
 **🪟 Живое жидкое стекло.** Панели блюрят обои ровно под собой, текст
 остаётся идеально чётким. А обои — любые: фото и даже гифки, с настройкой
-блюра и затемнения отдельно для фона и отдельно для панелей.
+блюра и затемнения отдельно для фона и отдельно для панелей. Два режима:
+тонированное (тинт + блюр) и чистое (только блюр).
 
 **🔊 Свои звуки интерфейса.** Клик, наведение, переходы, тумблеры —
 на каждый звук можно кинуть свой wav и выставить громкость. Движок сам
@@ -43,6 +45,9 @@ Telegram-канал: https://t.me/mesorgdev
 **🎨 Своя тема.** Шрифты заголовков, интерфейса и моно + цвета текста
 (палитра и hex) — меняется живьём, без перезапуска.
 
+**🌍 Русский / English.** Полная локализация интерфейса — переключается
+в Настройках, применяется сразу без перезапуска.
+
 **📊 Знает, где ты был.** Счётчик наигранного по каждой игре, последняя
 игра с «Играть снова», гео и пинг текущего сервера как в Shift+F5.
 
@@ -57,16 +62,17 @@ Telegram-канал: https://t.me/mesorgdev
 **Моды** — файлы из `Mods`, вкл/выкл/удалить, Fleasion с автозапуском.
 
 **FastFlags** — таблица флагов версии, живой поиск, 16 пресетов
-(FPS 60/144/240, свет, MSAA, Vulkan…), импорт/экспорт JSON, удаление
-по одному и все сразу.
+(FPS 60/144/240, свет, MSAA, Vulkan…), профили, импорт/экспорт JSON.
 
 **Версии** — установленные клиенты (активация/удаление/откат), Studio.
 
-**История** — итоги по плейсам, лог заходов, копии PlaceId/ссылок,
-открытие плейса на сайте.
+**История** — итоги по плейсам, лог заходов, избранное, копии
+PlaceId/ссылок, открытие плейса на сайте.
 
-**Настройки** — тумблеры применяются сразу, путь Roblox, CDN-фикс,
-обои, стекло, звуки.
+**Настройки** — тумблеры применяются сразу, язык (RU/EN), путь Roblox,
+CDN-фикс, обои, стекло, звуки, шрифты и цвета.
+
+**О программе** — версия, проверка обновлений, ссылки, лицензия.
 
 ## Сборка из исходников
 
@@ -77,11 +83,11 @@ dotnet restore
 dotnet build NekoStrap.sln -c Release
 ```
 
-Одиночный self-contained exe:
+Одиночный exe:
 
 ```bash
-dotnet publish NekoStrap.Wpf/NekoStrap.Wpf.csproj -c Release -r win-x64 \
-  --self-contained true /p:PublishSingleFile=true \
+dotnet publish NekoStrap.Wpf/NekoStrap.Wpf.csproj -c Release -r win-x64 `
+  --self-contained false /p:PublishSingleFile=true `
   /p:IncludeNativeLibrariesForSelfExtract=true -o build-wpf
 ```
 
@@ -96,7 +102,7 @@ dotnet run --project NekoStrap.Smoke -c Release
 Версия — в `<Version>` (`NekoStrap.Wpf.csproj`). Новый релиз:
 
 ```bash
-git tag v1.1.0 && git push origin v1.1.0
+git tag v1.3.0 && git push origin v1.3.0
 ```
 
 Workflow соберёт `NekoStrap.exe` и приложит к GitHub-релизу — лаунчеры
@@ -110,7 +116,9 @@ NekoStrap/
 ├── NekoStrap.sln
 ├── NekoStrap.Wpf/        # приложение: окно, страницы, тема, трей
 │   ├── Theme/Theme.xaml  # палитра, стили, иконки
-│   ├── Pages/            # 7 разделов + диалоги
+│   ├── Pages/            # 6 разделов + диалоги
+│   ├── Lang.cs           # движок локализации (RU/EN)
+│   ├── LangStrings.cs    # словари строк
 │   ├── Glass.cs          # жидкое стекло (блюр обоев под панелями)
 │   ├── GifPlayer.cs      # анимированные GIF-обои
 │   └── MainWindow.*      # хром окна + весь бэкенд

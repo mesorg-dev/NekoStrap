@@ -129,7 +129,7 @@ public partial class MainWindow : Window
         _settingsPage.SaveClicked += (_, _) =>
         {
             SaveConfigFromUi();
-            _homePage.SetStatus("Настройки сохранены", true);
+            _homePage.SetStatus(Lang.Get("Set_Saved"), true);
         };
         _settingsPage.SoundPickClicked += (key) => PickCustomSound(key);
         _settingsPage.SoundResetClicked += (key) => ResetCustomSound(key);
@@ -141,6 +141,7 @@ public partial class MainWindow : Window
         };
         _settingsPage.AppearanceChanged += () => ApplyAppearanceFromUi(save: true);
         _settingsPage.AppearanceResetClicked += () => ResetAppearance();
+        _settingsPage.LanguagePicked += (choice) => ApplyLanguage(choice, save: true);
         _settingsPage.CdnApplyClicked += (_, _) => CdnApply();
         _settingsPage.CdnRollbackClicked += (_, _) => CdnRollback();
         _settingsPage.WallpaperPickClicked += (_, _) => PickWallpaper();
@@ -204,6 +205,7 @@ public partial class MainWindow : Window
         _serverTimer.Tick += (_, _) => RefreshServerCard();
 
         LoadConfig();
+        ApplyLanguage(_config.Language, save: false);
         Loaded += (_, _) =>
         {
             RestoreWindowBounds();
@@ -221,8 +223,7 @@ public partial class MainWindow : Window
             UiTheme.ApplyText(_config);
             RefreshWallpaperSettings();
             RefreshGlassSettings();
-            InitTray();
-            FooterText.Text = $"v{AppInfo.Version}  •  готов";
+            FooterText.Text = $"v{AppInfo.Version}  •  {Lang.Get("Footer_Ready")}";
             NavHome.IsChecked = true;
         };
         StateChanged += (_, _) =>
@@ -293,7 +294,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            _homePage.SetStatus("Не вышло обновить раздел: " + ex.Message, false);
+            _homePage.SetStatus(Lang.Get("Upd_SectFail") + " " + ex.Message, false);
         }
     }
 
@@ -352,7 +353,7 @@ public partial class MainWindow : Window
                     }
                 }
                 if (!_hasWallpaper)
-                    throw new InvalidOperationException("не вышло загрузить фон");
+                    throw new InvalidOperationException(Lang.Get("Wallpaper_LoadErr"));
             }
             catch
             {
@@ -431,11 +432,13 @@ public partial class MainWindow : Window
         var mods = ModManager.List();
         var flags = FastFlagStore.Load(EffectiveVersion());
         _homePage.SetCounts(mods.Count, flags.Count,
-            PlaytimeStore.Format(_playtime.TotalSeconds));
+            PlaytimeStore.Format(_playtime.TotalSeconds,
+                Lang.Get("Time_LessMinute"), Lang.Get("Time_Min"), Lang.Get("Time_Hour")));
         string? v = EffectiveVersion();
-        _homePage.SetVersionInfo($"Лаунчер {AppInfo.Version}   •   Roblox: " + (v ?? "не установлен"));
+        _homePage.SetVersionInfo(Lang.Format("Home_LauncherFmt", AppInfo.Version)
+            + "   •   Roblox: " + (v ?? Lang.Get("Home_RobloxNone")));
         _homePage.SetLastGame(FormatLastGame(), _config.LastGamePlaceId);
-        _homePage.SetAccount("Аккаунт: клиент");
+        _homePage.SetAccount(Lang.Get("Home_AccountClient"));
     }
 
     private string FormatLastGame()
@@ -443,17 +446,18 @@ public partial class MainWindow : Window
         if (_config.LastGamePlaceId <= 0 && _config.LastGameName.Length == 0) return "";
         string name = _config.LastGameName.Length > 0
             ? _config.LastGameName
-            : "Place " + _config.LastGamePlaceId;
+            : Lang.Format("Common_PlaceFmt", _config.LastGamePlaceId);
         string id = _config.LastGamePlaceId > 0 ? $"  •  PlaceId {_config.LastGamePlaceId}" : "";
         if (_config.LastGameAt == default) return name + id;
         var ago = DateTime.UtcNow - _config.LastGameAt;
-        string when = ago.TotalMinutes < 1 ? "только что"
-            : ago.TotalMinutes < 60 ? $"{(int)ago.TotalMinutes} мин назад"
-            : ago.TotalHours < 24 ? $"{(int)ago.TotalHours} ч назад"
-            : ago.TotalDays < 7 ? $"{(int)ago.TotalDays} дн назад"
-            : _config.LastGameAt.ToLocalTime().ToString("d MMM yyyy");
+        string when = ago.TotalMinutes < 1 ? Lang.Get("Time_Now")
+            : ago.TotalMinutes < 60 ? Lang.Format("Time_MinAgoFmt", (int)ago.TotalMinutes)
+            : ago.TotalHours < 24 ? Lang.Format("Time_HourAgoFmt", (int)ago.TotalHours)
+            : ago.TotalDays < 7 ? Lang.Format("Time_DayAgoFmt", (int)ago.TotalDays)
+            : _config.LastGameAt.ToLocalTime().ToString("d MMM yyyy", Lang.Culture);
         string played = _playtime.ForPlace(_config.LastGamePlaceId) > 0
-            ? $"  •  наиграно {PlaytimeStore.Format(_playtime.ForPlace(_config.LastGamePlaceId))}"
+            ? Lang.Format("Time_PlayedFmt", PlaytimeStore.Format(_playtime.ForPlace(_config.LastGamePlaceId),
+                Lang.Get("Time_LessMinute"), Lang.Get("Time_Min"), Lang.Get("Time_Hour")))
             : "";
         return $"{name}{id}  •  {when}{played}";
     }
@@ -467,7 +471,7 @@ public partial class MainWindow : Window
         long placeId = _config.LastGamePlaceId;
         if (placeId <= 0)
         {
-            MessageBox.Show("Пока не во что переигрывать — зайди в игру хоть раз.",
+            MessageBox.Show(Lang.Get("Play_Nothing"),
                 "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
@@ -475,7 +479,7 @@ public partial class MainWindow : Window
     }
 
     /// <summary>Запуск плейса через наш exe (без реестра).</summary>
-    private async void LaunchPlaceById(long placeId)
+    private void LaunchPlaceById(long placeId)
     {
         try
         {
@@ -483,41 +487,22 @@ public partial class MainWindow : Window
             string? exe = RobloxLauncher.GetExePath(guid);
             if (exe == null)
             {
-                MessageBox.Show("Roblox не установлен — нажми «Играть».",
+                MessageBox.Show(Lang.Get("Play_NoRoblox"),
                     "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             _watcher.Clear();
-            Process? process = null;
-            var (ticket, acc) = await GetActiveTicketAsync();
-            if (ticket.Length > 0 && acc != null)
-            {
-                _homePage.SetStatus("Открываю плейс: " + acc.Label + "...", false);
-                process = RobloxAuth.LaunchPlace(exe, ticket, placeId);
-            }
+            _homePage.SetStatus(Lang.Get("Play_OpenPlace"), false);
+            Process? process = RobloxLauncher.LaunchPlace(exe, placeId);
             if (process == null)
-            {
-                _homePage.SetStatus("Открываю плейс...", false);
-                process = RobloxLauncher.LaunchPlace(exe, placeId);
-            }
-            if (process == null)
-                throw new InvalidOperationException("не вышло запустить процесс клиента");
+                throw new InvalidOperationException(Lang.Get("Play_LaunchFail"));
             AfterLaunch(process);
         }
         catch (Exception ex)
         {
-            MessageBox.Show("Не вышло открыть плейс:\n" + ex.Message,
+            MessageBox.Show(Lang.Get("Play_OpenPlaceErr") + ex.Message,
                 "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
-    }
-
-    /// <summary>
-    /// Раздел аккаунтов убран: запускаемся всегда под залогиненным в клиенте.
-    /// Заглушка оставлена, чтобы не трогать три места запуска.
-    /// </summary>
-    private static Task<(string ticket, AccountEntry? acc)> GetActiveTicketAsync()
-    {
-        return Task.FromResult<(string, AccountEntry?)>(("", null));
     }
 
     /// <summary>Общее после любого запуска игры: трекинг, моды, Discord, таймеры.</summary>
@@ -526,12 +511,37 @@ public partial class MainWindow : Window
         TrackPlayer(process);
         FleasionManager.LaunchIfEnabled(_config.FleasionEnabled);
         _discord.SetIdle();
-        _homePage.SetStatus("Roblox запущен", true);
+        _homePage.SetStatus(Lang.Get("Play_Launched"), true);
         _serverTimer.Start();
         RefreshHomeMeta();
 
         if (_config.CloseOnLaunch && !_config.CloseToTray)
             Close();
+    }
+
+    /// <summary>
+    /// Строка прогресса установки: фаза и деталь — коды установщика,
+    /// тексты собираем по словарю (технические детали — как есть).
+    /// </summary>
+    private static string FormatInstall(InstallProgress p)
+    {
+        string phase = p.Phase switch
+        {
+            "check" => Lang.Get("Prog_PhaseCheck"),
+            "done" => Lang.Get("Prog_PhaseDone"),
+            "download" => Lang.Get("Prog_PhaseDownload"),
+            "extract" => Lang.Get("Prog_PhaseExtract"),
+            "setup" => Lang.Get("Prog_PhaseSetup"),
+            _ => p.Phase
+        };
+        string detail = p.Detail switch
+        {
+            "already" => Lang.Format("Prog_AlreadyFmt", p.Arg),
+            "installed" => Lang.Format("Prog_InstalledFmt", p.Arg),
+            null => "",
+            _ => p.Detail
+        };
+        return detail.Length > 0 ? $"{phase}: {detail}" : phase;
     }
 
     private async Task PlayFlowAsync()
@@ -544,7 +554,7 @@ public partial class MainWindow : Window
             var progress = new Progress<InstallProgress>(p =>
             {
                 if (_closed) return;
-                _homePage.SetStatus($"{p.Phase}: {p.Detail}", false);
+                _homePage.SetStatus(FormatInstall(p), false);
                 _homePage.SetProgress(p.Fraction);
             });
 
@@ -558,36 +568,28 @@ public partial class MainWindow : Window
 
             string? exe = RobloxLauncher.GetExePath(guid);
             if (exe == null)
-                throw new InvalidOperationException("exe клиента не найден после установки");
+                throw new InvalidOperationException(Lang.Get("Play_LaunchFail"));
 
             // FPS-лимит и фиксы Roblox применяются поверх перед стартом.
             FpsManager.Apply(guid, _config.FpsLimit);
             RobloxAppFixes.Apply(_config.RobloxNoTray, _config.RobloxNoStartup);
 
-            _homePage.SetStatus("Запуск Roblox...", false);
+            _homePage.SetStatus(Lang.Get("Play_Starting"), false);
             _homePage.SetProgress(null);
             _watcher.Clear();
-            Process? process = null;
-            var (ticket, acc) = await GetActiveTicketAsync();
-            if (ticket.Length > 0 && acc != null)
-            {
-                _homePage.SetStatus("Запуск Roblox: " + acc.Label + "...", false);
-                process = RobloxAuth.LaunchApp(exe, ticket);
-            }
+            Process? process = RobloxLauncher.Launch(exe);
             if (process == null)
-                process = RobloxLauncher.Launch(exe);
-            if (process == null)
-                throw new InvalidOperationException("не вышло запустить процесс клиента");
+                throw new InvalidOperationException(Lang.Get("Play_LaunchFail"));
             AfterLaunch(process);
         }
         catch (OperationCanceledException)
         {
-            _homePage.SetStatus("Отменено", false);
+            _homePage.SetStatus(Lang.Get("Common_Cancelled"), false);
         }
         catch (Exception ex)
         {
-            _homePage.SetStatus("Ошибка", false);
-            MessageBox.Show("Не вышло запустить Roblox:\n" + ex.Message,
+            _homePage.SetStatus(Lang.Get("Common_Error"), false);
+            MessageBox.Show(Lang.Get("Play_StartErr") + ex.Message,
                 "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
@@ -612,9 +614,11 @@ public partial class MainWindow : Window
                     _ = Dispatcher.BeginInvoke(new Action(() =>
                     {
                         if (_closed) return;
-                        _homePage.SetStatus("Доступно обновление Roblox — нажми Играть", false);
+                        _homePage.SetStatus(Lang.Get("Upd_RobloxAvail"), false);
                         _homePage.SetVersionInfo(
-                            $"Лаунчер {AppInfo.Version}   •   Roblox: {installed ?? "не установлен"} → {latest.VersionGuid}");
+                            Lang.Format("Home_LauncherFmt", AppInfo.Version)
+                            + "   •   Roblox: " + (installed ?? Lang.Get("Home_RobloxNone"))
+                            + $" → {latest.VersionGuid}");
                     }));
                 }
             }
@@ -649,7 +653,7 @@ public partial class MainWindow : Window
         _lastGameName = "";
         _discord.SetIdle();
         _serverTimer.Stop();
-        _homePage.SetStatus("Игра закрыта", true);
+        _homePage.SetStatus(Lang.Get("Play_Closed"), true);
         RefreshHomeMeta();
         try { _playerProcess?.Dispose(); } catch { /* ignore */ }
         _playerProcess = null;
@@ -683,8 +687,8 @@ public partial class MainWindow : Window
         int seq = ++_sessionSeq;
         BeginSessionTime(session.PlaceId, "");
         try { _recent.Begin(session.PlaceId, session.JobId, session.ServerIp, session.ServerPort); } catch { /* ignore */ }
-        _homePage.SetServer(session.ServerIp.Length > 0 ? session.ServerIp : "поиск...",
-            "определяю...", "—");
+        _homePage.SetServer(session.ServerIp.Length > 0 ? session.ServerIp : Lang.Get("Server_Searching"),
+            Lang.Get("Server_Locating"), "—");
         _ = Task.Run(async () =>
         {
             string? name = await ServerLookup.GetPlaceNameAsync(session.PlaceId);
@@ -782,11 +786,11 @@ public partial class MainWindow : Window
         {
             if (_watcher.LastClientPingMs > 0 &&
                 (DateTime.UtcNow - _watcher.LastClientPingAt).TotalSeconds < 10)
-                return _watcher.LastClientPingMs + " мс";
+                return Lang.Format("Ping_MsFmt", _watcher.LastClientPingMs);
         }
         catch { /* ignore */ }
         return ping.Ms >= 0
-            ? (ping.Estimated ? "~" : "") + ping.Ms + " мс"
+            ? (ping.Estimated ? "~" : "") + Lang.Format("Ping_MsFmt", ping.Ms)
             : "—";
     }
 
@@ -856,7 +860,41 @@ public partial class MainWindow : Window
         SaveQuiet();
         RefreshAppearanceSettings();
         UiTheme.ApplyText(_config);
-        _homePage.SetStatus("Оформление сброшено", true);
+        _homePage.SetStatus(Lang.Get("Theme_ResetDone"), true);
+    }
+
+    // ================= Язык =================
+
+    /// <summary>
+    /// Живое переключение языка: словари через {L} обновляются сами,
+    /// построенные кодом ряды/кнопки/таблицы пересоздаём и обновляем здесь.
+    /// </summary>
+    private void ApplyLanguage(string choice, bool save)
+    {
+        if (choice != "ru" && choice != "en" && choice != "auto")
+            choice = "auto";
+        Lang.Set(Lang.Resolve(choice));
+        if (save)
+        {
+            _config.Language = choice;
+            SaveQuiet();
+        }
+        _settingsPage.SetLanguage(choice);
+        _settingsPage.RefreshSoundRows();
+        _settingsPage.RefreshColorRows();
+        _flagsPage.RefreshPresetButtons();
+        RefreshSoundsSettings();
+        RefreshAppearanceSettings();
+        RefreshFavorites();
+        RefreshHomeMeta();
+        RefreshMods();
+        RefreshFlagProfiles();
+        RefreshVersions();
+        RefreshHistory();
+        RefreshCdnStatus();
+        RefreshFleasionStatus();
+        FooterText.Text = $"v{AppInfo.Version}  •  {Lang.Get("Footer_Ready")}";
+        InitTray();
     }
 
     // ================= Кастомные звуки =================
@@ -885,8 +923,8 @@ public partial class MainWindow : Window
         string title = ClickSound.Sounds.FirstOrDefault(s => s.Key == key).Title ?? key;
         var dlg = new Microsoft.Win32.OpenFileDialog
         {
-            Title = $"Свой звук: {title}",
-            Filter = "WAV (*.wav)|*.wav|Все файлы (*.*)|*.*"
+            Title = Lang.Format("Dlg_SoundFmt", title),
+            Filter = "WAV (*.wav)|*.wav|" + Lang.Get("Dlg_AllFiles") + " (*.*)|*.*"
         };
         if (dlg.ShowDialog(this) != true) return;
         if (ClickSound.TrySetCustom(key, dlg.FileName, out string error))
@@ -894,11 +932,11 @@ public partial class MainWindow : Window
             _config.CustomSounds[key] = dlg.FileName;
             SaveQuiet();
             RefreshSoundsSettings();
-            _homePage.SetStatus($"Звук «{title}»: свой файл", true);
+            _homePage.SetStatus(Lang.Format("Snd_SetFmt", title), true);
         }
         else
         {
-            MessageBox.Show($"Не вышло взять звук:\n{error}",
+            MessageBox.Show(Lang.Format("Snd_Err", error),
                 "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
@@ -997,9 +1035,9 @@ public partial class MainWindow : Window
     {
         var dlg = new Microsoft.Win32.OpenFileDialog
         {
-            Title = "Выбери файлы мода",
+            Title = Lang.Get("Dlg_ModsTitle"),
             Multiselect = true,
-            Filter = "Все файлы (*.*)|*.*"
+            Filter = $"{Lang.Get("Dlg_AllFiles")} (*.*)|*.*"
         };
         if (dlg.ShowDialog(this) != true) return;
         try
@@ -1010,7 +1048,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show("Не вышло добавить мод:\n" + ex.Message,
+            MessageBox.Show(Lang.Get("Mod_AddErr") + ex.Message,
                 "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
@@ -1020,7 +1058,7 @@ public partial class MainWindow : Window
         var selected = _modsPage.SelectedModPaths();
         if (selected.Count == 0)
         {
-            MessageBox.Show("Выбери мод в списке.", "NekoStrap",
+            MessageBox.Show(Lang.Get("Mod_SelOne"), "NekoStrap",
                 MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
@@ -1040,7 +1078,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show("Не вышло переключить мод:\n" + ex.Message,
+            MessageBox.Show(Lang.Get("Mod_ToggleErr") + ex.Message,
                 "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
@@ -1050,11 +1088,11 @@ public partial class MainWindow : Window
         var selected = _modsPage.SelectedModPaths();
         if (selected.Count == 0)
         {
-            MessageBox.Show("Выбери мод в списке.", "NekoStrap",
+            MessageBox.Show(Lang.Get("Mod_SelOne"), "NekoStrap",
                 MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
-        if (MessageBox.Show($"Удалить модов: {selected.Count}?",
+        if (MessageBox.Show(Lang.Format("Mod_DelConfirm", selected.Count),
                 "NekoStrap", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
             return;
         try
@@ -1074,7 +1112,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show("Не вышло удалить:\n" + ex.Message,
+            MessageBox.Show(Lang.Get("Common_DelErr") + ex.Message,
                 "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
@@ -1082,29 +1120,30 @@ public partial class MainWindow : Window
     private void RefreshFleasionStatus()
     {
         _modsPage.SetFleasionStatus(FleasionManager.IsInstalled()
-            ? (FleasionManager.IsRunning() ? "установлен, запущен" : "установлен")
-            : "не установлен — нажми Скачать");
+            ? (FleasionManager.IsRunning() ? Lang.Get("Ver_InstalledRunning") : Lang.Get("Ver_Installed"))
+            : Lang.Get("Ver_NotInstalledDl"));
     }
 
     private async Task DownloadFleasionAsync()
     {
-        _modsPage.SetFleasionStatus("качаю с GitHub...");
+        _modsPage.SetFleasionStatus(Lang.Get("Mod_FleaDl"));
         try
         {
             var progress = new Progress<(long done, long total)>(t =>
             {
                 if (_closed) return;
                 string detail = t.total > 0
-                    ? $"{t.done / 1048576.0:F1} / {t.total / 1048576.0:F1} МБ"
-                    : $"{t.done / 1048576.0:F1} МБ";
-                _modsPage.SetFleasionStatus("качаю: " + detail);
+                    ? Lang.Format("Size_MbFmt", t.done / 1048576.0) + " / "
+                        + Lang.Format("Size_MbFmt", t.total / 1048576.0)
+                    : Lang.Format("Size_MbFmt", t.done / 1048576.0);
+                _modsPage.SetFleasionStatus(Lang.Format("Mod_FleaProgFmt", detail));
             });
             await FleasionManager.DownloadAsync(progress, CancellationToken.None);
             RefreshFleasionStatus();
         }
         catch (Exception ex)
         {
-            _modsPage.SetFleasionStatus("ошибка: " + ex.Message);
+            _modsPage.SetFleasionStatus(Lang.Format("Common_ErrFmt", ex.Message));
         }
     }
 
@@ -1122,7 +1161,7 @@ public partial class MainWindow : Window
         var (placeId, name) = _historyPage.SelectedGame();
         if (placeId <= 0)
         {
-            MessageBox.Show("Выбери игру в списке.", "NekoStrap",
+            MessageBox.Show(Lang.Get("Hist_SelGame"), "NekoStrap",
                 MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
@@ -1130,15 +1169,16 @@ public partial class MainWindow : Window
         FavoritesStore.Add(placeId, name);
         RefreshFavorites();
         _homePage.SetStatus(existed
-            ? "Уже в избранном — название обновил"
-            : $"В избранном: {(name.Length > 0 ? name : "Place " + placeId)}", true);
+            ? Lang.Get("Fav_Existed")
+            : Lang.Format("Fav_AddedFmt",
+                name.Length > 0 ? name : Lang.Format("Common_PlaceFmt", placeId)), true);
     }
 
     private void RemoveFavorite(long placeId)
     {
         FavoritesStore.Remove(placeId);
         RefreshFavorites();
-        _homePage.SetStatus("Убрал из избранного", true);
+        _homePage.SetStatus(Lang.Get("Fav_Removed"), true);
     }
 
     // ================= FastFlags =================
@@ -1154,12 +1194,12 @@ public partial class MainWindow : Window
         if (flags == null) return;
         if (_flagsPage.CollectFlags().Count > 0)
         {
-            if (MessageBox.Show($"Применить профиль «{name}»? Таблица заменится целиком.",
+            if (MessageBox.Show(Lang.Format("Prof_ApplyConfirm", name),
                     "NekoStrap", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
                 return;
         }
         _flagsPage.SetFlags(new Dictionary<string, string>(flags));
-        _homePage.SetStatus($"Профиль «{name}»: {flags.Count} флагов (нажми «Сохранить»)", false);
+        _homePage.SetStatus(Lang.Format("Prof_AppliedFmt", name, flags.Count), false);
     }
 
     private void SaveFlagProfile()
@@ -1167,21 +1207,21 @@ public partial class MainWindow : Window
         string name = _flagsPage.ProfileNameText;
         if (name.Length == 0)
         {
-            MessageBox.Show("Введи название профиля.", "NekoStrap",
+            MessageBox.Show(Lang.Get("Prof_NeedName"), "NekoStrap",
                 MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
         var flags = _flagsPage.CollectFlags();
         if (flags.Count == 0)
         {
-            MessageBox.Show("Таблица пустая — нечего сохранять.", "NekoStrap",
+            MessageBox.Show(Lang.Get("Prof_EmptyTable"), "NekoStrap",
                 MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
         FlagProfiles.SaveProfile(name, flags);
         _flagsPage.ClearProfileName();
         RefreshFlagProfiles();
-        _homePage.SetStatus($"Профиль «{name}» сохранён", true);
+        _homePage.SetStatus(Lang.Format("Prof_SavedFmt", name), true);
     }
 
     private void DeleteFlagProfile()
@@ -1189,33 +1229,33 @@ public partial class MainWindow : Window
         string name = _flagsPage.ProfileNameText;
         if (name.Length == 0)
         {
-            MessageBox.Show("Введи название профиля для удаления.", "NekoStrap",
+            MessageBox.Show(Lang.Get("Prof_NeedNameDel"), "NekoStrap",
                 MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
         if (FlagProfiles.Get(name) == null)
         {
-            MessageBox.Show($"Профиля «{name}» нет.", "NekoStrap",
+            MessageBox.Show(Lang.Format("Prof_NoSuchFmt", name), "NekoStrap",
                 MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
-        if (MessageBox.Show($"Удалить профиль «{name}»?", "NekoStrap",
+        if (MessageBox.Show(Lang.Format("Prof_DelConfirm", name), "NekoStrap",
                 MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
             return;
         FlagProfiles.Delete(name);
         _flagsPage.ClearProfileName();
         RefreshFlagProfiles();
-        _homePage.SetStatus($"Профиль «{name}» удалён", true);
+        _homePage.SetStatus(Lang.Format("Prof_DeletedFmt", name), true);
     }
 
     private void DeleteAllFlags()
     {
         if (_flagsPage.CollectFlags().Count == 0) return;
-        if (MessageBox.Show("Удалить ВСЕ флаги из таблицы?\nВ файл запишется после кнопки «Сохранить».",
+        if (MessageBox.Show(Lang.Get("Flags_ClearConfirm"),
                 "NekoStrap", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
             return;
         _flagsPage.ClearFlags();
-        _homePage.SetStatus("Все флаги удалены (нажми «Сохранить»)", false);
+        _homePage.SetStatus(Lang.Get("Flags_Cleared"), false);
     }
 
     private void SaveFlags()
@@ -1225,11 +1265,11 @@ public partial class MainWindow : Window
             var flags = _flagsPage.CollectFlags();
             FastFlagStore.Save(EffectiveVersion(), flags);
             RefreshHomeMeta();
-            _homePage.SetStatus("Флаги сохранены", true);
+            _homePage.SetStatus(Lang.Get("Flags_Saved"), true);
         }
         catch (Exception ex)
         {
-            MessageBox.Show("Не вышло сохранить флаги:\n" + ex.Message,
+            MessageBox.Show(Lang.Get("Flags_SaveErr") + ex.Message,
                 "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
@@ -1238,8 +1278,8 @@ public partial class MainWindow : Window
     {
         var dlg = new Microsoft.Win32.OpenFileDialog
         {
-            Title = "Импорт флагов из JSON",
-            Filter = "JSON (*.json)|*.json|Все файлы (*.*)|*.*"
+            Title = Lang.Get("Dlg_FlagsImport"),
+            Filter = $"JSON (*.json)|*.json|{Lang.Get("Dlg_AllFiles")} (*.*)|*.*"
         };
         if (dlg.ShowDialog(this) != true) return;
         try
@@ -1256,11 +1296,11 @@ public partial class MainWindow : Window
             foreach (var (k, v) in dict)
                 current[k] = v;
             _flagsPage.SetFlags(current);
-            _homePage.SetStatus($"Импортировано флагов: {dict.Count}", true);
+            _homePage.SetStatus(Lang.Format("Flags_ImportedFmt", dict.Count), true);
         }
         catch (Exception ex)
         {
-            MessageBox.Show("Не вышло импортировать:\n" + ex.Message,
+            MessageBox.Show(Lang.Get("Flags_ImportErr") + ex.Message,
                 "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
@@ -1269,7 +1309,7 @@ public partial class MainWindow : Window
     {
         var dlg = new Microsoft.Win32.SaveFileDialog
         {
-            Title = "Экспорт флагов в JSON",
+            Title = Lang.Get("Dlg_FlagsExport"),
             Filter = "JSON (*.json)|*.json",
             FileName = "fastflags.json"
         };
@@ -1290,11 +1330,11 @@ public partial class MainWindow : Window
                 w.WriteEndObject();
             }
             File.WriteAllBytes(dlg.FileName, ms.ToArray());
-            _homePage.SetStatus($"Экспортировано флагов: {flags.Count}", true);
+            _homePage.SetStatus(Lang.Format("Flags_ExportedFmt", flags.Count), true);
         }
         catch (Exception ex)
         {
-            MessageBox.Show("Не вышло экспортировать:\n" + ex.Message,
+            MessageBox.Show(Lang.Get("Flags_ExportErr") + ex.Message,
                 "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
@@ -1308,7 +1348,7 @@ public partial class MainWindow : Window
         _versionsPage.SetStudioStatus(
             RobloxPaths.IsVersionGuid(studio) &&
             File.Exists(Path.Combine(RobloxPaths.VersionsDir, studio, RobloxInstaller.StudioExe))
-            ? studio : "не установлено");
+            ? studio : Lang.Get("Ver_StudioNotSet"));
     }
 
     private void ActivateSelectedVersion()
@@ -1316,7 +1356,7 @@ public partial class MainWindow : Window
         string? guid = _versionsPage.SelectedVersion();
         if (guid == null)
         {
-            MessageBox.Show("Выбери версию в списке.", "NekoStrap",
+            MessageBox.Show(Lang.Get("Ver_SelOne"), "NekoStrap",
                 MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
@@ -1327,7 +1367,7 @@ public partial class MainWindow : Window
         _config.Save(RobloxPaths.ConfigPath);
         RefreshVersions();
         RefreshHomeMeta();
-        _homePage.SetStatus("Активна версия " + guid, true);
+        _homePage.SetStatus(Lang.Format("Ver_ActivatedFmt", guid), true);
     }
 
     private void DeleteSelectedVersion()
@@ -1335,17 +1375,17 @@ public partial class MainWindow : Window
         string? guid = _versionsPage.SelectedVersion();
         if (guid == null)
         {
-            MessageBox.Show("Выбери версию в списке.", "NekoStrap",
+            MessageBox.Show(Lang.Get("Ver_SelOne"), "NekoStrap",
                 MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
         if (guid == _config.InstalledVersion || guid == _config.StudioVersion)
         {
-            MessageBox.Show("Активную версию удалить нельзя.", "NekoStrap",
+            MessageBox.Show(Lang.Get("Ver_NoDelActive"), "NekoStrap",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
-        if (MessageBox.Show($"Удалить {guid}?", "NekoStrap",
+        if (MessageBox.Show(Lang.Format("Ver_DelConfirm", guid), "NekoStrap",
                 MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
             return;
         try
@@ -1372,19 +1412,19 @@ public partial class MainWindow : Window
             var progress = new Progress<InstallProgress>(p =>
             {
                 if (_closed) return;
-                _homePage.SetStatus($"Studio — {p.Phase}: {p.Detail}", false);
+                _homePage.SetStatus($"Studio — {FormatInstall(p)}", false);
                 _homePage.SetProgress(p.Fraction);
             });
             string guid = await RobloxInstaller.EnsureStudioInstalledAsync(
                 _config, progress, CancellationToken.None);
             _config.Save(RobloxPaths.ConfigPath);
             RefreshVersions();
-            _homePage.SetStatus("Studio установлено: " + guid, true);
+            _homePage.SetStatus(Lang.Format("Ver_StudioDone", guid), true);
         }
         catch (Exception ex)
         {
-            _homePage.SetStatus("Ошибка Studio", false);
-            MessageBox.Show("Не вышло поставить Studio:\n" + ex.Message,
+            _homePage.SetStatus(Lang.Get("Ver_StudioErr"), false);
+            MessageBox.Show(Lang.Get("Ver_StudioErr2") + ex.Message,
                 "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
@@ -1404,7 +1444,7 @@ public partial class MainWindow : Window
             string? exe = guid != null
                 ? Path.Combine(RobloxPaths.VersionsDir, guid, RobloxInstaller.StudioExe) : null;
             if (exe == null || !File.Exists(exe))
-                throw new InvalidOperationException("Studio не установлено — нажми Установить");
+                throw new InvalidOperationException(Lang.Get("Ver_StudioNeedInstall"));
             RobloxLauncher.LaunchStudio(exe);
         }
         catch (Exception ex)
@@ -1438,7 +1478,7 @@ public partial class MainWindow : Window
         long placeId = _historyPage.SelectedPlaceId();
         if (placeId <= 0)
         {
-            MessageBox.Show("Выбери игру в списке.", "NekoStrap",
+            MessageBox.Show(Lang.Get("Hist_SelGame"), "NekoStrap",
                 MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
@@ -1450,7 +1490,7 @@ public partial class MainWindow : Window
         long placeId = _historyPage.SelectedPlaceId();
         if (placeId <= 0)
         {
-            MessageBox.Show("Выбери игру в списке.", "NekoStrap",
+            MessageBox.Show(Lang.Get("Hist_SelGame"), "NekoStrap",
                 MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
@@ -1462,7 +1502,7 @@ public partial class MainWindow : Window
     private void ClearHistory()
     {
         if (_playtime.Games.Count == 0) return;
-        if (MessageBox.Show("Стереть всю историю игр?", "NekoStrap",
+        if (MessageBox.Show(Lang.Get("Hist_ClearConfirm"), "NekoStrap",
                 MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
             return;
         _playtime.Clear();
@@ -1475,13 +1515,13 @@ public partial class MainWindow : Window
         var s = _historyPage.SelectedSession();
         if (s == null)
         {
-            MessageBox.Show("Выбери заход в нижнем списке «Последние заходы».",
+            MessageBox.Show(Lang.Get("Hist_SelSession"),
                 "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Information);
             return null;
         }
         if (s.PlaceId <= 0)
         {
-            MessageBox.Show("У этого захода нет PlaceId — туда не перезайти.",
+            MessageBox.Show(Lang.Get("Hist_NoPlace"),
                 "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Warning);
             return null;
         }
@@ -1494,8 +1534,7 @@ public partial class MainWindow : Window
         if (s == null) return;
         if (s.JobId.Length == 0)
         {
-            if (MessageBox.Show(
-                    "JobId сервера не сохранился — зайду на случайный сервер того же плейса?",
+            if (MessageBox.Show(Lang.Get("Common_NoJob"),
                     "NekoStrap", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
                 return;
         }
@@ -1520,12 +1559,13 @@ public partial class MainWindow : Window
     {
         var s = RequireSession();
         if (s == null) return;
+        string dash = "—";
         string text =
-            $"Игра: {s.DisplayName}\n" +
+            $"{Lang.Get("Srv_Game")}: {s.DisplayName}\n" +
             $"PlaceId: {s.PlaceId}\n" +
-            $"JobId: {(s.JobId.Length > 0 ? s.JobId : "—")}\n" +
-            $"Ссылка: {RobloxLauncher.BuildServerUrl(s.PlaceId, s.JobId)}\n" +
-            $"На сайте: {RobloxLauncher.BuildWebUrl(s.PlaceId)}";
+            $"JobId: {(s.JobId.Length > 0 ? s.JobId : dash)}\n" +
+            $"{Lang.Get("Srv_Link")}: {RobloxLauncher.BuildServerUrl(s.PlaceId, s.JobId)}\n" +
+            $"{Lang.Get("Srv_Site")}: {RobloxLauncher.BuildWebUrl(s.PlaceId)}";
         CopyText(text);
     }
 
@@ -1540,7 +1580,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show("Не вышло открыть браузер:\n" + ex.Message,
+            MessageBox.Show(Lang.Get("Common_BrowserErr") + ex.Message,
                 "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
@@ -1550,7 +1590,7 @@ public partial class MainWindow : Window
         var s = _historyPage.SelectedSession();
         if (s == null)
         {
-            MessageBox.Show("Выбери заход в нижнем списке.", "NekoStrap",
+            MessageBox.Show(Lang.Get("Hist_SelSession2"), "NekoStrap",
                 MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
@@ -1561,7 +1601,7 @@ public partial class MainWindow : Window
     private void ClearSessions()
     {
         if (_recent.List().Count == 0) return;
-        if (MessageBox.Show("Стереть лог последних заходов?\n(Суммарное время по играм останется.)",
+        if (MessageBox.Show(Lang.Get("Hist_ClearSessConfirm"),
                 "NekoStrap", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
             return;
         _recent.Clear();
@@ -1573,11 +1613,11 @@ public partial class MainWindow : Window
         try
         {
             Clipboard.SetText(text);
-            _homePage.SetStatus("Скопировано в буфер обмена", true);
+            _homePage.SetStatus(Lang.Get("Common_Copied"), true);
         }
         catch (Exception ex)
         {
-            MessageBox.Show("Не вышло скопировать:\n" + ex.Message,
+            MessageBox.Show(Lang.Get("Common_CopyErr") + ex.Message,
                 "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
@@ -1585,7 +1625,7 @@ public partial class MainWindow : Window
     /// <summary>
     /// Перезаход на тот же сервер по JobId. Без JobId — обычный заход на плейс.
     /// </summary>
-    private async void LaunchServerByJob(long placeId, string jobId)
+    private void LaunchServerByJob(long placeId, string jobId)
     {
         try
         {
@@ -1593,32 +1633,21 @@ public partial class MainWindow : Window
             string? exe = RobloxLauncher.GetExePath(guid);
             if (exe == null)
             {
-                MessageBox.Show("Roblox не установлен — нажми «Играть».",
+                MessageBox.Show(Lang.Get("Play_NoRoblox"),
                     "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             _watcher.Clear();
-            Process? process = null;
-            var (ticket, acc) = await GetActiveTicketAsync();
-            if (ticket.Length > 0 && acc != null)
-            {
-                _homePage.SetStatus(jobId.Length > 0
-                    ? "Возвращаю на тот же сервер: " + acc.Label + "..." : "Открываю плейс: " + acc.Label + "...", false);
-                process = RobloxAuth.LaunchServer(exe, ticket, placeId, jobId);
-            }
+            _homePage.SetStatus(jobId.Length > 0
+                ? Lang.Get("Hop_Rejoin") : Lang.Get("Play_OpenPlace"), false);
+            Process? process = RobloxLauncher.LaunchServer(exe, placeId, jobId);
             if (process == null)
-            {
-                _homePage.SetStatus(jobId.Length > 0
-                    ? "Возвращаю на тот же сервер..." : "Открываю плейс...", false);
-                process = RobloxLauncher.LaunchServer(exe, placeId, jobId);
-            }
-            if (process == null)
-                throw new InvalidOperationException("не вышло запустить процесс клиента");
+                throw new InvalidOperationException(Lang.Get("Play_LaunchFail"));
             AfterLaunch(process);
         }
         catch (Exception ex)
         {
-            MessageBox.Show("Не вышло перезайти:\n" + ex.Message,
+            MessageBox.Show(Lang.Get("Hop_RejoinErr") + ex.Message,
                 "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
@@ -1732,7 +1761,7 @@ public partial class MainWindow : Window
 
     private void CdnApply()
     {
-        if (!EnsureAdmin("включить CDN-фикс")) return;
+        if (!EnsureAdmin(Lang.Get("Cdn_ActOn"))) return;
         try
         {
             string result = CdnFix.Apply();
@@ -1740,14 +1769,14 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show("Не вышло включить фикс:\n" + ex.Message,
+            MessageBox.Show(Lang.Get("Cdn_OnErr") + ex.Message,
                 "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 
     private void CdnRollback()
     {
-        if (!EnsureAdmin("откатить CDN-фикс")) return;
+        if (!EnsureAdmin(Lang.Get("Cdn_ActOff"))) return;
         try
         {
             string result = CdnFix.Rollback();
@@ -1755,7 +1784,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show("Не вышло откатить:\n" + ex.Message,
+            MessageBox.Show(Lang.Get("Cdn_OffErr") + ex.Message,
                 "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
@@ -1764,7 +1793,7 @@ public partial class MainWindow : Window
     {
         if (CdnFix.IsAdmin()) return true;
         if (MessageBox.Show(
-                $"Чтобы {action}, нужны права администратора.\nПерезапустить лаунчер с правами?",
+                Lang.Format("Cdn_AdminFmt", action),
                 "NekoStrap", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
             return false;
         try
@@ -1789,21 +1818,20 @@ public partial class MainWindow : Window
 
     /// <summary>
     /// Декод картинки в BitmapSource без лока файла. Webp WPF не умеет —
-    /// его тянем через SkiaSharp в PNG-байты (как было в WinForms).
-    /// Гифки: WPF показывает первый кадр статично (анимация — позже).
+    /// его тянем через SkiaSharp в PNG-байты. Гифки идут через GifPlayer.
     /// </summary>
     private static System.Windows.Media.Imaging.BitmapSource? DecodeWallpaper(string path)
     {
         string ext = Path.GetExtension(path).ToLowerInvariant();
         if (!WallpaperExts.Contains(ext))
-            throw new InvalidOperationException("Формат не поддерживается (jpg/png/gif/webp).");
+            throw new InvalidOperationException(Lang.Get("Wall_BadFmt"));
         Stream stream;
         MemoryStream? owned = null;
         if (ext == ".webp")
         {
             using var sk = SkiaSharp.SKBitmap.Decode(path);
             if (sk == null)
-                throw new InvalidOperationException("Не вышло декодировать webp.");
+                throw new InvalidOperationException(Lang.Get("Wall_BadWebp"));
             using var img = SkiaSharp.SKImage.FromBitmap(sk);
             using var data = img.Encode(SkiaSharp.SKEncodedImageFormat.Png, 100);
             owned = new MemoryStream(data.ToArray());
@@ -1834,8 +1862,8 @@ public partial class MainWindow : Window
     {
         var dlg = new Microsoft.Win32.OpenFileDialog
         {
-            Title = "Выбери фон",
-            Filter = "Фото (*.jpg;*.png;*.gif;*.webp)|*.jpg;*.jpeg;*.png;*.bmp;*.gif;*.webp"
+            Title = Lang.Get("Dlg_WallTitle"),
+            Filter = $"{Lang.Get("Dlg_Photo")} (*.jpg;*.png;*.gif;*.webp)|*.jpg;*.jpeg;*.png;*.bmp;*.gif;*.webp"
         };
         if (dlg.ShowDialog(this) != true) return;
         try
@@ -1847,7 +1875,7 @@ public partial class MainWindow : Window
             {
                 using var trial = GifPlayer.TryCreate(dlg.FileName, WallpaperImage);
                 if (trial == null)
-                    throw new InvalidOperationException("не вышло загрузить гифку");
+                    throw new InvalidOperationException(Lang.Get("Wall_BadGif"));
             }
             else
             {
@@ -1857,11 +1885,11 @@ public partial class MainWindow : Window
             SaveQuiet();
             ApplyWallpaper();
             RefreshWallpaperSettings();
-            _homePage.SetStatus("Фон: " + Path.GetFileName(dlg.FileName), true);
+            _homePage.SetStatus(Lang.Format("Wall_SetFmt", Path.GetFileName(dlg.FileName)), true);
         }
         catch (Exception ex)
         {
-            MessageBox.Show("Не вышло загрузить фон: " + ex.Message,
+            MessageBox.Show(Lang.Format("Wall_LoadErrFmt", ex.Message),
                 "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
@@ -1872,7 +1900,7 @@ public partial class MainWindow : Window
         SaveQuiet();
         ApplyWallpaper();
         RefreshWallpaperSettings();
-        _homePage.SetStatus("Фон сброшен", true);
+        _homePage.SetStatus(Lang.Get("Wall_Reset"), true);
     }
 
     /// <summary>
@@ -1970,7 +1998,7 @@ public partial class MainWindow : Window
                 _ = Dispatcher.BeginInvoke(new Action(() =>
                 {
                     if (_closed) return;
-                    _homePage.SetStatus($"Доступна версия {rel.Tag} — см. раздел «О программе»", false);
+                    _homePage.SetStatus(Lang.Format("Upd_AppAvailFmt", rel.Tag), false);
                 }));
             }
             catch { /* без сети — молча */ }
@@ -1981,33 +2009,34 @@ public partial class MainWindow : Window
     {
         _aboutPage.ShowDownloadButton(false);
         _aboutPage.SetReleaseNotes("");
-        _aboutPage.SetUpdateStatus("Проверяю релизы на GitHub...");
+        _aboutPage.SetUpdateStatus(Lang.Get("Upd_Checking"));
         try
         {
             var rel = await AppUpdater.GetLatestAsync();
             if (_closed) return;
             if (rel == null)
             {
-                _aboutPage.SetUpdateStatus(
-                    $"Не вышло проверить{(manual ? " (нет сети?)" : "")}. Релизы вручную: github.com/mesorg-dev/NekoStrap/releases");
+                _aboutPage.SetUpdateStatus(Lang.Format("Upd_FailFmt",
+                    manual ? Lang.Get("Upd_FailNet") : ""));
                 return;
             }
             if (!AppUpdater.IsNewer(AppInfo.Version, rel.Tag))
             {
                 _pendingRelease = null;
-                _aboutPage.SetUpdateStatus($"У тебя свежая версия (v{AppInfo.Version}, релиз {rel.Tag}).");
+                _aboutPage.SetUpdateStatus(Lang.Format("Upd_FreshFmt", AppInfo.Version, rel.Tag));
                 return;
             }
             _pendingRelease = rel;
-            string when = rel.PublishedAt == default ? "" : $" ({rel.PublishedAt.ToLocalTime():d MMM yyyy})";
-            _aboutPage.SetUpdateStatus($"Доступна {rel.Tag}{when}. Текущая: v{AppInfo.Version}.");
+            string when = rel.PublishedAt == default ? ""
+                : $" ({rel.PublishedAt.ToLocalTime().ToString("d MMM yyyy", Lang.Culture)})";
+            _aboutPage.SetUpdateStatus(Lang.Format("Upd_AvailFmt", rel.Tag, when, AppInfo.Version));
             _aboutPage.SetReleaseNotes(rel.Notes);
             _aboutPage.ShowDownloadButton(true);
         }
         catch (Exception ex)
         {
             if (!_closed)
-                _aboutPage.SetUpdateStatus("Не вышло проверить: " + ex.Message);
+                _aboutPage.SetUpdateStatus(Lang.Format("Upd_FailFmt", ": " + ex.Message));
         }
     }
 
@@ -2023,13 +2052,14 @@ public partial class MainWindow : Window
             {
                 if (_closed) return;
                 string detail = t.total > 0
-                    ? $"{t.done / 1048576.0:F1} / {t.total / 1048576.0:F1} МБ"
-                    : $"{t.done / 1048576.0:F1} МБ";
-                _aboutPage.SetUpdateStatus($"Качаю {rel.Tag}: " + detail);
+                    ? Lang.Format("Size_MbFmt", t.done / 1048576.0) + " / "
+                        + Lang.Format("Size_MbFmt", t.total / 1048576.0)
+                    : Lang.Format("Size_MbFmt", t.done / 1048576.0);
+                _aboutPage.SetUpdateStatus(Lang.Format("Upd_DlFmt", rel.Tag, detail));
             });
             await AppUpdater.DownloadAsync(rel.DownloadUrl, dest, progress, CancellationToken.None);
             if (_closed) return;
-            _aboutPage.SetUpdateStatus("Готово, перезапускаюсь на новую версию...");
+            _aboutPage.SetUpdateStatus(Lang.Get("Upd_Done"));
             await Task.Delay(800);
             AppUpdater.InstallAndRestart(dest);
             _reallyExit = true;
@@ -2039,7 +2069,7 @@ public partial class MainWindow : Window
         {
             if (!_closed)
             {
-                _aboutPage.SetUpdateStatus("Не вышло скачать: " + ex.Message);
+                _aboutPage.SetUpdateStatus(Lang.Get("Upd_DlErr") + ex.Message);
                 _aboutPage.ShowDownloadButton(true);
             }
         }
@@ -2066,7 +2096,7 @@ public partial class MainWindow : Window
         Hide();
         if (_config.NotificationsEnabled)
             _trayIcon?.ShowBalloonTip(1500, "NekoStrap",
-                "Лаунчер свёрнут в трей. Выход — правый клик по иконке.",
+                Lang.Get("Tray_Minimized"),
                 WinForms.ToolTipIcon.Info);
     }
 
@@ -2087,23 +2117,23 @@ public partial class MainWindow : Window
             Visible = true
         };
         var menu = new WinForms.ContextMenuStrip();
-        menu.Items.Add("Открыть", null, (_, _) => ShowFromTray());
-        menu.Items.Add("Играть", null, async (_, _) =>
+        menu.Items.Add(Lang.Get("Tray_Open"), null, (_, _) => ShowFromTray());
+        menu.Items.Add(Lang.Get("Btn_Play"), null, async (_, _) =>
         {
             ShowFromTray();
             await PlayFlowAsync();
         });
-        menu.Items.Add("Информация о сервере", null, (_, _) =>
+        menu.Items.Add(Lang.Get("Tray_ServerInfo"), null, (_, _) =>
         {
             ShowFromTray();
             ShowServerInfoDialog();
         });
-        menu.Items.Add("Перезайти (тот же сервер)", null, async (_, _) =>
+        menu.Items.Add(Lang.Get("Tray_Rejoin"), null, async (_, _) =>
         {
             ShowFromTray();
             await RejoinSameServerAsync();
         });
-        menu.Items.Add("Другой сервер этого плейса", null, async (_, _) =>
+        menu.Items.Add(Lang.Get("Tray_Hop"), null, async (_, _) =>
         {
             ShowFromTray();
             await ServerHopAsync();
@@ -2111,7 +2141,7 @@ public partial class MainWindow : Window
         menu.Items.Add(BuildMusicMenu());
         menu.Items.Add(BuildColorMenu());
         menu.Items.Add(new WinForms.ToolStripSeparator());
-        menu.Items.Add("Выход", null, (_, _) =>
+        menu.Items.Add(Lang.Get("Tray_Exit"), null, (_, _) =>
         {
             _reallyExit = true;
             Close();
@@ -2144,7 +2174,7 @@ public partial class MainWindow : Window
     /// <summary>NekoStrap Music в трее: управление + список треков из папки Music.</summary>
     private WinForms.ToolStripMenuItem BuildMusicMenu()
     {
-        var music = new WinForms.ToolStripMenuItem("Музыка");
+        var music = new WinForms.ToolStripMenuItem(Lang.Get("Tray_Music"));
         music.DropDownOpening += (_, _) =>
         {
             music.DropDownItems.Clear();
@@ -2153,27 +2183,27 @@ public partial class MainWindow : Window
                 _music.Refresh();
                 string now = _music.CurrentTitle;
                 var header = new WinForms.ToolStripMenuItem(
-                    now.Length > 0 ? "♪ " + now : "Папка Music пуста — кинь туда mp3")
+                    now.Length > 0 ? "♪ " + now : Lang.Get("Tray_MusicEmpty"))
                 {
                     Enabled = false
                 };
                 music.DropDownItems.Add(header);
                 music.DropDownItems.Add(new WinForms.ToolStripSeparator());
-                music.DropDownItems.Add(_music.IsPlaying ? "Пауза" : "Играть", null,
+                music.DropDownItems.Add(_music.IsPlaying ? Lang.Get("Tray_Pause") : Lang.Get("Btn_Play"), null,
                     (_, _) => _music.PlayPause());
-                music.DropDownItems.Add("Следующий", null, (_, _) => _music.Next());
-                music.DropDownItems.Add("Предыдущий", null, (_, _) => _music.Prev());
-                music.DropDownItems.Add("Стоп", null, (_, _) => _music.Stop());
-                var shuffle = new WinForms.ToolStripMenuItem("Шаффл")
+                music.DropDownItems.Add(Lang.Get("Tray_Next"), null, (_, _) => _music.Next());
+                music.DropDownItems.Add(Lang.Get("Tray_Prev"), null, (_, _) => _music.Prev());
+                music.DropDownItems.Add(Lang.Get("Tray_Stop"), null, (_, _) => _music.Stop());
+                var shuffle = new WinForms.ToolStripMenuItem(Lang.Get("Tray_Shuffle"))
                 {
                     Checked = _music.Shuffle,
                     CheckOnClick = true
                 };
                 shuffle.CheckedChanged += (_, _) => _music.Shuffle = shuffle.Checked;
                 music.DropDownItems.Add(shuffle);
-                music.DropDownItems.Add("Громче", null,
+                music.DropDownItems.Add(Lang.Get("Tray_Louder"), null,
                     (_, _) => _music.SetVolume(_music.Volume + 0.1f));
-                music.DropDownItems.Add("Тише", null,
+                music.DropDownItems.Add(Lang.Get("Tray_Quieter"), null,
                     (_, _) => _music.SetVolume(_music.Volume - 0.1f));
                 music.DropDownItems.Add(new WinForms.ToolStripSeparator());
 
@@ -2193,10 +2223,10 @@ public partial class MainWindow : Window
                 }
                 if (_music.Tracks.Count > shown)
                     music.DropDownItems.Add(new WinForms.ToolStripMenuItem(
-                        $"…и ещё {_music.Tracks.Count - shown}") { Enabled = false });
+                        Lang.Format("Tray_MoreFmt", _music.Tracks.Count - shown)) { Enabled = false });
 
                 music.DropDownItems.Add(new WinForms.ToolStripSeparator());
-                music.DropDownItems.Add("Открыть папку музыки", null, (_, _) =>
+                music.DropDownItems.Add(Lang.Get("Tray_OpenMusic"), null, (_, _) =>
                 {
                     try
                     {
@@ -2215,21 +2245,21 @@ public partial class MainWindow : Window
     /// <summary>Цветокоррекция в трее: вкл, пресеты, авто-режим, тюнер.</summary>
     private WinForms.ToolStripMenuItem BuildColorMenu()
     {
-        var root = new WinForms.ToolStripMenuItem("Цветокоррекция");
+        var root = new WinForms.ToolStripMenuItem(Lang.Get("Tray_Color"));
         root.DropDownOpening += (_, _) =>
         {
             root.DropDownItems.Clear();
             try
             {
                 var state = new WinForms.ToolStripMenuItem(
-                    !_config.ColorFxEnabled ? "Выключена"
-                    : _config.ColorFxAuto ? (IsRobloxForeground() ? "Активна (игра)" : "Ждёт игру…")
-                    : "Активна всегда")
+                    !_config.ColorFxEnabled ? Lang.Get("Color_Off")
+                    : _config.ColorFxAuto ? (IsRobloxForeground() ? Lang.Get("Color_OnGame") : Lang.Get("Color_WaitGame"))
+                    : Lang.Get("Color_OnAlways"))
                 { Enabled = false };
                 root.DropDownItems.Add(state);
                 root.DropDownItems.Add(new WinForms.ToolStripSeparator());
 
-                var on = new WinForms.ToolStripMenuItem("Включена")
+                var on = new WinForms.ToolStripMenuItem(Lang.Get("Tune_On_L"))
                     { Checked = _config.ColorFxEnabled, CheckOnClick = true };
                 on.CheckedChanged += (_, _) =>
                 {
@@ -2239,7 +2269,7 @@ public partial class MainWindow : Window
                 };
                 root.DropDownItems.Add(on);
 
-                var auto = new WinForms.ToolStripMenuItem("Только когда игра активна")
+                var auto = new WinForms.ToolStripMenuItem(Lang.Get("Color_Auto"))
                     { Checked = _config.ColorFxAuto, CheckOnClick = true };
                 auto.CheckedChanged += (_, _) =>
                 {
@@ -2256,12 +2286,12 @@ public partial class MainWindow : Window
                     item.Click += (_, _) => ApplyColorPreset(s);
                     root.DropDownItems.Add(item);
                 }
-                Preset("Стандарт", ColorSettings.Default);
-                Preset("Кино", ColorSettings.Cinema);
-                Preset("Ярко", ColorSettings.Vivid);
-                Preset("Чёрно-белое", ColorSettings.Mono);
+                Preset(Lang.Get("Tune_Standard"), ColorSettings.Default);
+                Preset(Lang.Get("Tune_Cinema"), ColorSettings.Cinema);
+                Preset(Lang.Get("Tune_Vivid"), ColorSettings.Vivid);
+                Preset(Lang.Get("Tune_Mono"), ColorSettings.Mono);
                 root.DropDownItems.Add(new WinForms.ToolStripSeparator());
-                root.DropDownItems.Add("Настроить… (ползунки)", null, (_, _) => OpenColorTuner());
+                root.DropDownItems.Add(Lang.Get("Tray_Tune"), null, (_, _) => OpenColorTuner());
             }
             catch { /* ignore */ }
         };
@@ -2347,7 +2377,7 @@ public partial class MainWindow : Window
         if (!IsPlayerRunning(p)) return;
         try
         {
-            _homePage.SetStatus("Закрываю текущий сервер...", false);
+            _homePage.SetStatus(Lang.Get("Hop_Closing"), false);
             p!.Kill();
             try { await p.WaitForExitAsync(CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(5)); }
             catch (TimeoutException) { /* не дождались — запускаем всё равно */ }
@@ -2356,7 +2386,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show("Не вышло закрыть Roblox:\n" + ex.Message,
+            MessageBox.Show(Lang.Get("Hop_KillErr") + ex.Message,
                 "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
@@ -2371,7 +2401,7 @@ public partial class MainWindow : Window
         long placeId = CurrentHopPlaceId();
         if (placeId <= 0)
         {
-            MessageBox.Show("Не знаю куда хопать — зайди в игру хоть раз.",
+            MessageBox.Show(Lang.Get("Hop_NoPlace"),
                 "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
@@ -2399,7 +2429,7 @@ public partial class MainWindow : Window
         long placeId = CurrentHopPlaceId();
         if (placeId <= 0)
         {
-            MessageBox.Show("Пока некуда возвращаться — зайди в игру хоть раз.",
+            MessageBox.Show(Lang.Get("Hop_NoRejoin"),
                 "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
@@ -2421,8 +2451,7 @@ public partial class MainWindow : Window
         catch { /* ignore */ }
         if (jobId.Length == 0)
         {
-            if (MessageBox.Show(
-                    "JobId сервера не сохранился — зайду на случайный сервер того же плейса?",
+            if (MessageBox.Show(Lang.Get("Common_NoJob"),
                     "NekoStrap", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
                 return;
         }
@@ -2447,18 +2476,19 @@ public partial class MainWindow : Window
         try { playing = _playerProcess != null && !_playerProcess.HasExited; } catch { /* ignore */ }
         if (!playing || session == null)
         {
-            MessageBox.Show("Сейчас никуда не зашёл — запусти игру.",
-                "Сервер", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(Lang.Get("Srv_NotPlaying"),
+                Lang.Get("Srv_Title"), MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
+        string dash = "—";
         string text =
-            $"Игра: {(_lastGameName.Length > 0 ? _lastGameName : "—")}\n" +
+            $"{Lang.Get("Srv_Game")}: {(_lastGameName.Length > 0 ? _lastGameName : dash)}\n" +
             $"PlaceId: {session.PlaceId}\n" +
             $"IP: {_lastServerIp}\n" +
-            $"Место: {_lastGeoText}\n" +
-            $"Пинг: {_lastPingText}\n" +
-            $"JobId: {(session.JobId.Length > 0 ? session.JobId : "—")}";
-        if (MessageBox.Show(text + "\n\nСкопировать всё в буфер обмена?", "Сервер",
+            $"{Lang.Get("Srv_Geo")}: {_lastGeoText}\n" +
+            $"{Lang.Get("Srv_Ping")}: {_lastPingText}\n" +
+            $"JobId: {(session.JobId.Length > 0 ? session.JobId : dash)}";
+        if (MessageBox.Show(text + Lang.Get("Srv_CopyAsk"), Lang.Get("Srv_Title"),
                 MessageBoxButton.YesNo, MessageBoxImage.Information) == MessageBoxResult.Yes)
         {
             try { Clipboard.SetText(text); } catch { /* ignore */ }
@@ -2471,7 +2501,7 @@ public partial class MainWindow : Window
         if (!_config.NotificationsEnabled) return;
         try
         {
-            _trayIcon?.ShowBalloonTip(4000, "NekoStrap — сервер",
+            _trayIcon?.ShowBalloonTip(4000, Lang.Get("Tray_ServerBalloon"),
                 $"{(_lastGameName.Length > 0 ? _lastGameName : "Roblox")}\n" +
                 $"{_lastServerIp}  •  {_lastGeoText}  •  {_lastPingText}",
                 WinForms.ToolTipIcon.Info);

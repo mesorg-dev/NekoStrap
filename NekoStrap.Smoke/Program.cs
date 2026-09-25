@@ -113,6 +113,26 @@ internal static class Program
                 if (flags.CollectFlags().Count != 0) throw new Exception("SetFlags не чистит");
             });
 
+            Check("Flags: drag&drop логика", () =>
+            {
+                flags.SetFlags(new Dictionary<string, string> { { "AFlag", "1" }, { "BFlag", "2" } });
+                flags.ApplyPresetDrop(FastFlagsPage.BuiltinPresets[1]);      // FPS 144
+                if (flags.CollectFlags().Count != 3 ||
+                    flags.CollectFlags()["DFIntTaskSchedulerTargetFps"] != "144")
+                    throw new Exception("ApplyPresetDrop не добавил флаг");
+                flags.ApplyPresetDrop(FastFlagsPage.BuiltinPresets[2]);      // FPS 240
+                if (flags.CollectFlags()["DFIntTaskSchedulerTargetFps"] != "240")
+                    throw new Exception("ApplyPresetDrop не обновил значение");
+                if (flags.CollectFlags().Count != 3) throw new Exception("ApplyPresetDrop задублировал");
+                flags.ReorderRow(2, 0);
+                if (flags.RowNames()[0] != "DFIntTaskSchedulerTargetFps")
+                    throw new Exception("ReorderRow не поднял строку наверх");
+                flags.ReorderRow(0, 99);                                    // краевые значения
+                if (flags.RowNames()[^1] != "DFIntTaskSchedulerTargetFps")
+                    throw new Exception("ReorderRow не увёл строку в конец");
+                flags.SetFlags(new Dictionary<string, string>());
+            });
+
             var versions = (VersionsPage)GetField(win, "_versionsPage")!;
             Check("Versions: таблица", () =>
             {

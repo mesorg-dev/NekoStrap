@@ -1,0 +1,82 @@
+<UserControl x:Class="NekoStrap.Wpf.Pages.ChatPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="clr-namespace:NekoStrap.Wpf">
+  <StackPanel>
+    <TextBlock Style="{StaticResource H1}" Text="{l:L Nav_Chat}" Margin="0,0,0,6"/>
+    <TextBlock Style="{StaticResource Body}" TextWrapping="Wrap" Text="{l:L Chat_Sub}" Margin="0,0,0,10"/>
+
+    <!-- Пометка «в разработке» -->
+    <Border Style="{StaticResource Card}" Margin="0,0,0,12" Padding="14,10">
+      <StackPanel>
+        <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" FontWeight="Bold"
+                   Foreground="{DynamicResource FgBrush}" Text="{l:L Chat_WipTitle}" Margin="0,0,0,4"/>
+        <TextBlock Style="{StaticResource Mono}" TextWrapping="Wrap" Text="{l:L Chat_Wip}"/>
+      </StackPanel>
+    </Border>
+
+    <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+      <DockPanel LastChildFill="True">
+        <!-- Статус + режим -->
+        <DockPanel DockPanel.Dock="Top" LastChildFill="False" Margin="0,0,0,8">
+          <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+            <Button x:Name="OverlayButton" Style="{StaticResource OutlineButton}"
+                    Content="{l:L Chat_Overlay}" Width="100" Height="30" Click="OverlayButton_Click"/>
+            <Button x:Name="AllButton" Style="{StaticResource PrimaryButton}"
+                    Content="{l:L Chat_All}" Width="90" Height="30" Margin="8,0,0,0" Click="AllButton_Click"/>
+            <Button x:Name="DmButton" Style="{StaticResource OutlineButton}"
+                    Content="{l:L Chat_Dm}" Width="70" Height="30" Margin="8,0,0,0" Click="DmButton_Click"/>
+          </StackPanel>
+          <StackPanel Orientation="Horizontal">
+            <Ellipse x:Name="StateDot" Width="8" Height="8" Fill="{StaticResource FgDimmerBrush}"
+                     VerticalAlignment="Center"/>
+            <TextBlock x:Name="StateLabel" Style="{StaticResource Mono}" Text="{l:L Chat_Off}"
+                       VerticalAlignment="Center" Margin="8,0,0,0"/>
+          </StackPanel>
+        </DockPanel>
+
+        <!-- Контент: сообщения + игроки -->
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="190"/>
+          </Grid.ColumnDefinitions>
+
+          <Grid Grid.Column="0" Margin="0,0,10,0">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="*"/>
+              <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Border Grid.Row="0" Background="{StaticResource LineSoftBrush}" CornerRadius="2" Height="340">
+              <ScrollViewer x:Name="MessagesScroll" Style="{StaticResource DarkScrollViewer}"
+                            VerticalScrollBarVisibility="Auto"
+                            HorizontalScrollBarVisibility="Disabled" Padding="10,8">
+                <StackPanel x:Name="MessagesPanel"/>
+              </ScrollViewer>
+            </Border>
+            <DockPanel Grid.Row="1" Margin="0,8,0,0" LastChildFill="True">
+              <Button Style="{StaticResource PrimaryButton}" Content="{l:L Btn_Send}" Width="100" Height="36"
+                      DockPanel.Dock="Right" Margin="8,0,0,0" Click="SendButton_Click"/>
+              <TextBox x:Name="InputBox" Style="{StaticResource DarkInput}" Height="36"
+                       VerticalContentAlignment="Center" MaxLength="500"
+                       KeyDown="InputBox_KeyDown"/>
+            </DockPanel>
+          </Grid>
+
+          <Border Grid.Column="1" Background="{StaticResource LineSoftBrush}" CornerRadius="2">
+            <DockPanel LastChildFill="True">
+              <TextBlock DockPanel.Dock="Top" Style="{StaticResource Mono}" FontSize="11"
+                         Text="{l:L Chat_Users}" Margin="10,8,10,4"/>
+              <ListBox x:Name="UsersList" Background="Transparent" BorderThickness="0"
+                       ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                       MouseDoubleClick="UsersList_DoubleClick"/>
+            </DockPanel>
+          </Border>
+        </Grid>
+      </DockPanel>
+    </Border>
+
+    <TextBlock x:Name="HintLabel" Style="{StaticResource Mono}" FontStyle="Italic"
+               Foreground="{DynamicResource FgDimBrush}" TextWrapping="Wrap" Text="{l:L Chat_NotInGame}"/>
+  </StackPanel>
+</UserControl>

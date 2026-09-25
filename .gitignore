@@ -27,3 +27,6 @@ desktop.ini
 appsettings.*.json
 *.pfx
 *.snk
+
+# ---> серверная часть чата (не публикуется в репозитории)
+ChatServer/

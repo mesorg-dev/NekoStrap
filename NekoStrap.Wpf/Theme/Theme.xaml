@@ -221,6 +221,7 @@
     <EllipseGeometry Center="9,9" RadiusX="8" RadiusY="8"/>
     <PathGeometry Figures="M9,8V13 M9,4.8V5"/>
   </GeometryGroup>
+  <PathGeometry x:Key="IconChat" Figures="M3,3H16V12H10L6,15.2V12H3Z"/>
 
   <!-- ============ Тумблер (CheckBox) ============ -->
   <Style x:Key="Switch" TargetType="CheckBox">

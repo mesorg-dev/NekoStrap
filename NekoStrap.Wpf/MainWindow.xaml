@@ -89,6 +89,8 @@
                          Tag="{StaticResource IconVersions}" Content="{l:L Nav_Versions}" Checked="Nav_Checked"/>
             <RadioButton x:Name="NavHistory" Style="{StaticResource NavRadio}" GroupName="Nav"
                          Tag="{StaticResource IconHistory}" Content="{l:L Nav_History}" Checked="Nav_Checked"/>
+            <RadioButton x:Name="NavChat" Style="{StaticResource NavRadio}" GroupName="Nav"
+                         Tag="{StaticResource IconChat}" Content="{l:L Nav_Chat}" Checked="Nav_Checked"/>
             <RadioButton x:Name="NavSettings" Style="{StaticResource NavRadio}" GroupName="Nav"
                          Tag="{StaticResource IconSettings}" Content="{l:L Nav_Settings}" Checked="Nav_Checked"/>
             <RadioButton x:Name="NavAbout" Style="{StaticResource NavRadio}" GroupName="Nav"

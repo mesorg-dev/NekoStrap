@@ -370,6 +370,21 @@ public partial class SettingsPage : UserControl
     public CheckBox RobloxNoTrayCheck => RobloxNoTrayBox;
     public CheckBox RobloxNoStartupCheck => RobloxNoStartupBox;
     public CheckBox GlassCheck => GlassCheckBox;
+    public CheckBox ChatEnabledCheck => ChatEnabledBox;
+    public CheckBox ChatDmCheck => ChatDmBox;
+    public CheckBox ChatOverlayCheck => ChatOverlayBox;
+
+    public string ChatUrlText
+    {
+        get => ChatUrlBox.Text.Trim();
+        set => ChatUrlBox.Text = value;
+    }
+
+    public string ChatNickText
+    {
+        get => ChatNickBox.Text.Trim();
+        set => ChatNickBox.Text = value;
+    }
 
     public string RobloxPathText
     {

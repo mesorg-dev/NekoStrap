@@ -108,6 +108,19 @@ namespace NekoStrap.Roblox
         // false = тонированное (тинт + блюр).
         public bool GlassPure { get; set; }
 
+        // Чат лаунчера (бета): общий чат роблокс-сервера + ЛС только между
+        // игроками на ОДНОМ сервере и только среди пользователей NekoStrap.
+        // Работает исключительно во время живой игровой сессии.
+        public bool ChatEnabled { get; set; }                 // мастер-тумблер
+        public bool ChatDmEnabled { get; set; } = true;       // ЛС вкл/выкл
+        public bool ChatOverlayOnJoin { get; set; } = true;   // оверлей при входе в игру
+        public string ChatServerUrl { get; set; } = "";       // ws://host:8787/ws
+        public string ChatNickname { get; set; } = "";        // пусто = ник Roblox
+        public long ChatUserId { get; set; }                  // стабильный uid (генерится один раз)
+        public int ChatOverlayX { get; set; } = -1;           // позиция оверлея
+        public int ChatOverlayY { get; set; } = -1;
+
+
         public static LauncherConfig Load(string path)
         {
             try

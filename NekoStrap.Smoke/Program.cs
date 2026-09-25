@@ -53,9 +53,9 @@ internal static class Program
             // Раскладка всех страниц = применение всех шаблонов.
             var host = (ContentControl)GetField(win, "PageHost")!;
             var pages = (System.Collections.IDictionary)GetField(win, "_pages")!;
-            Check("Страниц в навигации: 7", () =>
+            Check("Страниц в навигации: 8", () =>
             {
-                if (pages.Count != 7) throw new Exception("нашлось " + pages.Count);
+                if (pages.Count != 8) throw new Exception("нашлось " + pages.Count);
             });
             win.Measure(new Size(1120, 700));
             win.Arrange(new Rect(0, 0, 1120, 700));
@@ -145,12 +145,62 @@ internal static class Program
                 settings.RobloxPathText = "C:\\R";
                 settings.FpsValueText = "240";
                 settings.DiscordAppIdText = "123";
+                settings.ChatUrlText = "ws://localhost:8787/ws";
+                settings.ChatNickText = "Neko";
                 if (settings.RobloxPathText != "C:\\R") throw new Exception("PathText врёт");
+                if (settings.ChatUrlText != "ws://localhost:8787/ws") throw new Exception("ChatUrlText врёт");
                 settings.SetCdnStatus(true, "IP 1.1.1.1");
                 settings.SetCdnStatus(false, "");
                 settings.SetWallpaperInfo("bg.png", null, 30);
                 settings.SetWallpaperDim(50);
                 settings.SetGlassInfo(true, 50, 50, 80, false);
+            });
+
+            var chat = (ChatPage)GetField(win, "_chatPage")!;
+            Check("Chat: сеттеры+сообщения", () =>
+            {
+                chat.SetState(ChatState.Connecting);
+                chat.SetState(ChatState.Connected);
+                chat.SetStatus("тест", true);
+                chat.SetHint("подсказка");
+                chat.SetDmEnabled(true);
+                chat.SetUsers(new List<ChatUser>
+                {
+                    new(1, "Alice"),
+                    new(2, "Bob"),
+                }, 1);
+                chat.AppendMessage(new ChatMessage
+                {
+                    From = 1, Name = "Alice", Text = "привет",
+                    SelfUid = 1, At = DateTime.UtcNow,
+                });
+                chat.AppendMessage(new ChatMessage
+                {
+                    From = 2, Name = "Bob", Text = "лс", To = 1,
+                    SelfUid = 1, At = DateTime.UtcNow,
+                });
+                chat.ResetForRoom();
+                chat.RefreshLabels();
+                chat.SetDmEnabled(false);
+                chat.SetState(ChatState.Disconnected);
+            });
+
+            Check("ChatOverlay: конструируется+сеттеры", () =>
+            {
+                var ov = new ChatOverlayWindow();
+                ov.SetState(ChatState.Connected);
+                ov.SetUserCount(3);
+                ov.AppendMessage(new ChatMessage
+                {
+                    From = 9, Name = "X", Text = "hi",
+                    SelfUid = 1, At = DateTime.UtcNow,
+                });
+                ov.Replay(new List<ChatMessage>
+                {
+                    new() { From = 9, Name = "X", Text = "hi2", SelfUid = 1 },
+                });
+                ov.ResetMessages();
+                ov.Close();
             });
 
             Check("UiTheme: все комбинации", () =>

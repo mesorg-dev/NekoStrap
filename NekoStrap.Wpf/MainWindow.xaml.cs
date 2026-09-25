@@ -32,9 +32,13 @@ public partial class MainWindow : Window
     private readonly SessionWatcher _watcher = new();
     private readonly DiscordManager _discord = new();
     private readonly Media.MusicManager _music = new();
+    private readonly ChatClient _chat = new();
     private Process? _playerProcess;
     private WinForms.NotifyIcon? _trayIcon;
     private ColorTuneWindow? _tuneWindow;
+    private ChatOverlayWindow? _chatOverlay;
+    private readonly List<ChatMessage> _chatLog = new();
+    private string _chatRoom = "";
     private bool _tuningOpen;
     private DispatcherTimer? _glassTimer;
     private AppRelease? _pendingRelease;
@@ -56,6 +60,7 @@ public partial class MainWindow : Window
     private readonly FastFlagsPage _flagsPage = new();
     private readonly VersionsPage _versionsPage = new();
     private readonly HistoryPage _historyPage = new();
+    private readonly ChatPage _chatPage = new();
     private readonly SettingsPage _settingsPage = new();
     private readonly AboutPage _aboutPage = new();
     private readonly Dictionary<RadioButton, UserControl> _pages = new();
@@ -70,6 +75,7 @@ public partial class MainWindow : Window
         _pages[NavFlags] = _flagsPage;
         _pages[NavVersions] = _versionsPage;
         _pages[NavHistory] = _historyPage;
+        _pages[NavChat] = _chatPage;
         _pages[NavSettings] = _settingsPage;
         _pages[NavAbout] = _aboutPage;
 
@@ -196,8 +202,9 @@ public partial class MainWindow : Window
         };
 
         SubscribeLiveToggles();
+        WireChat();
 
-        // Сессии из лога → карта сервера + Discord.
+        // Сессии из лога → карта сервера + Discord + чат.
         _watcher.SessionChanged += (_, s) =>
             _ = Dispatcher.BeginInvoke(new Action(() => OnSessionChanged(s)));
 
@@ -235,6 +242,8 @@ public partial class MainWindow : Window
         Closed += (_, _) =>
         {
             _closed = true;
+            try { _chatOverlay?.Close(); } catch { /* ignore */ }
+            try { _chat.Dispose(); } catch { /* ignore */ }
             try { _watcher.Dispose(); } catch { /* ignore */ }
             try { _discord.Dispose(); } catch { /* ignore */ }
             try { _music.Dispose(); } catch { /* ignore */ }
@@ -286,6 +295,10 @@ public partial class MainWindow : Window
             else if (btn == NavHistory)
             {
                 RefreshHistory();
+            }
+            else if (btn == NavChat)
+            {
+                RefreshChatHint();
             }
             else if (btn == NavSettings)
             {
@@ -646,6 +659,8 @@ public partial class MainWindow : Window
         FlushSessionTime();
         _recent.EndAll();
         _watcher.Clear();
+        _ = _chat.DisconnectAsync();
+        try { _chatOverlay?.Hide(); } catch { /* ignore */ }
         _homePage.ClearServer();
         _lastServerIp = "";
         _lastGeoText = "—";
@@ -685,6 +700,10 @@ public partial class MainWindow : Window
     {
         if (_closed) return;
         int seq = ++_sessionSeq;
+        SyncChatWithSession();
+        if (_config.ChatEnabled && _config.ChatOverlayOnJoin &&
+            session.PlaceId > 0 && session.JobId.Length > 0)
+            ShowChatOverlay();
         BeginSessionTime(session.PlaceId, "");
         try { _recent.Begin(session.PlaceId, session.JobId, session.ServerIp, session.ServerPort); } catch { /* ignore */ }
         _homePage.SetServer(session.ServerIp.Length > 0 ? session.ServerIp : Lang.Get("Server_Searching"),
@@ -893,6 +912,9 @@ public partial class MainWindow : Window
         RefreshHistory();
         RefreshCdnStatus();
         RefreshFleasionStatus();
+        _chatPage.RefreshLabels();
+        _chatPage.SetState(_chat.State);
+        RefreshChatHint();
         FooterText.Text = $"v{AppInfo.Version}  •  {Lang.Get("Footer_Ready")}";
         InitTray();
     }
@@ -1671,6 +1693,12 @@ public partial class MainWindow : Window
         _settingsPage.RobloxNoTrayCheck.IsChecked = _config.RobloxNoTray;
         _settingsPage.RobloxNoStartupCheck.IsChecked = _config.RobloxNoStartup;
         _settingsPage.RobloxPathText = _config.RobloxPath;
+        _settingsPage.ChatEnabledCheck.IsChecked = _config.ChatEnabled;
+        _settingsPage.ChatDmCheck.IsChecked = _config.ChatDmEnabled;
+        _settingsPage.ChatOverlayCheck.IsChecked = _config.ChatOverlayOnJoin;
+        _settingsPage.ChatUrlText = _config.ChatServerUrl;
+        _settingsPage.ChatNickText = _config.ChatNickname;
+        _chatPage.SetDmEnabled(_config.ChatEnabled && _config.ChatDmEnabled);
         _modsPage.FleasionCheck.IsChecked = _config.FleasionEnabled;
     }
 
@@ -1691,6 +1719,8 @@ public partial class MainWindow : Window
         _config.TrackPlaytime = _settingsPage.TrackPlaytimeCheck.IsChecked == true;
         _config.RobloxNoTray = _settingsPage.RobloxNoTrayCheck.IsChecked == true;
         _config.RobloxNoStartup = _settingsPage.RobloxNoStartupCheck.IsChecked == true;
+        _config.ChatServerUrl = _settingsPage.ChatUrlText;
+        _config.ChatNickname = _settingsPage.ChatNickText;
         _config.FleasionEnabled = _modsPage.FleasionCheck.IsChecked == true;
         ClickSound.Enabled = _config.Sounds;
         ApplyDiscord();
@@ -1741,6 +1771,20 @@ public partial class MainWindow : Window
             _config.RobloxNoStartup = v;
             RobloxAppFixes.Apply(_config.RobloxNoTray, _config.RobloxNoStartup);
         });
+        Bool(_settingsPage.ChatEnabledCheck, v =>
+        {
+            _config.ChatEnabled = v;
+            _chatPage.SetDmEnabled(v && _config.ChatDmEnabled);
+            SyncChatWithSession();
+            RefreshChatHint();
+        });
+        Bool(_settingsPage.ChatDmCheck, v =>
+        {
+            _config.ChatDmEnabled = v;
+            _chat.DmAllowed = v;
+            _chatPage.SetDmEnabled(_config.ChatEnabled && v);
+        });
+        Bool(_settingsPage.ChatOverlayCheck, v => _config.ChatOverlayOnJoin = v);
     }
 
     private int ParseFpsValue()
@@ -1748,6 +1792,192 @@ public partial class MainWindow : Window
         if (int.TryParse(_settingsPage.FpsValueText, out int fps) && fps >= 5 && fps <= 10000)
             return fps;
         return 240;
+    }
+
+    // ================= Чат =================
+
+    /// <summary>Связать страницу/оверлей чата с клиентом и событиями.</summary>
+    private void WireChat()
+    {
+        _chatPage.ServerMessageSend += text => _ = SendChatAsync(text, 0);
+        _chatPage.DmMessageSend += (to, text) => _ = SendChatAsync(text, to);
+        _chatPage.OpenOverlayClicked += () => ShowChatOverlay();
+
+        _chat.StateChanged += state =>
+            _ = Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (_closed) return;
+                _chatPage.SetState(state);
+                _chatOverlay?.SetState(state);
+                RefreshChatHint();
+            }));
+        _chat.UsersChanged += users =>
+            _ = Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (_closed) return;
+                _chatPage.SetUsers(users, _chat.SelfUid);
+                _chatOverlay?.SetUserCount(users.Select(u => u.Uid).Distinct().Count());
+            }));
+        _chat.MessageReceived += msg =>
+            _ = Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (_closed) return;
+                _chatLog.Add(msg);
+                while (_chatLog.Count > 200) _chatLog.RemoveAt(0);
+                _chatPage.AppendMessage(msg);
+                _chatOverlay?.AppendMessage(msg);
+                // Входящее ЛС — всплывашка, если оверлей не открыт на виду.
+                if (msg.To > 0 && !msg.Mine &&
+                    (_chatOverlay == null || !_chatOverlay.IsVisible) &&
+                    _config.NotificationsEnabled)
+                {
+                    try
+                    {
+                        _trayIcon?.ShowBalloonTip(3000, Lang.Get("Tray_ChatBalloon"),
+                            $"{msg.Name}: {msg.Text}", WinForms.ToolTipIcon.Info);
+                    }
+                    catch { /* ignore */ }
+                }
+            }));
+        _chat.ServerError += err =>
+            _ = Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (_closed) return;
+                _chatPage.SetStatus(err, false);
+            }));
+    }
+
+    private async Task SendChatAsync(string text, long to)
+    {
+        try
+        {
+            if (to > 0)
+                await _chat.SendDmAsync(to, text);
+            else
+                await _chat.SendServerAsync(text);
+        }
+        catch (Exception ex)
+        {
+            _chatPage.SetStatus(ex.Message, false);
+        }
+    }
+
+    /// <summary>
+    /// Чат живёт только вместе с игрой: подключаемся при живой сессии с
+    /// JobId (одна комната = один роблокс-сервер), иначе отключаемся.
+    /// Достаточно самой сессии из лога — не важно, кто запустил клиент.
+    /// </summary>
+    private void SyncChatWithSession()
+    {
+        var session = _watcher.Current;
+        if (!_config.ChatEnabled || session == null ||
+            session.PlaceId <= 0 || session.JobId.Length == 0)
+        {
+            _ = _chat.DisconnectAsync();
+            return;
+        }
+        _ = ConnectChatAsync(session);
+    }
+
+    private async Task ConnectChatAsync(GameSession session)
+    {
+        try
+        {
+            long uid = _config.ChatUserId;
+            if (uid <= 0)
+            {
+                uid = Random.Shared.NextInt64(1, long.MaxValue);
+                _config.ChatUserId = uid;
+                SaveQuiet();
+            }
+            string name = _config.ChatNickname;
+            if (name.Length == 0)
+            {
+                try { name = AccountStore.Load().Active?.Name ?? ""; } catch { /* ignore */ }
+            }
+            if (name.Length == 0)
+                name = "Player" + uid % 10000;
+
+            _chat.DmAllowed = _config.ChatDmEnabled;
+            string url = ChatClient.NormalizeUrl(_config.ChatServerUrl);
+            if (url.Length == 0)
+            {
+                _chatPage.SetStatus(Lang.Get("Chat_BadUrl"), false);
+                return;
+            }
+            string room = session.PlaceId + "_" + session.JobId;
+            // Новый сервер (другая комната) — чистим ленту от прошлого захода.
+            if (!string.Equals(_chatRoom, room, StringComparison.Ordinal))
+            {
+                _chatRoom = room;
+                _chatLog.Clear();
+                _chatPage.ResetForRoom();
+                _chatOverlay?.ResetMessages();
+            }
+            await _chat.ConnectAsync(url, room, uid, name);
+        }
+        catch (Exception ex)
+        {
+            _chatPage.SetStatus(ex.Message, false);
+        }
+    }
+
+    private void RefreshChatHint()
+    {
+        if (_closed) return;
+        if (!_config.ChatEnabled)
+        {
+            _chatPage.SetHint(Lang.Get("Chat_HintOff"));
+            return;
+        }
+        var session = _watcher.Current;
+        _chatPage.SetHint(session != null && session.JobId.Length > 0
+            ? Lang.Get("Chat_HintLive")
+            : Lang.Get("Chat_NotInGame"));
+    }
+
+    /// <summary>Летающий оверлей чата: показать/перепоказать (или создать).</summary>
+    private void ShowChatOverlay()
+    {
+        try
+        {
+            if (_chatOverlay != null)
+            {
+                _chatOverlay.Show();
+                _chatOverlay.Activate();
+                return;
+            }
+            _chatOverlay = new ChatOverlayWindow();
+            _chatOverlay.SendRequested += text => _ = SendChatAsync(text, 0);
+            _chatOverlay.Closed += (_, _) =>
+            {
+                try
+                {
+                    _config.ChatOverlayX = (int)_chatOverlay.Left;
+                    _config.ChatOverlayY = (int)_chatOverlay.Top;
+                    SaveQuiet();
+                }
+                catch { /* ignore */ }
+                _chatOverlay = null;
+            };
+            double vw = SystemParameters.VirtualScreenWidth;
+            double vh = SystemParameters.VirtualScreenHeight;
+            if (_config.ChatOverlayX >= 0 && _config.ChatOverlayY >= 0 &&
+                _config.ChatOverlayX < vw - 80 && _config.ChatOverlayY < vh - 40)
+            {
+                _chatOverlay.Left = _config.ChatOverlayX;
+                _chatOverlay.Top = _config.ChatOverlayY;
+            }
+            else
+            {
+                _chatOverlay.Left = SystemParameters.VirtualScreenLeft + vw - 380;
+                _chatOverlay.Top = SystemParameters.VirtualScreenTop + vh - 540;
+            }
+            _chatOverlay.SetState(_chat.State);
+            _chatOverlay.Replay(_chatLog);
+            _chatOverlay.Show();
+        }
+        catch { /* ignore */ }
     }
 
     // ---------- CDN-фикс (hosts) ----------
@@ -2140,6 +2370,26 @@ public partial class MainWindow : Window
         });
         menu.Items.Add(BuildMusicMenu());
         menu.Items.Add(BuildColorMenu());
+        menu.Items.Add(new WinForms.ToolStripSeparator());
+
+        var chatOverlayItem = new WinForms.ToolStripMenuItem(Lang.Get("Tray_ChatOverlayOn"))
+        {
+            Checked = _config.ChatOverlayOnJoin,
+            CheckOnClick = true
+        };
+        chatOverlayItem.CheckedChanged += (_, _) =>
+        {
+            _config.ChatOverlayOnJoin = chatOverlayItem.Checked;
+            _settingsPage.ChatOverlayCheck.IsChecked = chatOverlayItem.Checked;
+            SaveQuiet();
+        };
+        menu.Items.Add(chatOverlayItem);
+        menu.Items.Add(Lang.Get("Tray_ChatOpen"), null, (_, _) => ShowChatOverlay());
+        menu.Items.Add(Lang.Get("Tray_ChatPage"), null, (_, _) =>
+        {
+            ShowFromTray();
+            NavChat.IsChecked = true;
+        });
         menu.Items.Add(new WinForms.ToolStripSeparator());
         menu.Items.Add(Lang.Get("Tray_Exit"), null, (_, _) =>
         {

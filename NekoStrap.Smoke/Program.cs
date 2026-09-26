@@ -141,6 +141,40 @@ internal static class Program
                 flags.SetFlags(new Dictionary<string, string>());
             });
 
+            Check("Flags: импорт — разбор JSON и конфликты", () =>
+            {
+                const string json = """
+                    {"DFIntTaskSchedulerTargetFps":240,"FFlagEnableShaders":"true","Same":"x"}
+                    """;
+                var incoming = NekoStrap.Roblox.FastFlagStore.ParseImportJson(json);
+                if (incoming.Count != 3 ||
+                    incoming["DFIntTaskSchedulerTargetFps"] != "240" ||
+                    incoming["FFlagEnableShaders"] != "true")
+                    throw new Exception("ParseImportJson разобрал неверно: " + incoming.Count);
+
+                var current = new Dictionary<string, string>
+                {
+                    ["DFIntTaskSchedulerTargetFps"] = "144",
+                    ["Same"] = "x"
+                };
+                var conflicts = NekoStrap.Roblox.FastFlagStore.FindConflicts(current, incoming);
+                if (conflicts.Count != 1 ||
+                    conflicts[0].Key != "DFIntTaskSchedulerTargetFps" ||
+                    conflicts[0].Value != "240")
+                    throw new Exception("FindConflicts насчитал не то: " + conflicts.Count);
+
+                bool rejected = false;
+                try { NekoStrap.Roblox.FastFlagStore.ParseImportJson("[1,2]"); }
+                catch (FormatException) { rejected = true; }
+                if (!rejected) throw new Exception("JSON-массив не отвергнут");
+
+                var dialog = new NekoStrap.Wpf.FlagConflictDialog(
+                    "DFIntTaskSchedulerTargetFps", "144", "240");
+                if (dialog.Choice != NekoStrap.Wpf.FlagConflictChoice.Keep)
+                    throw new Exception("диалог по умолчанию не «Не заменять»");
+                dialog.Close();
+            });
+
             var versions = (VersionsPage)GetField(win, "_versionsPage")!;
             Check("Versions: таблица", () =>
             {

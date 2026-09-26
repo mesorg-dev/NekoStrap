@@ -68,5 +68,40 @@ namespace NekoStrap.Roblox
             else
                 w.WriteStringValue(v);
         }
+
+        /// <summary>
+        /// Разбор импортируемого JSON (файл или буфер обмена): ключи как есть,
+        /// значения строками — как в таблице флагов.
+        /// </summary>
+        public static Dictionary<string, string> ParseImportJson(string json)
+        {
+            var dict = new Dictionary<string, string>();
+            using var doc = JsonDocument.Parse(json);
+            if (doc.RootElement.ValueKind != JsonValueKind.Object)
+                throw new FormatException("ожидался JSON-объект");
+            foreach (var p in doc.RootElement.EnumerateObject())
+                dict[p.Name] = p.Value.ValueKind == JsonValueKind.String
+                    ? p.Value.GetString() ?? ""
+                    : p.Value.GetRawText();
+            return dict;
+        }
+
+        /// <summary>
+        /// Конфликты импорта: флаг уже стоит в таблице, но с другим значением.
+        /// Одинаковые значения и новые флаги конфликтом не считаются.
+        /// </summary>
+        public static List<KeyValuePair<string, string>> FindConflicts(
+            IReadOnlyDictionary<string, string> current,
+            IReadOnlyDictionary<string, string> incoming)
+        {
+            var list = new List<KeyValuePair<string, string>>();
+            foreach (var (k, v) in incoming)
+            {
+                if (current.TryGetValue(k, out string? old) &&
+                    !string.Equals(old, v, StringComparison.Ordinal))
+                    list.Add(new KeyValuePair<string, string>(k, v));
+            }
+            return list;
+        }
     }
 }

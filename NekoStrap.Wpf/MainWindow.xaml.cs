@@ -135,6 +135,7 @@ public partial class MainWindow : Window
         _flagsPage.DeleteAllClicked += (_, _) => DeleteAllFlags();
         _flagsPage.SaveClicked += (_, _) => SaveFlags();
         _flagsPage.ImportClicked += (_, _) => ImportFlags();
+        _flagsPage.PasteClicked += (_, _) => ImportFlagsFromClipboard();
         _flagsPage.ExportClicked += (_, _) => ExportFlags();
 
         _versionsPage.ActivateClicked += (_, _) => ActivateSelectedVersion();
@@ -2012,25 +2013,95 @@ public partial class MainWindow : Window
         if (dlg.ShowDialog(this) != true) return;
         try
         {
-            var dict = new Dictionary<string, string>();
-            using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(dlg.FileName));
-            foreach (var p in doc.RootElement.EnumerateObject())
-            {
-                dict[p.Name] = p.Value.ValueKind == System.Text.Json.JsonValueKind.String
-                    ? p.Value.GetString() ?? ""
-                    : p.Value.GetRawText();
-            }
-            var current = _flagsPage.CollectFlags();
-            foreach (var (k, v) in dict)
-                current[k] = v;
-            _flagsPage.SetFlags(current);
-            _homePage.SetStatus(Lang.Format("Flags_ImportedFmt", dict.Count), true);
+            ApplyImportedFlags(File.ReadAllText(dlg.FileName));
         }
         catch (Exception ex)
         {
             MessageBox.Show(Lang.Get("Flags_ImportErr") + ex.Message,
                 "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
+    }
+
+    /// <summary>Импорт JSON из буфера обмена — тот же путь, что и из файла.</summary>
+    private void ImportFlagsFromClipboard()
+    {
+        string text = "";
+        try { text = Clipboard.GetText(); } catch { /* буфер недоступен */ }
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            _homePage.SetStatus(Lang.Get("Flags_NoClipboard"), false);
+            return;
+        }
+        try
+        {
+            ApplyImportedFlags(text);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(Lang.Get("Flags_ImportErr") + ex.Message,
+                "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    /// <summary>
+    /// Наложение импорта: новые флаги берутся сразу, совпадающие пропускаются,
+    /// а конфликты (флаг стоит с другим значением) — по спросу: заменить этот,
+    /// заменить все или не заменять.
+    /// </summary>
+    private void ApplyImportedFlags(string json)
+    {
+        var incoming = FastFlagStore.ParseImportJson(json);
+        if (incoming.Count == 0)
+        {
+            _homePage.SetStatus(Lang.Get("Flags_EmptyImport"), false);
+            return;
+        }
+
+        var current = _flagsPage.CollectFlags();
+        bool replaceAll = false;
+        bool keepRest = false;
+        int applied = 0;
+        int skipped = 0;
+
+        foreach (var (name, value) in incoming)
+        {
+            if (!current.TryGetValue(name, out string? old))
+            {
+                current[name] = value;
+                applied++;
+                continue;
+            }
+            if (string.Equals(old, value, StringComparison.Ordinal)) continue;
+            if (keepRest)
+            {
+                skipped++;
+                continue;
+            }
+            if (!replaceAll)
+            {
+                var ask = new FlagConflictDialog(name, old, value) { Owner = this };
+                ask.ShowDialog();
+                switch (ask.Choice)
+                {
+                    case FlagConflictChoice.ReplaceAll:
+                        replaceAll = true;
+                        break;
+                    case FlagConflictChoice.Keep:
+                        keepRest = true;
+                        skipped++;
+                        continue;
+                    case FlagConflictChoice.Replace:
+                        break;
+                }
+            }
+            current[name] = value;
+            applied++;
+        }
+
+        _flagsPage.SetFlags(current);
+        _homePage.SetStatus(skipped > 0
+            ? Lang.Format("Flags_ImportedSkipFmt", applied, skipped)
+            : Lang.Format("Flags_ImportedFmt", applied), true);
     }
 
     private void ExportFlags()

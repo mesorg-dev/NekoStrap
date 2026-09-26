@@ -61,6 +61,7 @@ public partial class FastFlagsPage : UserControl
     public event EventHandler? AddFlagClicked;
     public event EventHandler? SaveClicked;
     public event EventHandler? ImportClicked;
+    public event EventHandler? PasteClicked;
     public event EventHandler? ExportClicked;
     public event Action<string>? ProfileApplyClicked;
     public event EventHandler? ProfileSaveClicked;
@@ -177,6 +178,11 @@ public partial class FastFlagsPage : UserControl
     private void ImportButton_Click(object sender, RoutedEventArgs e)
     {
         ImportClicked?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void PasteButton_Click(object sender, RoutedEventArgs e)
+    {
+        PasteClicked?.Invoke(this, EventArgs.Empty);
     }
 
     private void ExportButton_Click(object sender, RoutedEventArgs e)

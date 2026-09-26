@@ -13,6 +13,7 @@
       <Button Style="{StaticResource PrimaryButton}" Content="{l:L Btn_AddFlag}" Height="38" Padding="16,0" Margin="0,0,10,0" Click="AddButton_Click"/>
       <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_Save}" Height="38" Padding="16,0" Margin="0,0,10,0" Click="SaveButton_Click"/>
       <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_Import}" Height="38" Padding="16,0" Margin="0,0,10,0" Click="ImportButton_Click"/>
+      <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_Paste}" Height="38" Padding="16,0" Margin="0,0,10,0" Click="PasteButton_Click"/>
       <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_Export}" Height="38" Padding="16,0" Margin="0,0,10,0" Click="ExportButton_Click"/>
       <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_Delete}" Height="38" Padding="16,0" Click="DeleteButton_Click"/>
       <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_DeleteAll}" Height="38" Padding="16,0" Margin="10,0,0,0" Click="DeleteAllButton_Click"/>

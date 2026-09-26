@@ -2649,6 +2649,7 @@ public partial class MainWindow : Window
         _config.TrackPlaytime = _settingsPage.TrackPlaytimeCheck.IsChecked == true;
         _config.RobloxNoTray = _settingsPage.RobloxNoTrayCheck.IsChecked == true;
         _config.RobloxNoStartup = _settingsPage.RobloxNoStartupCheck.IsChecked == true;
+        string prevChatUrl = _config.ChatServerUrl;
         _config.ChatServerUrl = _settingsPage.ChatUrlText;
         _config.ChatNickname = _settingsPage.ChatNickText;
         _config.FleasionEnabled = _modsPage.FleasionCheck.IsChecked == true;
@@ -2664,6 +2665,8 @@ public partial class MainWindow : Window
             _config.InstalledVersion = RobloxPaths.FindInstalledVersion() ?? "";
         }
         _config.Save(RobloxPaths.ConfigPath);
+        if (!string.Equals(prevChatUrl, _config.ChatServerUrl, StringComparison.Ordinal))
+            SyncChatWithSession();
         RefreshHomeMeta();
     }
 
@@ -2798,10 +2801,15 @@ public partial class MainWindow : Window
                 await _chat.SendDmAsync(to, text);
             else
                 await _chat.SendServerAsync(text);
+            _chatOverlay?.SetState(_chat.State);
         }
         catch (Exception ex)
         {
-            _chatPage.SetStatus(ex.Message, false);
+            string error = ex.Message == ChatClient.ErrNotConnected
+                ? Lang.Get("Chat_NotConnected")
+                : Lang.Format("Chat_SendErrorFmt", ex.Message);
+            _chatPage.SetStatus(error, false);
+            _chatOverlay?.SetHint(error);
         }
     }
 

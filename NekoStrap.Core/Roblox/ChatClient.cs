@@ -37,6 +37,9 @@ namespace NekoStrap.Roblox
     /// </summary>
     internal sealed class ChatClient : IDisposable
     {
+        /// <summary>Маркер «не подключено» — UI переводит его сам, по константе.</summary>
+        public const string ErrNotConnected = "chat_not_connected";
+
         public event Action<ChatState>? StateChanged;
         public event Action<IReadOnlyList<ChatUser>>? UsersChanged;
         public event Action<ChatMessage>? MessageReceived;
@@ -135,7 +138,7 @@ namespace NekoStrap.Roblox
             if (text.Length > 500) text = text[..500];
             var ws = _ws;
             if (ws == null || ws.State != WebSocketState.Open)
-                throw new InvalidOperationException("chat_not_connected");
+                throw new InvalidOperationException(ErrNotConnected);
             object payload = type == "dm"
                 ? new { t = "dm", to = to ?? 0, text }
                 : new { t = "msg", text };

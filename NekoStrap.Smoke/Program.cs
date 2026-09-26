@@ -250,6 +250,7 @@ internal static class Program
             {
                 var ov = new ChatOverlayWindow();
                 ov.SetState(ChatState.Connected);
+                ov.SetHint("подсказка");
                 ov.SetUserCount(3);
                 ov.AppendMessage(new ChatMessage
                 {

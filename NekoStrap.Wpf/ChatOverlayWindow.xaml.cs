@@ -75,6 +75,8 @@ public partial class ChatOverlayWindow : Window
         UsersLabel.Text = Lang.Format("Chat_UsersFmt", count);
     }
 
+    public void SetHint(string text) => HintLabel.Text = text;
+
     public void ResetMessages()
     {
         _messages.Clear();

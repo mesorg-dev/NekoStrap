@@ -65,6 +65,8 @@ public partial class FastFlagsPage : UserControl
     public event Action<string>? ProfileApplyClicked;
     public event EventHandler? ProfileSaveClicked;
     public event EventHandler? ProfileDeleteClicked;
+    public event EventHandler? ProfileBindRequested;
+    public event EventHandler? ProfileUnbindRequested;
     public event EventHandler? DeleteAllClicked;
 
     private readonly ObservableCollection<FlagRow> _rows = new();
@@ -196,6 +198,15 @@ public partial class FastFlagsPage : UserControl
     {
         ProfileDeleteClicked?.Invoke(this, EventArgs.Empty);
     }
+
+    private void ProfileBindButton_Click(object sender, RoutedEventArgs e) =>
+        ProfileBindRequested?.Invoke(this, EventArgs.Empty);
+
+    private void ProfileUnbindButton_Click(object sender, RoutedEventArgs e) =>
+        ProfileUnbindRequested?.Invoke(this, EventArgs.Empty);
+
+    /// <summary>Какой профиль флагов привязан к последней игре.</summary>
+    public void SetBindStatus(string text) => ProfileBindStatus.Text = text;
 
     public string ProfileNameText
     {

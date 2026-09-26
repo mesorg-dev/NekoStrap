@@ -6,6 +6,64 @@
     <TextBlock Style="{StaticResource H1}" Text="{l:L Nav_Mods}" Margin="0,0,0,6"/>
     <TextBlock Style="{StaticResource Body}" Text="{l:L Mods_Sub}" Margin="0,0,0,10"/>
 
+    <!-- Профили модов: инстансы набора файлов, переключение в один клик -->
+    <Border Style="{StaticResource Card}" Margin="0,0,0,12" Padding="18">
+      <StackPanel>
+        <TextBlock Style="{StaticResource H2}" FontSize="13" Text="{l:L ModP_Title}" Margin="0,0,0,4"/>
+        <TextBlock Style="{StaticResource Mono}" TextWrapping="Wrap" Text="{l:L ModP_Sub}" Margin="0,0,0,12"/>
+        <StackPanel Orientation="Horizontal">
+          <TextBlock Text="{l:L ModP_Active}" FontFamily="{DynamicResource UiFont}" FontSize="12.5"
+                     Foreground="{DynamicResource FgDimBrush}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+          <ComboBox x:Name="ProfilesCombo" Style="{StaticResource DarkCombo}" Width="240"
+                    SelectionChanged="ProfilesCombo_SelectionChanged"/>
+          <TextBlock x:Name="ProfileStatus" Style="{StaticResource Mono}" VerticalAlignment="Center" Margin="14,0,0,0"/>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+          <TextBox x:Name="ProfileNameBox" Style="{StaticResource DarkInput}" Width="220" Height="38"
+                   VerticalContentAlignment="Center" ToolTip="{l:L ModP_NameTip}"/>
+          <Button Style="{StaticResource PrimaryButton}" Content="{l:L ModP_New}" Height="38" Padding="16,0"
+                  Margin="10,0,0,0" Click="ProfileNewButton_Click"/>
+          <Button Style="{StaticResource OutlineButton}" Content="{l:L ModP_Dup}" Height="38" Padding="16,0"
+                  Margin="10,0,0,0" Click="ProfileDupButton_Click"/>
+          <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_Delete}" Height="38" Padding="16,0"
+                  Margin="10,0,0,0" Click="ProfileDeleteButton_Click"/>
+          <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_Folder}" Height="38" Padding="16,0"
+                  Margin="10,0,0,0" Click="ProfileFolderButton_Click"/>
+        </StackPanel>
+        <!-- Авто-профиль: привязать этот набор к последней игре -->
+        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+          <TextBlock Text="{l:L AutoP_Label}" FontFamily="{DynamicResource UiFont}" FontSize="12.5"
+                     Foreground="{DynamicResource FgDimBrush}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+          <Button Style="{StaticResource OutlineButton}" Content="{l:L AutoP_Bind}" Height="34" Padding="14,0"
+                  Click="ProfileBindButton_Click"/>
+          <Button Style="{StaticResource OutlineButton}" Content="{l:L AutoP_Unbind}" Height="34" Padding="14,0"
+                  Margin="8,0,0,0" Click="ProfileUnbindButton_Click"/>
+          <TextBlock x:Name="ProfileBindStatus" Style="{StaticResource Mono}" VerticalAlignment="Center"
+                     TextWrapping="Wrap" Margin="12,0,0,0"/>
+        </StackPanel>
+        <!-- Профиль → zip и обратно: поделиться набором -->
+        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+          <Button Style="{StaticResource OutlineButton}" Content="{l:L ModP_Export}" Height="34" Padding="14,0"
+                  Click="ProfileExportButton_Click"/>
+          <Button Style="{StaticResource OutlineButton}" Content="{l:L ModP_Import}" Height="34" Padding="14,0"
+                  Margin="10,0,0,0" Click="ProfileImportButton_Click"/>
+          <TextBlock Style="{StaticResource Mono}" FontStyle="Italic" VerticalAlignment="Center"
+                     TextWrapping="Wrap" Margin="12,0,0,0" Text="{l:L ModP_IoHint}"/>
+        </StackPanel>
+      </StackPanel>
+    </Border>
+
+    <!-- Быстрая замена лёгких файлов -->
+    <Border Style="{StaticResource Card}" Margin="0,0,0,12" Padding="18">
+      <StackPanel>
+        <TextBlock Style="{StaticResource H2}" FontSize="13" Text="{l:L Quick_Title}" Margin="0,0,0,4"/>
+        <TextBlock Style="{StaticResource Mono}" TextWrapping="Wrap" Text="{l:L Quick_Sub}" Margin="0,0,0,12"/>
+        <StackPanel x:Name="QuickPanel"/>
+        <TextBlock Style="{StaticResource Mono}" FontStyle="Italic" TextWrapping="Wrap"
+                   Text="{l:L Quick_Hint}" Margin="0,4,0,0"/>
+      </StackPanel>
+    </Border>
+
     <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
       <Button Style="{StaticResource PrimaryButton}" Content="{l:L Btn_Add}" Height="38" Padding="16,0" Click="AddButton_Click"/>
       <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_Refresh}" Height="38" Padding="16,0" Margin="10,0,0,0" Click="RefreshButton_Click"/>

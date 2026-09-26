@@ -24,6 +24,12 @@ namespace NekoStrap.Roblox
         public static string DownloadsDir => Path.Combine(BaseDir, "Downloads");
         public static string ConfigPath => Path.Combine(BaseDir, "config.json");
 
+        /// <summary>Профили модов: ModProfiles\&lt;имя&gt;\ зеркалит клиент.</summary>
+        public static string ModProfilesDir => Path.Combine(BaseDir, "ModProfiles");
+
+        /// <summary>Откаты применённых модов: ModState\&lt;version&gt;\manifest + backup.</summary>
+        public static string ModStateDir => Path.Combine(BaseDir, "ModState");
+
         /// <summary>guid вида version- + 16 hex-символов, всего 24.</summary>
         public static bool IsVersionGuid(string? s)
         {

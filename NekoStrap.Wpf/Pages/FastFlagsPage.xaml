@@ -72,6 +72,17 @@
           <Button Style="{StaticResource PrimaryButton}" Content="{l:L Btn_SaveProfile}" Height="38" Padding="16,0" Margin="10,0,0,0" Click="ProfileSaveButton_Click"/>
           <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_Delete}" Height="38" Padding="16,0" Margin="10,0,0,0" Click="ProfileDeleteButton_Click"/>
         </StackPanel>
+        <!-- Авто-профиль: привязать эти флаги к последней игре -->
+        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+          <TextBlock Text="{l:L AutoP_Label}" FontFamily="{DynamicResource UiFont}" FontSize="12.5"
+                     Foreground="{DynamicResource FgDimBrush}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+          <Button Style="{StaticResource OutlineButton}" Content="{l:L AutoP_Bind}" Height="34" Padding="14,0"
+                  Click="ProfileBindButton_Click"/>
+          <Button Style="{StaticResource OutlineButton}" Content="{l:L AutoP_Unbind}" Height="34" Padding="14,0"
+                  Margin="8,0,0,0" Click="ProfileUnbindButton_Click"/>
+          <TextBlock x:Name="ProfileBindStatus" Style="{StaticResource Mono}" VerticalAlignment="Center"
+                     TextWrapping="Wrap" Margin="12,0,0,0"/>
+        </StackPanel>
       </StackPanel>
     </Border>
   </StackPanel>

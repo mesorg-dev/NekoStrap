@@ -35,6 +35,20 @@
       </ListView>
     </Border>
 
+    <Border Style="{StaticResource Card}" Margin="0,0,0,12" Padding="18">
+      <StackPanel>
+        <TextBlock Style="{StaticResource H2}" FontSize="13" Text="{l:L Ver_IntegrityTitle}" Margin="0,0,0,8"/>
+        <TextBlock x:Name="IntegrityStatus" Style="{StaticResource Mono}" FontSize="12" TextWrapping="Wrap"
+                   Margin="0,0,0,8" Text="{l:L Ver_IntegrityHint}"/>
+        <StackPanel Orientation="Horizontal">
+          <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_CheckFiles}" Width="170" Height="38"
+                  Click="CheckFilesButton_Click"/>
+          <Button x:Name="RepairButton" Style="{StaticResource PrimaryButton}" Content="{l:L Btn_RepairFiles}"
+                  Width="170" Height="38" Margin="10,0,0,0" IsEnabled="False" Click="RepairButton_Click"/>
+        </StackPanel>
+      </StackPanel>
+    </Border>
+
     <Border Style="{StaticResource Card}">
       <StackPanel>
         <TextBlock Style="{StaticResource H2}" FontSize="13" Text="{l:L Ver_StudioTitle}" Margin="0,0,0,8"/>

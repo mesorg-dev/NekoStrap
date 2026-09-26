@@ -3,20 +3,41 @@ using DiscordRPC;
 
 namespace NekoStrap.Roblox
 {
+    /// <summary>Что показывать в Discord-статусе (все галки — из настроек).</summary>
+    internal sealed class DiscordOptions
+    {
+        public bool AllowJoin { get; set; } = true;
+        public bool ShowName { get; set; } = true;
+        public bool ShowServer { get; set; } = true;
+        public bool ShowIcon { get; set; } = true;
+        public bool ShowElapsed { get; set; } = true;
+        public bool ShowButton { get; set; } = true;
+        public string AssetKey { get; set; } = "";
+    }
+
     /// <summary>
     /// Discord Rich Presence через DiscordRichPresence (NuGet, чистый C# без нативных dll).
     /// Показывает игру/сервер, кнопка Join у друзей заходит на тот же сервер
     /// через roblox://placeId + gameInstanceId (механика как у Voidstrap).
-    /// Нужен свой Application ID из discord.com/developers (бесплатно, 2 минуты).
+    /// ID приложения зашит в коде (LauncherConfig.DefaultDiscordAppId).
     /// </summary>
     internal sealed class DiscordManager : IDisposable
     {
         private DiscordRpcClient? _client;
         private string _appId = "";
-        private bool _allowJoin = true;
+        private DiscordOptions _opts = new();
         private DateTime _sessionStart = DateTime.UtcNow;
         private readonly System.Threading.Timer _retryTimer;
         private bool _disposed;
+
+        // Последняя сессия — чтобы перерисовать статус сразу после смены галок.
+        private string _lastGame = "";
+        private string _lastServer = "";
+        private long _lastPlace;
+        private string _lastJob = "";
+        private string _lastLabel = "";
+        private string _iconUrl = "";
+        private bool _hasSession;
 
         public bool IsRunning => _client?.IsInitialized ?? false;
 
@@ -33,15 +54,26 @@ namespace NekoStrap.Roblox
             }, null, Timeout.Infinite, Timeout.Infinite);
         }
 
-        public void Configure(string appId, bool allowJoin)
+        /// <summary>Подключение/переключение настроек: реконнект только при смене ID.</summary>
+        public void Configure(string appId, DiscordOptions opts)
         {
-            bool changed = appId.Trim() != _appId || allowJoin != _allowJoin;
+            bool reconnect = appId.Trim() != _appId;
             _appId = appId.Trim();
-            _allowJoin = allowJoin;
-            if (!changed) return;
+            _opts = opts;
+            if (!reconnect)
+            {
+                Refresh(); // флаги видимости применяются сразу, без переподключения
+                return;
+            }
             Shutdown();
             if (_appId.Length > 0)
                 Start();
+        }
+
+        /// <summary>Перерисовать текущий статус с новыми галками (без сброса таймера).</summary>
+        public void Refresh()
+        {
+            if (_hasSession) Set(Build());
         }
 
         private void Start()
@@ -84,7 +116,9 @@ namespace NekoStrap.Roblox
 
         public void SetIdle()
         {
+            _hasSession = false;
             _sessionStart = DateTime.UtcNow;
+            _iconUrl = "";
             Set(new RichPresence
             {
                 Details = "NekoStrap",
@@ -93,19 +127,74 @@ namespace NekoStrap.Roblox
             });
         }
 
-        public void SetSession(string gameName, string serverText, long placeId, string jobId)
+        /// <summary>
+        /// Присутствие в игре. Кнопка «Открыть игру» ставится только когда
+        /// Join выключен: Discord не показывает кнопки вместе с секретами,
+        /// тогда кнопку Join рисует сам клиент (видна друзьям в их Discord).
+        /// </summary>
+        public void SetSession(string gameName, string serverText, long placeId,
+            string jobId, string openGameLabel = "")
         {
+            _lastGame = gameName;
+            _lastServer = serverText;
+            _lastPlace = placeId;
+            _lastJob = jobId;
+            _lastLabel = openGameLabel;
             _sessionStart = DateTime.UtcNow;
+            _iconUrl = "";          // у нового плейса своя иконка
+            _hasSession = true;
+            Set(Build());
+        }
+
+        private RichPresence Build()
+        {
+            string name = _lastGame.Length > 0 ? _lastGame : "Roblox";
+            string? details = _opts.ShowName && _lastGame.Length > 0 ? _lastGame : null;
+            string? state = _opts.ShowServer && _lastServer.Length > 0 ? _lastServer : null;
+            if (details == null && state == null) details = "Roblox"; // Discord требует хоть строку
+
             var presence = new RichPresence
             {
-                Details = gameName.Length > 0 ? gameName : "Roblox",
-                State = serverText,
-                Timestamps = new Timestamps(_sessionStart),
-                Party = new Party { ID = jobId.Length > 0 ? jobId : placeId.ToString(), Size = 1, Max = 50 }
+                Details = details,
+                State = state,
+                Timestamps = _opts.ShowElapsed ? new Timestamps(_sessionStart) : null,
+                Party = new Party
+                {
+                    ID = _lastJob.Length > 0 ? _lastJob : _lastPlace.ToString(),
+                    Size = 1,
+                    Max = 50
+                }
             };
-            if (_allowJoin && placeId > 0)
-                presence.Secrets = new Secrets { JoinSecret = $"{placeId}|{jobId}" };
-            Set(presence);
+
+            string image = _opts.ShowIcon
+                ? (_iconUrl.Length > 0 ? _iconUrl : _opts.AssetKey.Trim())
+                : "";
+            if (image.Length > 0)
+                presence.Assets = new Assets { LargeImageKey = image, LargeImageText = name };
+
+            if (_opts.AllowJoin && _lastPlace > 0)
+                presence.Secrets = new Secrets { JoinSecret = $"{_lastPlace}|{_lastJob}" };
+            else if (_opts.ShowButton && _lastPlace > 0 && _lastLabel.Trim().Length > 0)
+                presence.Buttons = new[]
+                {
+                    new Button
+                    {
+                        Label = _lastLabel.Trim(),
+                        Url = $"https://www.roblox.com/games/{_lastPlace}"
+                    }
+                };
+            return presence;
+        }
+
+        /// <summary>
+        /// Картинка плейса: URL из thumbnails API или ключ из Assets приложения —
+        /// вписываем в текущий статус сразу, без ожидания следующего обновления.
+        /// </summary>
+        public void UpdateLargeAsset(string keyOrUrl, string tooltip)
+        {
+            if (keyOrUrl.Trim().Length == 0) return;
+            _iconUrl = keyOrUrl.Trim();
+            if (_hasSession) Set(Build());
         }
 
         private void Set(RichPresence presence)

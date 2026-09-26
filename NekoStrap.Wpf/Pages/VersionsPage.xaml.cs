@@ -22,6 +22,8 @@ public partial class VersionsPage : UserControl
     public event EventHandler? DeleteClicked;
     public event EventHandler? StudioInstallClicked;
     public event EventHandler? StudioLaunchClicked;
+    public event EventHandler? CheckFilesClicked;
+    public event EventHandler? RepairClicked;
 
     private readonly ObservableCollection<VersionRow> _rows = new();
 
@@ -49,6 +51,26 @@ public partial class VersionsPage : UserControl
     private void LaunchButton_Click(object sender, RoutedEventArgs e)
     {
         StudioLaunchClicked?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void CheckFilesButton_Click(object sender, RoutedEventArgs e)
+    {
+        CheckFilesClicked?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void RepairButton_Click(object sender, RoutedEventArgs e)
+    {
+        RepairClicked?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void SetIntegrityStatus(string text)
+    {
+        IntegrityStatus.Text = text;
+    }
+
+    public void SetRepairEnabled(bool enabled)
+    {
+        RepairButton.IsEnabled = enabled;
     }
 
     public void SetVersions(List<InstalledVersionInfo> versions, string? activeGuid, string? previousGuid)

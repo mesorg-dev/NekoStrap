@@ -11,6 +11,10 @@ namespace NekoStrap.Roblox
         public bool DiscordRpc { get; set; }
         public bool Sounds { get; set; } = true;
         public bool AutoUpdate { get; set; }
+
+        // Фоновое обновление клиента: новая версия качается заранее, пока
+        // игрок не нажал «Играть». Выключено по умолчанию — трафик на усмотрение.
+        public bool RobloxBgUpdate { get; set; }
         public bool Animations { get; set; } = true;
         public string RobloxPath { get; set; } = "";
         public string InstalledVersion { get; set; } = "";
@@ -19,9 +23,23 @@ namespace NekoStrap.Roblox
         // FPS-анлокер: 0 = не трогать флаг, иначе DFIntTaskSchedulerTargetFps.
         public int FpsLimit { get; set; } = 0;
 
-        // Discord: свой Application ID из discord.com/developers (без него RPC молчит).
-        public string DiscordAppId { get; set; } = "";
+        // Потоки закачки пакетов клиента (1..8). 4 — разумный максимум для
+        // линии ~100 Мбит/с: больше не ускорит, а диск и CPU задержит.
+        public int DownloadThreads { get; set; } = 4;
+
+        // Discord: ID приложения спрятан в коде (в UI его нет, чтобы не светился).
+        public const string DefaultDiscordAppId = "1553364708369760278";
         public bool DiscordAllowJoin { get; set; } = true;
+
+        // Что показывать в Discord-статусе (всё включено по умолчанию).
+        public bool DiscordShowName { get; set; } = true;
+        public bool DiscordShowServer { get; set; } = true;
+        public bool DiscordShowIcon { get; set; } = true;
+        public bool DiscordShowElapsed { get; set; } = true;
+        public bool DiscordShowButton { get; set; } = true;
+
+        // Ключ большой картинки в Assets приложения (пусто = без картинки).
+        public string DiscordAssetKey { get; set; } = "";
 
         // Трей лаунчера.
         public bool MinimizeToTray { get; set; }
@@ -44,6 +62,10 @@ namespace NekoStrap.Roblox
         public string LastGameName { get; set; } = "";
         public long LastGamePlaceId { get; set; }
         public DateTime LastGameAt { get; set; }
+
+        // Последний применённый вручную профиль флагов (для авто-привязки
+        // на игру). Пусто = таблица правилась руками и уже не равна профилю.
+        public string ActiveFlagProfile { get; set; } = "";
 
         // Геометрия окна (-1 = нет сохранения).
         public int WinX { get; set; } = -1;

@@ -43,6 +43,43 @@ public partial class SettingsPage : UserControl
         BuildSoundRows();
         BuildFontBoxes();
         BuildColorRows();
+        BuildThreadsBox();
+    }
+
+    // ================= Потоки загрузки клиента =================
+
+    /// <summary>Допустимые значения (движок клампит 1..8).</summary>
+    private static readonly int[] ThreadOptions = { 1, 2, 4, 8 };
+
+    public event Action<int>? DownloadThreadsChanged;
+
+    private void BuildThreadsBox()
+    {
+        foreach (int n in ThreadOptions)
+            ThreadsCombo.Items.Add(new ComboBoxItem { Content = n.ToString(), Tag = n });
+        _sync = true;
+        ThreadsCombo.SelectedIndex = 2; // 4 — дефолт
+        _sync = false;
+    }
+
+    public int DownloadThreadsValue
+    {
+        get => ThreadsCombo.SelectedItem is ComboBoxItem it && it.Tag is int n ? n : 4;
+        set
+        {
+            int idx = Array.IndexOf(ThreadOptions, value);
+            if (idx < 0) idx = Array.IndexOf(ThreadOptions, 4);
+            _sync = true;
+            ThreadsCombo.SelectedIndex = idx;
+            _sync = false;
+        }
+    }
+
+    private void ThreadsCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_sync) return;
+        if (ThreadsCombo.SelectedItem is ComboBoxItem it && it.Tag is int n)
+            DownloadThreadsChanged?.Invoke(n);
     }
 
     // ================= Внешний вид =================
@@ -360,8 +397,15 @@ public partial class SettingsPage : UserControl
 
     public CheckBox CloseOnLaunchCheck => CloseOnLaunchBox;
     public CheckBox DiscordRpcCheck => DiscordRpcBox;
+    public CheckBox DiscordNameCheck => DiscordNameBox;
+    public CheckBox DiscordServerCheck => DiscordServerBox;
+    public CheckBox DiscordIconCheck => DiscordIconBox;
+    public CheckBox DiscordTimeCheck => DiscordTimeBox;
+    public CheckBox DiscordBtnCheck => DiscordBtnBox;
+    public CheckBox DiscordAllowJoinCheck => DiscordAllowJoinBox;
     public CheckBox SoundsCheck => SoundsBox;
     public CheckBox AutoUpdateCheck => AutoUpdateBox;
+    public CheckBox RobloxBgUpdateCheck => RobloxBgUpdateBox;
     public CheckBox FpsCheck => FpsBox2;
     public CheckBox MinimizeToTrayCheck => MinimizeToTrayBox;
     public CheckBox CloseToTrayCheck => CloseToTrayBox;
@@ -398,10 +442,11 @@ public partial class SettingsPage : UserControl
         set => FpsValueBox.Text = value;
     }
 
-    public string DiscordAppIdText
+    /// <summary>Ключ картинки (Rich Presence Assets) — по желанию.</summary>
+    public string DiscordAssetKeyText
     {
-        get => DiscordAppBox.Text.Trim();
-        set => DiscordAppBox.Text = value;
+        get => DiscordAssetBox.Text.Trim();
+        set => DiscordAssetBox.Text = value;
     }
 
     private void BrowseButton_Click(object sender, RoutedEventArgs e)

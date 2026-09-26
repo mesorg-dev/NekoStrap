@@ -1,7 +1,21 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace NekoStrap.Wpf.Pages;
+
+/// <summary>Строка результата поиска игр (шаблон списка на главной).</summary>
+public sealed class SearchRow
+{
+    public required long PlaceId { get; init; }
+    public required string Name { get; init; }
+    public required string Meta { get; init; }
+
+    /// <summary>URL иконки; пусто — плитку не показываем.</summary>
+    public string Icon { get; init; } = "";
+
+    public bool HasIcon => Icon.Length > 0;
+}
 
 /// <summary>
 /// Главная: статус, «Играть», прогресс, статы, последняя игра, сервер.
@@ -12,8 +26,15 @@ public partial class HomePage : UserControl
 {
     public event EventHandler? PlayClicked;
     public event EventHandler? PlayAgainClicked;
+    public event EventHandler? CleanLaunchClicked;
     public event Action<long>? FavoritePlayClicked;
     public event Action<long>? FavoriteRemoveClicked;
+
+    /// <summary>Пользователь запросил поиск (по кнопке или Enter).</summary>
+    public event Action<string>? SearchQueryEntered;
+
+    /// <summary>Двойной клик по результату: открыть плейс.</summary>
+    public event Action<long, string>? SearchPlayRequested;
 
     private double _progress = -1;
 
@@ -31,6 +52,53 @@ public partial class HomePage : UserControl
     private void AgainButton_Click(object sender, RoutedEventArgs e)
     {
         PlayAgainClicked?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void CleanButton_Click(object sender, RoutedEventArgs e)
+    {
+        CleanLaunchClicked?.Invoke(this, EventArgs.Empty);
+    }
+
+    // ---------- Поиск игр ----------
+
+    private void SearchButton_Click(object sender, RoutedEventArgs e)
+    {
+        SubmitSearch();
+    }
+
+    private void SearchBox_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter) return;
+        SubmitSearch();
+        e.Handled = true;
+    }
+
+    private void SubmitSearch()
+    {
+        string q = SearchBox.Text.Trim();
+        if (q.Length == 0) return;
+        SearchQueryEntered?.Invoke(q);
+    }
+
+    private void SearchList_DoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        if (SearchList.SelectedItem is SearchRow row)
+            SearchPlayRequested?.Invoke(row.PlaceId, row.Name);
+    }
+
+    /// <summary>Ожидание ответа API: список прячем, статус меняем.</summary>
+    public void SetSearching()
+    {
+        SearchStatus.Text = Lang.Get("Search_Busy");
+        SearchList.Visibility = Visibility.Collapsed;
+    }
+
+    /// <summary>Итог поиска: строки и подпись (пусто / ошибка / сколько нашлось).</summary>
+    public void ShowSearchResults(List<SearchRow> rows, string status)
+    {
+        SearchStatus.Text = status;
+        SearchList.ItemsSource = rows;
+        SearchList.Visibility = rows.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
     public void SetStatus(string text, bool ready)
@@ -86,7 +154,9 @@ public partial class HomePage : UserControl
     public void SetLastGame(string text, long placeId)
     {
         LastGameLabel.Text = text.Length > 0 ? text : "—";
-        AgainButton.Visibility = placeId > 0 ? Visibility.Visible : Visibility.Collapsed;
+        var vis = placeId > 0 ? Visibility.Visible : Visibility.Collapsed;
+        AgainButton.Visibility = vis;
+        CleanButton.Visibility = vis;
     }
 
     /// <summary>Кнопки избранного (клик = играть, правый клик = убрать).</summary>

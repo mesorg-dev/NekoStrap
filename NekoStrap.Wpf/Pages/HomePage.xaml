@@ -77,6 +77,55 @@
       </StackPanel>
     </Border>
 
+    <!-- Поиск игр (живой API) -->
+    <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+      <StackPanel>
+        <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="13" FontWeight="Bold"
+                   Foreground="{DynamicResource FgDimBrush}" Text="{l:L Search_Title}" Margin="0,0,0,6"/>
+        <DockPanel LastChildFill="True" Margin="0,0,0,6">
+          <Button DockPanel.Dock="Right" Style="{StaticResource OutlineButton}" Content="{l:L Search_Btn}"
+                  Width="110" Height="36" Margin="10,0,0,0" Click="SearchButton_Click"/>
+          <TextBox x:Name="SearchBox" Style="{StaticResource DarkInput}" Height="36"
+                   VerticalContentAlignment="Center" KeyDown="SearchBox_KeyDown"/>
+        </DockPanel>
+        <TextBlock x:Name="SearchStatus" Style="{StaticResource Mono}" FontStyle="Italic"
+                   Text="{l:L Search_Hint}" TextWrapping="Wrap" Margin="0,0,0,4"/>
+        <ListBox x:Name="SearchList" Background="Transparent" BorderThickness="0" MaxHeight="240"
+                 Visibility="Collapsed" MouseDoubleClick="SearchList_DoubleClick">
+          <ListBox.ItemContainerStyle>
+            <Style TargetType="ListBoxItem" BasedOn="{StaticResource DarkListRow}">
+              <Setter Property="Foreground" Value="{DynamicResource FgDimBrush}"/>
+              <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                  <Setter Property="Foreground" Value="{DynamicResource FgBrush}"/>
+                </Trigger>
+              </Style.Triggers>
+            </Style>
+          </ListBox.ItemContainerStyle>
+          <ListBox.ItemTemplate>
+            <DataTemplate>
+              <StackPanel Orientation="Horizontal" Margin="2,5">
+                <Image x:Name="HitIcon" Width="36" Height="36" Margin="0,0,10,0" Stretch="UniformToFill"
+                       Source="{Binding Icon}"/>
+                <StackPanel VerticalAlignment="Center">
+                  <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="13.5" FontWeight="SemiBold"
+                             Foreground="{DynamicResource FgBrush}" Text="{Binding Name}"
+                             TextTrimming="CharacterEllipsis"/>
+                  <TextBlock Style="{StaticResource Mono}" FontSize="11.5" Text="{Binding Meta}"
+                             TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
+              </StackPanel>
+              <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding HasIcon}" Value="False">
+                  <Setter TargetName="HitIcon" Property="Visibility" Value="Collapsed"/>
+                </DataTrigger>
+              </DataTemplate.Triggers>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </StackPanel>
+    </Border>
+
     <!-- Последняя игра -->
     <Border Style="{StaticResource Card}" Margin="0,0,0,16">
       <StackPanel>
@@ -85,9 +134,13 @@
         <TextBlock x:Name="LastGameLabel" FontFamily="{DynamicResource UiFont}" FontSize="15"
                    FontWeight="Bold" Foreground="{DynamicResource FgBrush}" Text="—"
                    TextTrimming="CharacterEllipsis" Margin="0,0,0,8"/>
-        <Button x:Name="AgainButton" Style="{StaticResource PrimaryButton}" Content="{l:L Btn_PlayAgain}"
-                Width="170" Height="34" HorizontalAlignment="Left"
-                Visibility="Collapsed" Click="AgainButton_Click"/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+          <Button x:Name="AgainButton" Style="{StaticResource PrimaryButton}" Content="{l:L Btn_PlayAgain}"
+                  Width="170" Height="34" Visibility="Collapsed" Click="AgainButton_Click"/>
+          <Button x:Name="CleanButton" Style="{StaticResource OutlineButton}" Content="{l:L Btn_CleanPlay}"
+                  Height="34" Padding="14,0" Margin="10,0,0,0" Visibility="Collapsed"
+                  ToolTip="{l:L Btn_CleanPlayTip}" Click="CleanButton_Click"/>
+        </StackPanel>
       </StackPanel>
     </Border>
 

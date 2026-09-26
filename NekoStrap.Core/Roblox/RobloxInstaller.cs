@@ -82,7 +82,8 @@ namespace NekoStrap.Roblox
             return EnsureAsync("WindowsPlayer", RobloxPaths.PlayerExe, PlayerDirMap,
                 applyMods: true, progress, ct,
                 installed: PlayerInstalled(cfg),
-                onInstalled: guid => cfg.InstalledVersion = guid);
+                onInstalled: guid => cfg.InstalledVersion = guid,
+                downloadThreads: cfg.DownloadThreads);
         }
 
         /// <summary>Возвращает guid установленной Studio.</summary>
@@ -94,7 +95,8 @@ namespace NekoStrap.Roblox
             return EnsureAsync("WindowsStudio64", StudioExe, StudioDirMap,
                 applyMods: false, progress, ct,
                 installed: StudioInstalled(cfg),
-                onInstalled: guid => cfg.StudioVersion = guid);
+                onInstalled: guid => cfg.StudioVersion = guid,
+                downloadThreads: cfg.DownloadThreads);
         }
 
         private static string? PlayerInstalled(LauncherConfig cfg)
@@ -125,7 +127,8 @@ namespace NekoStrap.Roblox
             string binaryType, string exeName,
             Dictionary<string, string> dirMap, bool applyMods,
             IProgress<InstallProgress>? progress, CancellationToken ct,
-            string? installed, Action<string> onInstalled)
+            string? installed, Action<string> onInstalled,
+            int downloadThreads)
         {
             progress?.Report(new InstallProgress("check", null, null));
             var latest = await Deployment.GetLatestVersionAsync(binaryType, ct);
@@ -133,8 +136,11 @@ namespace NekoStrap.Roblox
             if (installed == latest.VersionGuid)
             {
                 onInstalled(installed);
+                string installedDir = Path.Combine(RobloxPaths.VersionsDir, installed);
+                // Первый чистый запуск пишет снимок файлов — для проверки целостности.
+                Integrity.EnsureBaseline(installedDir);
                 if (applyMods)
-                    ModManager.ApplyTo(Path.Combine(RobloxPaths.VersionsDir, installed));
+                    ModManager.ApplyTo(installedDir);
                 progress?.Report(new InstallProgress("done", "already", 1, installed));
                 return installed;
             }
@@ -145,45 +151,50 @@ namespace NekoStrap.Roblox
 
             string versionDir = Path.Combine(RobloxPaths.VersionsDir, latest.VersionGuid);
             string dlDir = Path.Combine(RobloxPaths.DownloadsDir, latest.VersionGuid);
-            long totalPacked = packages.Sum(p => p.PackedSize);
-            long donePacked = 0;
+            Directory.CreateDirectory(versionDir);
 
-            for (int i = 0; i < packages.Count; i++)
-            {
-                ct.ThrowIfCancellationRequested();
-                var pkg = packages[i];
-                string zipPath = Path.Combine(dlDir, pkg.Name);
+            var items = new List<PackageBatchItem>(packages.Count);
+            foreach (var p in packages)
+                items.Add(new PackageBatchItem(p.Name, p.PackedSize,
+                    Path.Combine(dlDir, p.Name),
+                    Path.Combine(versionDir, dirMap.GetValueOrDefault(p.Name) ?? "")));
 
-                var fileProg = new Progress<(long done, long total)>(t =>
+            // Параллельно (на 100 Мбит/с хватает 4 потоков), уже скачанное
+            // не качаем заново, битое — перекачиваем.
+            await PackageBatch.RunAsync(
+                items,
+                (item, fileProgress, token) => Deployment.DownloadPackageAsync(
+                    Deployment.PackageUrl(latest.VersionGuid, item.Name),
+                    item.ZipPath, fileProgress, item.PackedSize, token),
+                (item, token) =>
                 {
-                    double frac = totalPacked > 0
-                        ? 0.85 * (donePacked + t.done) / totalPacked
-                        : 0;
-                    progress?.Report(new InstallProgress("download",
-                        $"{pkg.Name} ({i + 1}/{packages.Count})", frac));
-                });
-
-                await Deployment.DownloadPackageAsync(
-                    Deployment.PackageUrl(latest.VersionGuid, pkg.Name), zipPath, fileProg, ct);
-                donePacked += new FileInfo(zipPath).Length;
-
-                progress?.Report(new InstallProgress("extract",
-                    $"{pkg.Name} ({i + 1}/{packages.Count})", 0.85 + 0.15 * (i + 1) / packages.Count));
-
-                string sub = dirMap.GetValueOrDefault(pkg.Name) ?? "";
-                string dest = Path.Combine(versionDir, sub);
-                Directory.CreateDirectory(dest);
-                ExtractZipSafe(zipPath, dest);
-            }
+                    token.ThrowIfCancellationRequested();
+                    Directory.CreateDirectory(item.DestDir);
+                    ExtractZipSafe(item.ZipPath, item.DestDir);
+                },
+                Math.Clamp(downloadThreads, 1, 8),
+                new StageAdapter(progress),
+                ct);
 
             progress?.Report(new InstallProgress("setup", null, 1));
             await File.WriteAllTextAsync(Path.Combine(versionDir, "AppSettings.xml"), AppSettingsXml, ct);
+            // Снимок до модов: в нём — размеры оригинальных файлов клиента.
+            Integrity.WriteBaseline(versionDir);
             if (applyMods)
                 ModManager.ApplyTo(versionDir);
             onInstalled(latest.VersionGuid);
 
             progress?.Report(new InstallProgress("done", "installed", 1, latest.VersionGuid));
             return latest.VersionGuid;
+        }
+
+        /// <summary>Прогресс батча пакетов → прогресс установщика (фазы те же).</summary>
+        private sealed class StageAdapter : IProgress<PackageBatchStage>
+        {
+            private readonly IProgress<InstallProgress>? _dst;
+            public StageAdapter(IProgress<InstallProgress>? dst) => _dst = dst;
+            public void Report(PackageBatchStage s) =>
+                _dst?.Report(new InstallProgress(s.Phase, s.Detail, s.Fraction));
         }
 
         /// <summary>

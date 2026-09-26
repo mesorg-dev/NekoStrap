@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using System.IO;
+using System.Net.Http;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
@@ -31,6 +33,10 @@ public partial class MainWindow : Window
 
     private readonly SessionWatcher _watcher = new();
     private readonly DiscordManager _discord = new();
+
+    // Кэш иконок плейсов для Discord-присутствия (гость ходит по серверам
+    // одного места — тянуть картинку заново каждый раз незачем).
+    private readonly Dictionary<long, string> _placeIconCache = new();
     private readonly Media.MusicManager _music = new();
     private readonly ChatClient _chat = new();
     private Process? _playerProcess;
@@ -54,6 +60,9 @@ public partial class MainWindow : Window
     private DateTime _sessionStartedAt;
     private long _sessionPlaceId;
     private string _sessionName = "";
+
+    // Когда стартовал клиент (для диагностики крашей).
+    private DateTime _playerStartedAt;
 
     private readonly HomePage _homePage = new();
     private readonly ModsPage _modsPage = new();
@@ -81,8 +90,11 @@ public partial class MainWindow : Window
 
         _homePage.PlayClicked += async (_, _) => await PlayFlowAsync();
         _homePage.PlayAgainClicked += (_, _) => PlayAgain();
+        _homePage.CleanLaunchClicked += (_, _) => StartCleanLaunch();
         _homePage.FavoritePlayClicked += (placeId) => LaunchPlaceById(placeId);
         _homePage.FavoriteRemoveClicked += (placeId) => RemoveFavorite(placeId);
+        _homePage.SearchQueryEntered += async (q) => await SearchGamesAsync(q);
+        _homePage.SearchPlayRequested += (placeId, _) => LaunchPlaceById(placeId);
 
         _modsPage.AddModClicked += (_, _) => AddMods();
         _modsPage.RefreshClicked += (_, _) => RefreshMods();
@@ -101,11 +113,25 @@ public partial class MainWindow : Window
             SaveQuiet();
             RefreshFleasionStatus();
         };
+        _modsPage.ProfileSelected += name => SwitchModProfile(name);
+        _modsPage.ProfileCreateClicked += (_, _) => CreateModProfile(copyActive: false);
+        _modsPage.ProfileDuplicateClicked += (_, _) => CreateModProfile(copyActive: true);
+        _modsPage.ProfileDeleteClicked += (_, _) => DeleteModProfile();
+        _modsPage.ProfileFolderClicked += (_, _) => OpenModProfileFolder();
+        _modsPage.QuickPickRequested += id => PickQuickAsset(id);
+        _modsPage.QuickResetRequested += id => ResetQuickAsset(id);
+        _modsPage.QuickTargetEdited += (id, path) => EditQuickTarget(id, path);
+        _modsPage.ProfileBindRequested += (_, _) => BindProfileToLastGame(mod: true);
+        _modsPage.ProfileUnbindRequested += (_, _) => UnbindProfileFromLastGame(mod: true);
+        _modsPage.ProfileExportRequested += (_, _) => ExportModProfile();
+        _modsPage.ProfileImportRequested += (_, _) => ImportModProfile();
 
         _flagsPage.AddFlagClicked += (_, _) => _flagsPage.AddNewFlag();
         _flagsPage.ProfileApplyClicked += (name) => ApplyFlagProfile(name);
         _flagsPage.ProfileSaveClicked += (_, _) => SaveFlagProfile();
         _flagsPage.ProfileDeleteClicked += (_, _) => DeleteFlagProfile();
+        _flagsPage.ProfileBindRequested += (_, _) => BindProfileToLastGame(mod: false);
+        _flagsPage.ProfileUnbindRequested += (_, _) => UnbindProfileFromLastGame(mod: false);
         _flagsPage.DeleteAllClicked += (_, _) => DeleteAllFlags();
         _flagsPage.SaveClicked += (_, _) => SaveFlags();
         _flagsPage.ImportClicked += (_, _) => ImportFlags();
@@ -115,6 +141,8 @@ public partial class MainWindow : Window
         _versionsPage.DeleteClicked += (_, _) => DeleteSelectedVersion();
         _versionsPage.StudioInstallClicked += async (_, _) => await InstallStudioAsync();
         _versionsPage.StudioLaunchClicked += (_, _) => LaunchStudio();
+        _versionsPage.CheckFilesClicked += async (_, _) => await CheckClientIntegrityAsync();
+        _versionsPage.RepairClicked += async (_, _) => await RepairClientAsync();
 
         _historyPage.PlayClicked += (_, _) => PlayHistorySelected();
         _historyPage.FavoriteAddClicked += (_, _) => AddFavoriteFromHistory();
@@ -218,11 +246,13 @@ public partial class MainWindow : Window
             RestoreWindowBounds();
             ApplyWallpaper();
             RefreshHomeMeta();
+            RestoreVanillaRun(); // если лаунчер убили посреди чистого запуска
             ApplyDiscord();
             UpdateColorFx();
             _music.LoadState();
             CheckForUpdatesQuiet();
             CheckForAppUpdatesQuiet();
+            ScheduleBackgroundRobloxUpdate();
             ApplyConfigToUi();
             RefreshFavorites();
             ApplySoundsFromConfig();
@@ -242,6 +272,7 @@ public partial class MainWindow : Window
         Closed += (_, _) =>
         {
             _closed = true;
+            try { _bgUpdateCts?.Cancel(); } catch { /* ignore */ }
             try { _chatOverlay?.Close(); } catch { /* ignore */ }
             try { _chat.Dispose(); } catch { /* ignore */ }
             try { _watcher.Dispose(); } catch { /* ignore */ }
@@ -506,6 +537,17 @@ public partial class MainWindow : Window
             }
             _watcher.Clear();
             _homePage.SetStatus(Lang.Get("Play_OpenPlace"), false);
+            if (_vanillaRun)
+            {
+                // Чистый запуск: снимок состояния + ваниль вместо авто-профиля.
+                _vanillaRun = false;
+                PrepareVanillaRun();
+            }
+            else
+            {
+                ApplyGameBinding(placeId); // авто-профиль игры (моды/флаги)
+                ApplyModsNow(); // активный профиль модов — перед стартом
+            }
             Process? process = RobloxLauncher.LaunchPlace(exe, placeId);
             if (process == null)
                 throw new InvalidOperationException(Lang.Get("Play_LaunchFail"));
@@ -572,6 +614,7 @@ public partial class MainWindow : Window
             });
 
             string oldGuid = _config.InstalledVersion;
+            await StopBackgroundRobloxUpdateAsync(); // фон не должен качать параллельно
             string guid = await RobloxInstaller.EnsureInstalledAsync(
                 _config, progress, CancellationToken.None);
             if (RobloxPaths.IsVersionGuid(oldGuid) && oldGuid != guid)
@@ -639,12 +682,182 @@ public partial class MainWindow : Window
         });
     }
 
+    // ---------- Фоновое обновление клиента ----------
+
+    private Task? _bgUpdateTask;
+    private CancellationTokenSource? _bgUpdateCts;
+
+    /// <summary>
+    /// Фоновое обновление Roblox (тумблер в настройках, выключен по умолчанию):
+    /// новая версия качается заранее, чтобы «Играть» не ждала загрузку.
+    /// Отменяется при старте игры, выключении тумблера и закрытии окна.
+    /// </summary>
+    private void MaybeStartBackgroundRobloxUpdate()
+    {
+        if (!_config.RobloxBgUpdate || _closed) return;
+        if (_bgUpdateTask is { IsCompleted: false }) return;
+
+        _bgUpdateCts?.Cancel();
+        var cts = new CancellationTokenSource();
+        _bgUpdateCts = cts;
+        var token = cts.Token;
+        void Ui(Action a) { try { Dispatcher.BeginInvoke(a); } catch { /* ignore */ } }
+
+        // Progress ловит UI-контекст на момент создания → колбэки на диспетчере.
+        var progress = new Progress<InstallProgress>(p =>
+        {
+            if (_closed || token.IsCancellationRequested) return;
+            _homePage.SetStatus(FormatInstall(p), false);
+            _homePage.SetProgress(p.Fraction);
+        });
+
+        _bgUpdateTask = Task.Run(async () =>
+        {
+            try
+            {
+                // Уже новое — молчим, статусы не трогаем.
+                string? installed = EffectiveVersion();
+                var latest = await Deployment.GetLatestPlayerVersionAsync(token);
+                token.ThrowIfCancellationRequested();
+                if (installed == latest.VersionGuid) return;
+                // Игра или своя установка уже идут — фону тут не место.
+                if (_busy || PlayerIsRunning(_playerProcess)) return;
+
+                Ui(() =>
+                {
+                    if (_closed || token.IsCancellationRequested) return;
+                    _homePage.SetStatus(Lang.Get("BgUpd_Start"), false);
+                });
+
+                string guid = await RobloxInstaller.EnsureInstalledAsync(_config, progress, token);
+                token.ThrowIfCancellationRequested();
+                if (guid == installed) return;
+
+                Ui(() =>
+                {
+                    if (_closed) return;
+                    if (RobloxPaths.IsVersionGuid(installed ?? "") && installed != guid)
+                        _config.PreviousVersion = installed!; // откат остаётся доступен
+                    RobloxInstaller.CleanupExcept(guid, _config.PreviousVersion, _config.StudioVersion);
+                    _config.Save(RobloxPaths.ConfigPath);
+                    _homePage.SetProgress(null);
+                    RefreshHomeMeta();
+                    _homePage.SetStatus(Lang.Format("BgUpd_DoneFmt", guid), true);
+                });
+            }
+            catch (OperationCanceledException)
+            {
+                // Игрок нажал «Играть» или выключил тумблер — это норма.
+            }
+            catch
+            {
+                // Фоновое обновление не должно ронять старт лаунчера.
+            }
+            finally
+            {
+                Ui(() =>
+                {
+                    if (!_closed) _homePage.SetProgress(null);
+                });
+            }
+        });
+    }
+
+    /// <summary>Стартуем через паузу, чтобы не мешать прогреву UI и тихой проверке.</summary>
+    private void ScheduleBackgroundRobloxUpdate()
+    {
+        if (!_config.RobloxBgUpdate) return;
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(TimeSpan.FromSeconds(15));
+            if (_closed) return;
+            _ = Dispatcher.BeginInvoke(new Action(MaybeStartBackgroundRobloxUpdate));
+        });
+    }
+
+    /// <summary>Ждать, пока фоновое обновление остановится (нужно перед своей установкой).</summary>
+    private async Task StopBackgroundRobloxUpdateAsync()
+    {
+        var task = _bgUpdateTask;
+        _bgUpdateCts?.Cancel();
+        if (task == null || task.IsCompleted) return;
+        try { await task; } catch { /* ignore */ }
+    }
+
+    // ---------- Поиск игр ----------
+
+    private bool _searchRunning;
+
+    /// <summary>
+    /// Поиск по живому omni-search: один запрос на нажатие (API режет по 429),
+    /// иконки UniverseId — вторым запросом, без них список уже готов.
+    /// </summary>
+    private async Task SearchGamesAsync(string query)
+    {
+        if (_searchRunning) return;
+        _searchRunning = true;
+        _homePage.SetSearching();
+        try
+        {
+            var hits = await GameSearch.SearchAsync(query, CancellationToken.None);
+            if (_closed) return;
+            if (hits.Count == 0)
+            {
+                _homePage.ShowSearchResults(new List<SearchRow>(), Lang.Get("Search_Empty"));
+                return;
+            }
+
+            Dictionary<long, string> icons = new();
+            try
+            {
+                icons = await GameSearch.GetIconsAsync(
+                    hits.Select(h => h.UniverseId).ToList(), CancellationToken.None);
+            }
+            catch { /* иконки не критичны */ }
+            if (_closed) return;
+
+            var rows = hits.Select(h => new SearchRow
+            {
+                PlaceId = h.PlaceId,
+                Name = h.Name.Length > 0 ? h.Name : Lang.Format("Common_PlaceFmt", h.PlaceId),
+                Meta = SearchMeta(h),
+                Icon = icons.TryGetValue(h.UniverseId, out string? icon) ? icon : ""
+            }).ToList();
+            _homePage.ShowSearchResults(rows, Lang.Format("Search_FoundFmt", rows.Count));
+        }
+        catch (HttpRequestException)
+        {
+            if (!_closed)
+                _homePage.ShowSearchResults(new List<SearchRow>(), Lang.Get("Search_NoNet"));
+        }
+        catch (Exception ex)
+        {
+            if (!_closed)
+                _homePage.ShowSearchResults(new List<SearchRow>(),
+                    Lang.Get("Search_Err") + ex.Message);
+        }
+        finally
+        {
+            _searchRunning = false;
+        }
+    }
+
+    private static string SearchMeta(GameHit h)
+    {
+        var parts = new List<string>(3);
+        if (h.Players > 0) parts.Add(Lang.Format("Search_PlayersFmt", h.Players));
+        if (h.Creator.Length > 0) parts.Add(h.Creator);
+        parts.Add("PlaceId " + h.PlaceId);
+        return string.Join("  •  ", parts);
+    }
+
     // ---------- Трекинг игры: сервер + Discord ----------
 
     private void TrackPlayer(Process process)
     {
         try { _playerProcess?.Dispose(); } catch { /* ignore */ }
         _playerProcess = process;
+        _playerStartedAt = DateTime.UtcNow;
         try
         {
             process.EnableRaisingEvents = true;
@@ -656,6 +869,8 @@ public partial class MainWindow : Window
     private void OnPlayerExited()
     {
         if (_closed) return;
+        int exitCode = 0;
+        try { exitCode = _playerProcess?.ExitCode ?? 0; } catch { /* ignore */ }
         FlushSessionTime();
         _recent.EndAll();
         _watcher.Clear();
@@ -672,6 +887,9 @@ public partial class MainWindow : Window
         RefreshHomeMeta();
         try { _playerProcess?.Dispose(); } catch { /* ignore */ }
         _playerProcess = null;
+        RestoreVanillaRun(); // чистый запуск закончился — возвращаем профили
+        // Ненулевой код = клиент упал, а не закрылся (крэш, AV, память).
+        if (exitCode != 0) ReportPossibleCrash(exitCode);
     }
 
     private void BeginSessionTime(long placeId, string name)
@@ -746,7 +964,8 @@ public partial class MainWindow : Window
                 if (_config.DiscordRpc)
                 {
                     _discord.SetSession(name ?? "", geoText,
-                        session.PlaceId, session.JobId);
+                        session.PlaceId, session.JobId, Lang.Get("Discord_OpenGame"));
+                    LoadDiscordPlaceIcon(session.PlaceId, name ?? "");
                 }
                 ShowServerBalloon();
             }));
@@ -815,10 +1034,48 @@ public partial class MainWindow : Window
 
     private void ApplyDiscord()
     {
-        if (_config.DiscordRpc && _config.DiscordAppId.Length > 0)
-            _discord.Configure(_config.DiscordAppId, _config.DiscordAllowJoin);
+        if (_config.DiscordRpc)
+            _discord.Configure(LauncherConfig.DefaultDiscordAppId, new DiscordOptions
+            {
+                AllowJoin = _config.DiscordAllowJoin,
+                ShowName = _config.DiscordShowName,
+                ShowServer = _config.DiscordShowServer,
+                ShowIcon = _config.DiscordShowIcon,
+                ShowElapsed = _config.DiscordShowElapsed,
+                ShowButton = _config.DiscordShowButton,
+                AssetKey = _config.DiscordAssetKey
+            });
         else
             _discord.Shutdown();
+    }
+
+    /// <summary>
+    /// Картинка плейса в присутствии: официальный thumbnails API отдаёт URL,
+    /// Discord их принимает. Ошибка сети молча остаётся без картинки — в этом
+    /// случае работает ключ из настроек.
+    /// </summary>
+    private void LoadDiscordPlaceIcon(long placeId, string gameName)
+    {
+        if (!_config.DiscordRpc || placeId <= 0) return;
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                if (!_placeIconCache.TryGetValue(placeId, out string? url))
+                {
+                    url = await Deployment.GetPlaceIconAsync(placeId, CancellationToken.None);
+                    if (url.Length > 0) _placeIconCache[placeId] = url;
+                }
+                if (url!.Length == 0 || _closed) return;
+                string text = gameName.Length > 0 ? gameName : "Roblox";
+                _ = Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    if (_closed || !_config.DiscordRpc) return;
+                    _discord.UpdateLargeAsset(url, text);
+                }));
+            }
+            catch { /* без сети — остаётся картинка из настроек */ }
+        });
     }
 
     private void SaveQuiet()
@@ -1050,7 +1307,453 @@ public partial class MainWindow : Window
 
     private void RefreshMods()
     {
-        _modsPage.SetMods(ModManager.List());
+        var mods = ModManager.List();
+        _modsPage.SetMods(mods);
+        _modsPage.SetProfiles(ModManager.Profiles(), ModManager.ActiveProfile(), mods.Count);
+        _modsPage.BuildQuickRows();
+        RefreshGameBindings();
+    }
+
+    /// <summary>
+    /// Откат прошлых правок + наложение активного профиля на установленную
+    /// версию. Возвращает число применённых файлов (0 = нечего/нет версии).
+    /// </summary>
+    private int ApplyModsNow()
+    {
+        try
+        {
+            string? guid = EffectiveVersion();
+            if (guid == null) return 0;
+            return ModManager.ApplyTo(Path.Combine(RobloxPaths.VersionsDir, guid));
+        }
+        catch { return 0; }
+    }
+
+    private static bool PlayerIsRunning(Process? process)
+    {
+        try { return process != null && !process.HasExited; }
+        catch { return false; }
+    }
+
+    /// <summary>Правки из UI: пока клиент запущен, его файлы не трогаем.</summary>
+    private int ApplyModsIfIdle() =>
+        PlayerIsRunning(_playerProcess) ? 0 : ApplyModsNow();
+
+    // ---- Авто-профили на игру ----
+
+    /// <summary>
+    /// Перед запуском плейса подставляем привязанные ему профили: моды
+    /// (переключением активного профиля, дальше их накладывает ApplyModsNow)
+    /// и флаги (пишутся в ClientAppSettings сразу, без вопросов).
+    /// </summary>
+    private void ApplyGameBinding(long placeId)
+    {
+        try
+        {
+            var b = GameProfiles.Get(placeId);
+            if (b == null) return;
+            bool changed = false;
+
+            if (b.ModProfile.Length > 0 &&
+                !string.Equals(b.ModProfile, ModManager.ActiveProfile(), StringComparison.OrdinalIgnoreCase) &&
+                ModManager.Profiles().Contains(b.ModProfile, StringComparer.OrdinalIgnoreCase) &&
+                ModManager.SetActive(b.ModProfile))
+            {
+                RefreshMods();
+                changed = true;
+            }
+
+            if (b.FlagProfile.Length > 0 &&
+                !string.Equals(b.FlagProfile, _config.ActiveFlagProfile, StringComparison.OrdinalIgnoreCase) &&
+                FlagProfiles.Get(b.FlagProfile) != null &&
+                ForceFlagProfile(b.FlagProfile))
+            {
+                RefreshFlagProfiles();
+                changed = true;
+            }
+
+            if (changed)
+                _homePage.SetStatus(Lang.Format("AutoP_AppliedFmt", GameTitle(b)), false);
+        }
+        catch { /* авто-профиль не должен ломать запуск */ }
+    }
+
+    /// <summary>Ставит профиль флагов в таблицу и сразу пишет его в клиент.</summary>
+    private bool ForceFlagProfile(string name)
+    {
+        var flags = FlagProfiles.Get(name);
+        if (flags == null) return false;
+        _flagsPage.SetFlags(new Dictionary<string, string>(flags));
+        FastFlagStore.Save(EffectiveVersion(), flags);
+        if (!string.Equals(_config.ActiveFlagProfile, name, StringComparison.OrdinalIgnoreCase))
+        {
+            _config.ActiveFlagProfile = name;
+            _config.Save(RobloxPaths.ConfigPath);
+        }
+        return true;
+    }
+
+    private void BindProfileToLastGame(bool mod)
+    {
+        long placeId = _config.LastGamePlaceId;
+        if (placeId <= 0)
+        {
+            _homePage.SetStatus(Lang.Get("AutoP_NoLastGame"), false);
+            return;
+        }
+        string value = mod ? ModManager.ActiveProfile() : _config.ActiveFlagProfile;
+        if (value.Length == 0)
+        {
+            _homePage.SetStatus(Lang.Get("AutoP_NoActive"), false);
+            return;
+        }
+
+        var b = GameProfiles.Get(placeId) ?? new GameBinding
+        {
+            PlaceId = placeId,
+            GameName = _config.LastGameName
+        };
+        if (b.GameName.Length == 0) b.GameName = _config.LastGameName;
+        if (mod) b.ModProfile = value; else b.FlagProfile = value;
+        GameProfiles.Set(b);
+
+        RefreshGameBindings();
+        _homePage.SetStatus(Lang.Format("AutoP_BoundFmt", value, GameTitle(b)), true);
+    }
+
+    private void UnbindProfileFromLastGame(bool mod)
+    {
+        long placeId = _config.LastGamePlaceId;
+        if (placeId <= 0)
+        {
+            _homePage.SetStatus(Lang.Get("AutoP_NoLastGame"), false);
+            return;
+        }
+        var b = GameProfiles.Get(placeId);
+        if (b != null)
+        {
+            if (mod) b.ModProfile = ""; else b.FlagProfile = "";
+            GameProfiles.Set(b); // пустое поле = запись удаляется
+            _homePage.SetStatus(Lang.Get("AutoP_Unbound"), true);
+        }
+        RefreshGameBindings();
+    }
+
+    /// <summary>Статус привязок на обеих страницах (по последней игре).</summary>
+    private void RefreshGameBindings()
+    {
+        GameBinding? b = _config.LastGamePlaceId > 0
+            ? GameProfiles.Get(_config.LastGamePlaceId) : null;
+        _modsPage.SetBindStatus(BindStatus(b, mod: true));
+        _flagsPage.SetBindStatus(BindStatus(b, mod: false));
+    }
+
+    private static string BindStatus(GameBinding? b, bool mod)
+    {
+        if (b == null) return Lang.Get("AutoP_NoBind");
+        string value = mod ? b.ModProfile : b.FlagProfile;
+        return value.Length == 0
+            ? Lang.Get("AutoP_NoBind")
+            : Lang.Format("AutoP_ForGameFmt", value, GameTitle(b));
+    }
+
+    private static string GameTitle(GameBinding b) =>
+        b.GameName.Length > 0 ? b.GameName : b.PlaceId.ToString();
+
+    // ---- Экспорт/импорт профиля модов (zip) ----
+
+    private void ExportModProfile()
+    {
+        string name = ModManager.ActiveProfile();
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = Lang.Get("Dlg_ProfileExport"),
+            FileName = name + ".zip",
+            Filter = $"ZIP (*.zip)|*.zip|{Lang.Get("Dlg_AllFiles")} (*.*)|*.*"
+        };
+        if (dlg.ShowDialog(this) != true) return;
+        try
+        {
+            ModManager.ExportProfile(name, dlg.FileName);
+            _homePage.SetStatus(Lang.Format("ModP_ExportedFmt", name), true);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(Lang.Get("ModP_ExportErr") + ex.Message,
+                "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    private void ImportModProfile()
+    {
+        var dlg = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = Lang.Get("Dlg_ProfileImport"),
+            Filter = $"ZIP (*.zip)|*.zip|{Lang.Get("Dlg_AllFiles")} (*.*)|*.*"
+        };
+        if (dlg.ShowDialog(this) != true) return;
+        try
+        {
+            string name = ModManager.ImportProfile(dlg.FileName);
+            RefreshMods();
+            _homePage.SetStatus(Lang.Format("ModP_ImportedFmt", name), true);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(Lang.Get("ModP_ImportErr") + ex.Message,
+                "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    // ---- Чистый запуск и диагностика крашей ----
+
+    /// <summary>Следующий запуск — ванильный (без модов и без флагов).</summary>
+    private bool _vanillaRun;
+
+    private void StartCleanLaunch()
+    {
+        long placeId = _config.LastGamePlaceId;
+        if (placeId <= 0)
+        {
+            MessageBox.Show(Lang.Get("Play_Nothing"), "NekoStrap",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        if (PlayerIsRunning(_playerProcess))
+        {
+            _homePage.SetStatus(Lang.Get("Play_CleanBusy"), false);
+            return;
+        }
+        _vanillaRun = true;
+        LaunchPlaceById(placeId);
+    }
+
+    /// <summary>Снимок «до» + клиент в ваниль — перед чистым стартом.</summary>
+    private void PrepareVanillaRun()
+    {
+        try
+        {
+            string? guid = EffectiveVersion();
+            if (guid != null)
+            {
+                VanillaStore.Save(new VanillaState
+                {
+                    VersionGuid = guid,
+                    ModProfile = ModManager.ActiveProfile(),
+                    FlagProfile = _config.ActiveFlagProfile,
+                    Flags = FastFlagStore.Load(guid)
+                });
+                FastFlagStore.Save(guid, new Dictionary<string, string>());
+                ModManager.RevertTo(Path.Combine(RobloxPaths.VersionsDir, guid));
+            }
+            RefreshMods();
+            _homePage.SetStatus(Lang.Get("Play_CleanStarting"), false);
+        }
+        catch { /* не собралось — запускаем как есть */ }
+    }
+
+    /// <summary>Вернуть состояние до чистого запуска (выход из игры / старт лаунчера).</summary>
+    private void RestoreVanillaRun()
+    {
+        var s = VanillaStore.Load();
+        if (s == null) return;
+        try
+        {
+            if (s.VersionGuid.Length > 0)
+            {
+                FastFlagStore.Save(s.VersionGuid, s.Flags ?? new Dictionary<string, string>());
+                if (s.ModProfile.Length > 0 &&
+                    ModManager.Profiles().Contains(s.ModProfile, StringComparer.OrdinalIgnoreCase))
+                    ModManager.SetActive(s.ModProfile);
+                ModManager.ApplyTo(Path.Combine(RobloxPaths.VersionsDir, s.VersionGuid));
+            }
+            if (s.FlagProfile.Length > 0) _config.ActiveFlagProfile = s.FlagProfile;
+            _config.Save(RobloxPaths.ConfigPath);
+            VanillaStore.Clear();
+            RefreshMods();
+            RefreshFlagProfiles();
+            _homePage.SetStatus(Lang.Get("Play_CleanRestored"), true);
+        }
+        catch { /* не вышло — снимок дождётся следующего старта */ }
+    }
+
+    /// <summary>Клиент умер с ненулевым кодом — предлагаем чистый запуск.</summary>
+    private void ReportPossibleCrash(int exitCode)
+    {
+        _homePage.SetStatus(Lang.Format("Crash_Fmt", exitCode), false);
+        var answer = MessageBox.Show(Lang.Format("Crash_AskFmt", exitCode), "NekoStrap",
+            MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        if (answer == MessageBoxResult.Yes) StartCleanLaunch();
+    }
+
+    // ---- Профили модов ----
+
+    private void SwitchModProfile(string name)
+    {
+        try
+        {
+            if (string.Equals(name, ModManager.ActiveProfile(), StringComparison.OrdinalIgnoreCase))
+                return;
+            if (!ModManager.SetActive(name)) return;
+            bool running = PlayerIsRunning(_playerProcess);
+            int applied = ApplyModsIfIdle();
+            RefreshMods();
+            RefreshHomeMeta();
+            _homePage.SetStatus(running
+                ? Lang.Format("ModP_SwitchedLaterFmt", ModManager.ActiveProfile())
+                : Lang.Format("ModP_SwitchedFmt", ModManager.ActiveProfile(), applied), true);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(Lang.Get("ModP_SwitchErr") + ex.Message,
+                "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    /// <summary>Создание профиля; copyActive = дубликат текущего со всеми файлами.</summary>
+    private void CreateModProfile(bool copyActive)
+    {
+        string name = _modsPage.ProfileNameText;
+        if (!ModManager.ValidName(name))
+        {
+            MessageBox.Show(Lang.Get("ModP_NeedName") + "\n" + Lang.Get("ModP_BadName"),
+                "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        name = name.Trim();
+        try
+        {
+            if (!ModManager.Create(name, copyActive))
+            {
+                MessageBox.Show(Lang.Format("ModP_ExistsFmt", name),
+                    "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+            _modsPage.ClearProfileName();
+            ModManager.SetActive(name);
+            ApplyModsIfIdle();
+            RefreshMods();
+            RefreshHomeMeta();
+            _homePage.SetStatus(Lang.Format(copyActive ? "ModP_DupFmt" : "ModP_CreatedFmt", name), true);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(Lang.Get("ModP_Err") + ex.Message,
+                "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    private void DeleteModProfile()
+    {
+        string name = ModManager.ActiveProfile();
+        if (ModManager.Profiles().Count <= 1)
+        {
+            MessageBox.Show(Lang.Get("ModP_Last"), "NekoStrap",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        if (MessageBox.Show(Lang.Format("ModP_DelConfirm", name),
+                "NekoStrap", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+            return;
+        try
+        {
+            if (!ModManager.Delete(name)) return;
+            ApplyModsIfIdle();
+            RefreshMods();
+            RefreshHomeMeta();
+            _homePage.SetStatus(Lang.Format("ModP_DeletedFmt", name), true);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(Lang.Get("ModP_Err") + ex.Message,
+                "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    private void OpenModProfileFolder()
+    {
+        try { ModManager.OpenActiveFolder(); } catch { /* ignore */ }
+    }
+
+    // ---- Быстрая замена ----
+
+    private static string QuickFilter(string kind) => kind switch
+    {
+        "audio" => $"{Lang.Get("Dlg_AudioFiles")} (*.ogg;*.wav;*.mp3)|*.ogg;*.wav;*.mp3",
+        "font" => $"{Lang.Get("Dlg_FontFiles")} (*.ttf;*.otf)|*.ttf;*.otf",
+        "image" => $"{Lang.Get("Dlg_ImageFiles")} (*.png;*.jpg;*.jpeg;*.webp;*.bmp)|*.png;*.jpg;*.jpeg;*.webp;*.bmp",
+        _ => $"{Lang.Get("Dlg_AllFiles")} (*.*)|*.*"
+    };
+
+    private void PickQuickAsset(string id)
+    {
+        var slot = QuickAssets.Get(id);
+        if (slot == null) return;
+        if (slot.Target.Length == 0)
+        {
+            MessageBox.Show(Lang.Format("Quick_NoTarget", Lang.Get(slot.TitleKey)),
+                "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        bool folder = QuickAssets.IsFolderTarget(slot.Target);
+        var dlg = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = Lang.Get(slot.TitleKey),
+            Multiselect = folder,
+            Filter = QuickFilter(slot.Filter)
+        };
+        if (dlg.ShowDialog(this) != true) return;
+        try
+        {
+            int n = QuickAssets.Install(id, dlg.FileNames);
+            if (n == 0) throw new InvalidOperationException(Lang.Get("Quick_NoFiles"));
+            ApplyModsIfIdle();
+            RefreshMods();
+            RefreshHomeMeta();
+            _homePage.SetStatus(Lang.Format("Quick_InstalledFmt", Lang.Get(slot.TitleKey), n), true);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(Lang.Get("Quick_Err") + ex.Message,
+                "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    private void ResetQuickAsset(string id)
+    {
+        var slot = QuickAssets.Get(id);
+        if (slot == null) return;
+        try
+        {
+            if (!QuickAssets.Reset(id))
+            {
+                Dispatcher.BeginInvoke(new Action(RefreshMods), DispatcherPriority.Background);
+                return;
+            }
+            ApplyModsIfIdle();
+            RefreshMods();
+            RefreshHomeMeta();
+            _homePage.SetStatus(Lang.Format("Quick_ResetFmt", Lang.Get(slot.TitleKey)), true);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(Lang.Get("Quick_Err") + ex.Message,
+                "NekoStrap", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    private void EditQuickTarget(string id, string path)
+    {
+        var slot = QuickAssets.Get(id);
+        if (slot == null) return;
+        if (!QuickAssets.TrySetTarget(id, path))
+        {
+            MessageBox.Show(Lang.Get("Quick_BadPath"), "NekoStrap",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        // Перестраиваем строки ПОСЛЕ события (фокус ещё в TextBox) — иначе
+        // контрол выдернется из дерева посреди собственного LostFocus.
+        Dispatcher.BeginInvoke(new Action(RefreshMods), DispatcherPriority.Background);
     }
 
     private void AddMods()
@@ -1065,6 +1768,7 @@ public partial class MainWindow : Window
         try
         {
             ModManager.AddFiles(dlg.FileNames);
+            ApplyModsIfIdle();
             RefreshMods();
             RefreshHomeMeta();
         }
@@ -1087,14 +1791,8 @@ public partial class MainWindow : Window
         try
         {
             foreach (var rel in selected)
-            {
-                string full = Path.Combine(RobloxPaths.ModsDir, rel);
-                if (!File.Exists(full)) continue;
-                if (full.EndsWith(".disabled", StringComparison.OrdinalIgnoreCase))
-                    File.Move(full, full[..^".disabled".Length]);
-                else
-                    File.Move(full, full + ".disabled");
-            }
+                ModManager.Toggle(rel);
+            ApplyModsIfIdle();
             RefreshMods();
             RefreshHomeMeta();
         }
@@ -1119,16 +1817,10 @@ public partial class MainWindow : Window
             return;
         try
         {
-            foreach (var rel in selected)
-            {
-                string full = Path.Combine(RobloxPaths.ModsDir, rel);
-                // Защита от выхода за папку модов.
-                string root = Path.GetFullPath(RobloxPaths.ModsDir);
-                if (!Path.GetFullPath(full).StartsWith(root + Path.DirectorySeparatorChar,
-                        StringComparison.OrdinalIgnoreCase))
-                    continue;
-                if (File.Exists(full)) File.Delete(full);
-            }
+            // Удаление идёт через ModManager: путь нормализуется и
+            // проверяется на выход за пределы папки активного профиля.
+            ModManager.DeleteFiles(selected);
+            ApplyModsIfIdle();
             RefreshMods();
             RefreshHomeMeta();
         }
@@ -1208,6 +1900,7 @@ public partial class MainWindow : Window
     private void RefreshFlagProfiles()
     {
         _flagsPage.SetProfiles(FlagProfiles.List());
+        RefreshGameBindings();
     }
 
     private void ApplyFlagProfile(string name)
@@ -1221,6 +1914,12 @@ public partial class MainWindow : Window
                 return;
         }
         _flagsPage.SetFlags(new Dictionary<string, string>(flags));
+        if (!string.Equals(_config.ActiveFlagProfile, name, StringComparison.OrdinalIgnoreCase))
+        {
+            _config.ActiveFlagProfile = name;
+            _config.Save(RobloxPaths.ConfigPath);
+        }
+        RefreshGameBindings();
         _homePage.SetStatus(Lang.Format("Prof_AppliedFmt", name, flags.Count), false);
     }
 
@@ -1286,6 +1985,13 @@ public partial class MainWindow : Window
         {
             var flags = _flagsPage.CollectFlags();
             FastFlagStore.Save(EffectiveVersion(), flags);
+            // Таблицу правили руками — она больше не равна профилю.
+            if (_config.ActiveFlagProfile.Length > 0)
+            {
+                _config.ActiveFlagProfile = "";
+                _config.Save(RobloxPaths.ConfigPath);
+                RefreshGameBindings();
+            }
             RefreshHomeMeta();
             _homePage.SetStatus(Lang.Get("Flags_Saved"), true);
         }
@@ -1373,6 +2079,140 @@ public partial class MainWindow : Window
             ? studio : Lang.Get("Ver_StudioNotSet"));
     }
 
+    // ================= Целостность клиента =================
+
+    private bool _checkingIntegrity;
+
+    /// <summary>
+    /// Проверка выбранной (или установленной) версии: обязательные файлы плюс
+    /// снимок размеров, снятый при установке. Правленные модами файлы в расчёт
+    /// не берутся — там лежит содержимое профиля, а не оригинальный клиент.
+    /// </summary>
+    private async Task CheckClientIntegrityAsync()
+    {
+        if (_checkingIntegrity) return;
+        string? guid = _versionsPage.SelectedVersion() ?? EffectiveVersion();
+        string dir = guid != null ? Path.Combine(RobloxPaths.VersionsDir, guid) : "";
+        if (guid == null || !RobloxPaths.IsVersionGuid(guid) || !Directory.Exists(dir))
+        {
+            _versionsPage.SetIntegrityStatus(Lang.Get("Int_NoVersion"));
+            _versionsPage.SetRepairEnabled(false);
+            return;
+        }
+
+        _checkingIntegrity = true;
+        _versionsPage.SetRepairEnabled(false);
+        _versionsPage.SetIntegrityStatus(Lang.Get("Int_Checking"));
+        try
+        {
+            // Десятки тысяч файлов на диске — гоним в фоне, UI не трогаем.
+            var report = await Task.Run(() => Integrity.Check(dir));
+            var sb = new StringBuilder();
+            if (report.Ok)
+            {
+                sb.Append(Lang.Format("Int_OkFmt", report.Checked));
+            }
+            else
+            {
+                sb.Append(Lang.Format("Int_ProblemsFmt", report.Issues.Count, report.Checked));
+                foreach (var i in report.Issues.Take(5))
+                    sb.AppendLine().Append("  • ").Append(i.Path)
+                     .Append(" — ").Append(IntKindText(i.Kind));
+                if (report.Issues.Count > 5)
+                    sb.AppendLine().Append("  ...");
+            }
+            if (!report.HasBaseline && report.Ok)
+                sb.AppendLine().Append(Lang.Get("Int_NoBaseline"));
+            _versionsPage.SetIntegrityStatus(sb.ToString());
+            _versionsPage.SetRepairEnabled(!report.Ok);
+        }
+        catch (Exception ex)
+        {
+            _versionsPage.SetIntegrityStatus(Lang.Get("Int_CheckErr") + ex.Message);
+        }
+        finally
+        {
+            _checkingIntegrity = false;
+        }
+    }
+
+    private static string IntKindText(string kind) => kind switch
+    {
+        Integrity.KindMissing => Lang.Get("Int_Missing"),
+        Integrity.KindEmpty => Lang.Get("Int_Empty"),
+        _ => Lang.Get("Int_Size")
+    };
+
+    /// <summary>
+    /// Ремонт: сносим папку активной версии и ставим её заново — установщик
+    /// докачает только недостающее, битое перезапишет.
+    /// </summary>
+    private async Task RepairClientAsync()
+    {
+        if (_busy) return;
+        string? guid = EffectiveVersion();
+        if (guid == null || !RobloxPaths.IsVersionGuid(guid))
+        {
+            _versionsPage.SetIntegrityStatus(Lang.Get("Int_NoVersion"));
+            return;
+        }
+        if (PlayerIsRunning(_playerProcess))
+        {
+            _versionsPage.SetIntegrityStatus(Lang.Get("Int_Running"));
+            return;
+        }
+        if (MessageBox.Show(Lang.Format("Int_RepairAsk", guid), "NekoStrap",
+                MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+            return;
+
+        _busy = true;
+        _homePage.SetBusy(true);
+        try
+        {
+            await StopBackgroundRobloxUpdateAsync();
+            var progress = new Progress<InstallProgress>(p =>
+            {
+                if (_closed) return;
+                _homePage.SetStatus(FormatInstall(p), false);
+                _homePage.SetProgress(p.Fraction);
+            });
+
+            _versionsPage.SetIntegrityStatus(Lang.Get("Int_Cleaning"));
+            string dir = Path.Combine(RobloxPaths.VersionsDir, guid);
+            await Task.Run(() =>
+            {
+                try { if (Directory.Exists(dir)) Directory.Delete(dir, true); }
+                catch { /* файл занят — установщик сообщит ошибкой */ }
+            });
+            // Папка могла не удалиться: без этого установщик решит, что всё цело.
+            if (Directory.Exists(dir))
+                throw new IOException(dir);
+
+            string oldGuid = _config.InstalledVersion;
+            string newGuid = await RobloxInstaller.EnsureInstalledAsync(
+                _config, progress, CancellationToken.None);
+            if (RobloxPaths.IsVersionGuid(oldGuid) && oldGuid != newGuid)
+                _config.PreviousVersion = oldGuid;
+            RobloxInstaller.CleanupExcept(newGuid, _config.PreviousVersion, _config.StudioVersion);
+            _config.Save(RobloxPaths.ConfigPath);
+            RefreshVersions();
+
+            string done = Lang.Format("Int_RepairDoneFmt", newGuid);
+            _versionsPage.SetIntegrityStatus(done);
+            _homePage.SetStatus(done, true);
+        }
+        catch (Exception ex)
+        {
+            _versionsPage.SetIntegrityStatus(Lang.Get("Int_RepairErr") + ex.Message);
+        }
+        finally
+        {
+            _homePage.SetProgress(null);
+            _homePage.SetBusy(false);
+            _busy = false;
+        }
+    }
+
     private void ActivateSelectedVersion()
     {
         string? guid = _versionsPage.SelectedVersion();
@@ -1437,6 +2277,7 @@ public partial class MainWindow : Window
                 _homePage.SetStatus($"Studio — {FormatInstall(p)}", false);
                 _homePage.SetProgress(p.Fraction);
             });
+            await StopBackgroundRobloxUpdateAsync();
             string guid = await RobloxInstaller.EnsureStudioInstalledAsync(
                 _config, progress, CancellationToken.None);
             _config.Save(RobloxPaths.ConfigPath);
@@ -1662,6 +2503,8 @@ public partial class MainWindow : Window
             _watcher.Clear();
             _homePage.SetStatus(jobId.Length > 0
                 ? Lang.Get("Hop_Rejoin") : Lang.Get("Play_OpenPlace"), false);
+            ApplyGameBinding(placeId); // авто-профиль игры (моды/флаги)
+            ApplyModsNow(); // активный профиль модов — перед стартом
             Process? process = RobloxLauncher.LaunchServer(exe, placeId, jobId);
             if (process == null)
                 throw new InvalidOperationException(Lang.Get("Play_LaunchFail"));
@@ -1681,11 +2524,19 @@ public partial class MainWindow : Window
         ClickSound.Enabled = _config.Sounds;
         _settingsPage.CloseOnLaunchCheck.IsChecked = _config.CloseOnLaunch;
         _settingsPage.DiscordRpcCheck.IsChecked = _config.DiscordRpc;
+        _settingsPage.DiscordNameCheck.IsChecked = _config.DiscordShowName;
+        _settingsPage.DiscordServerCheck.IsChecked = _config.DiscordShowServer;
+        _settingsPage.DiscordIconCheck.IsChecked = _config.DiscordShowIcon;
+        _settingsPage.DiscordTimeCheck.IsChecked = _config.DiscordShowElapsed;
+        _settingsPage.DiscordBtnCheck.IsChecked = _config.DiscordShowButton;
+        _settingsPage.DiscordAllowJoinCheck.IsChecked = _config.DiscordAllowJoin;
         _settingsPage.SoundsCheck.IsChecked = _config.Sounds;
-        _settingsPage.AutoUpdateCheck.IsChecked = _config.AutoUpdate;
+            _settingsPage.AutoUpdateCheck.IsChecked = _config.AutoUpdate;
+            _settingsPage.RobloxBgUpdateCheck.IsChecked = _config.RobloxBgUpdate;
         _settingsPage.FpsCheck.IsChecked = _config.FpsLimit > 0;
         _settingsPage.FpsValueText = _config.FpsLimit > 0 ? _config.FpsLimit.ToString() : "240";
-        _settingsPage.DiscordAppIdText = _config.DiscordAppId;
+        _settingsPage.DiscordAssetKeyText = _config.DiscordAssetKey;
+        _settingsPage.DownloadThreadsValue = _config.DownloadThreads;
         _settingsPage.MinimizeToTrayCheck.IsChecked = _config.MinimizeToTray;
         _settingsPage.CloseToTrayCheck.IsChecked = _config.CloseToTray;
         _settingsPage.NotificationsCheck.IsChecked = _config.NotificationsEnabled;
@@ -1706,13 +2557,21 @@ public partial class MainWindow : Window
     {
         _config.CloseOnLaunch = _settingsPage.CloseOnLaunchCheck.IsChecked == true;
         _config.DiscordRpc = _settingsPage.DiscordRpcCheck.IsChecked == true;
+        _config.DiscordShowName = _settingsPage.DiscordNameCheck.IsChecked == true;
+        _config.DiscordShowServer = _settingsPage.DiscordServerCheck.IsChecked == true;
+        _config.DiscordShowIcon = _settingsPage.DiscordIconCheck.IsChecked == true;
+        _config.DiscordShowElapsed = _settingsPage.DiscordTimeCheck.IsChecked == true;
+        _config.DiscordShowButton = _settingsPage.DiscordBtnCheck.IsChecked == true;
+        _config.DiscordAllowJoin = _settingsPage.DiscordAllowJoinCheck.IsChecked == true;
+        _config.DownloadThreads = _settingsPage.DownloadThreadsValue;
         _config.Sounds = _settingsPage.SoundsCheck.IsChecked == true;
         _config.AutoUpdate = _settingsPage.AutoUpdateCheck.IsChecked == true;
+        _config.RobloxBgUpdate = _settingsPage.RobloxBgUpdateCheck.IsChecked == true;
         _config.RobloxPath = _settingsPage.RobloxPathText;
         _config.FpsLimit = _settingsPage.FpsCheck.IsChecked == true
             && int.TryParse(_settingsPage.FpsValueText, out int fps) && fps >= 5 && fps <= 10000
             ? fps : 0;
-        _config.DiscordAppId = _settingsPage.DiscordAppIdText;
+        _config.DiscordAssetKey = _settingsPage.DiscordAssetKeyText;
         _config.MinimizeToTray = _settingsPage.MinimizeToTrayCheck.IsChecked == true;
         _config.CloseToTray = _settingsPage.CloseToTrayCheck.IsChecked == true;
         _config.NotificationsEnabled = _settingsPage.NotificationsCheck.IsChecked == true;
@@ -1747,7 +2606,20 @@ public partial class MainWindow : Window
         }
         Bool(_settingsPage.CloseOnLaunchCheck, v => _config.CloseOnLaunch = v);
         Bool(_settingsPage.DiscordRpcCheck, v => { _config.DiscordRpc = v; ApplyDiscord(); });
+        Bool(_settingsPage.DiscordNameCheck, v => { _config.DiscordShowName = v; ApplyDiscord(); });
+        Bool(_settingsPage.DiscordServerCheck, v => { _config.DiscordShowServer = v; ApplyDiscord(); });
+        Bool(_settingsPage.DiscordIconCheck, v => { _config.DiscordShowIcon = v; ApplyDiscord(); });
+        Bool(_settingsPage.DiscordTimeCheck, v => { _config.DiscordShowElapsed = v; ApplyDiscord(); });
+        Bool(_settingsPage.DiscordBtnCheck, v => { _config.DiscordShowButton = v; ApplyDiscord(); });
+        Bool(_settingsPage.DiscordAllowJoinCheck, v => { _config.DiscordAllowJoin = v; ApplyDiscord(); });
+        _settingsPage.DownloadThreadsChanged += v => { _config.DownloadThreads = v; SaveQuiet(); };
         Bool(_settingsPage.AutoUpdateCheck, v => _config.AutoUpdate = v);
+        Bool(_settingsPage.RobloxBgUpdateCheck, v =>
+        {
+            _config.RobloxBgUpdate = v;
+            if (v) MaybeStartBackgroundRobloxUpdate();
+            else _bgUpdateCts?.Cancel(); // выключили тумблер — качать бросили
+        });
         Bool(_settingsPage.FpsCheck, v => _config.FpsLimit = v ? ParseFpsValue() : 0);
         Bool(_settingsPage.MinimizeToTrayCheck, v => _config.MinimizeToTray = v);
         Bool(_settingsPage.CloseToTrayCheck, v => _config.CloseToTray = v);

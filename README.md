@@ -124,7 +124,9 @@ dotnet run --project ChatServer          # слушает http://0.0.0.0:8787
 # проверка: http://localhost:8787/health  →  {"ok":true,...}
 ```
 
-Адрес в лаунчере: `ws://localhost:8787/ws` (Настройки → Чат).
+Адрес в лаунчере уже стоит по умолчанию — `wss://nekostrap.duckdns.org/ws`
+(наш сервер, Caddy с TLS). Свой сервер: впиши его в настройках или поменяй
+дефолт (`DefaultChatServerUrl` в `LauncherConfig`).
 
 ### Развёртывание на VPS
 

@@ -136,9 +136,8 @@ namespace NekoStrap.Roblox
         public bool ChatEnabled { get; set; }                 // мастер-тумблер
         public bool ChatDmEnabled { get; set; } = true;       // ЛС вкл/выкл
         public bool ChatOverlayOnJoin { get; set; } = true;   // оверлей при входе в игру
-        // Чат: наш сервер по умолчанию. Свой адрес — вписать в настройках.
+        // Чат: единственный наш сервер чата, адреса в конфиге нет.
         public const string DefaultChatServerUrl = "wss://nekostrap.duckdns.org/ws";
-        public string ChatServerUrl { get; set; } = DefaultChatServerUrl;
         public string ChatNickname { get; set; } = "";        // пусто = ник Roblox
         public long ChatUserId { get; set; }                  // стабильный uid (генерится один раз)
         public int ChatOverlayX { get; set; } = -1;           // позиция оверлея
@@ -153,9 +152,6 @@ namespace NekoStrap.Roblox
                 {
                     var cfg = JsonSerializer.Deserialize<LauncherConfig>(
                         File.ReadAllText(path)) ?? new LauncherConfig();
-                    // Пустой адрес в старых конфигах = дефолт, а не localhost.
-                    if (string.IsNullOrWhiteSpace(cfg.ChatServerUrl))
-                        cfg.ChatServerUrl = DefaultChatServerUrl;
                     return cfg;
                 }
             }

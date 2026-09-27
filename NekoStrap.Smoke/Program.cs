@@ -206,10 +206,7 @@ internal static class Program
             {
                 settings.RobloxPathText = "C:\\R";
                 settings.FpsValueText = "240";
-                settings.ChatUrlText = "ws://localhost:8787/ws";
-                settings.ChatNickText = "Neko";
                 if (settings.RobloxPathText != "C:\\R") throw new Exception("PathText врёт");
-                if (settings.ChatUrlText != "ws://localhost:8787/ws") throw new Exception("ChatUrlText врёт");
                 settings.SetCdnStatus(true, "IP 1.1.1.1");
                 settings.SetCdnStatus(false, "");
                 settings.SetWallpaperInfo("bg.png", null, 30);
@@ -220,6 +217,8 @@ internal static class Program
             var chat = (ChatPage)GetField(win, "_chatPage")!;
             Check("Chat: сеттеры+сообщения", () =>
             {
+                chat.ChatNickText = "Neko";
+                if (chat.ChatNickText != "Neko") throw new Exception("ChatNickText врёт");
                 chat.SetState(ChatState.Connecting);
                 chat.SetState(ChatState.Connected);
                 chat.SetStatus("тест", true);

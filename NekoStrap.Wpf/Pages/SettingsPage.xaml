@@ -275,44 +275,6 @@
       </StackPanel>
     </Border>
 
-    <!-- ===== Дополнения ===== -->
-    <TextBlock Style="{StaticResource H2}" FontSize="14" Text="{l:L Set_Sec_Extras}" Margin="0,0,0,8"/>
-
-    <!-- Чат лаунчера (бета) -->
-    <Border Style="{StaticResource Card}" Margin="0,0,0,12">
-      <StackPanel>
-        <TextBlock Style="{StaticResource H2}" FontSize="13" Text="{l:L Set_ChatTitle}" Margin="0,0,0,4"/>
-        <TextBlock Style="{StaticResource Body}" TextWrapping="Wrap" Margin="0,0,0,6"
-                   Text="{l:L Set_ChatDesc}"/>
-        <TextBlock Style="{StaticResource Mono}" FontStyle="Italic" TextWrapping="Wrap" Margin="0,0,0,10"
-                   Foreground="{DynamicResource FgDimBrush}" Text="{l:L Set_ChatWip}"/>
-        <CheckBox x:Name="ChatEnabledBox" Style="{StaticResource Switch}" Margin="0,0,0,6">
-          <StackPanel>
-            <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_Chat_L}"/>
-            <TextBlock Style="{StaticResource Mono}" Text="{l:L Set_Chat_D}"/>
-          </StackPanel>
-        </CheckBox>
-        <CheckBox x:Name="ChatDmBox" Style="{StaticResource Switch}" Margin="0,0,0,6">
-          <StackPanel>
-            <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_ChatDm_L}"/>
-            <TextBlock Style="{StaticResource Mono}" Text="{l:L Set_ChatDm_D}"/>
-          </StackPanel>
-        </CheckBox>
-        <CheckBox x:Name="ChatOverlayBox" Style="{StaticResource Switch}" Margin="0,0,0,10">
-          <StackPanel>
-            <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_ChatOverlay_L}"/>
-            <TextBlock Style="{StaticResource Mono}" Text="{l:L Set_ChatOverlay_D}"/>
-          </StackPanel>
-        </CheckBox>
-        <TextBlock Style="{StaticResource Body}" Text="{l:L Set_ChatUrl}" Margin="0,0,0,6"/>
-        <TextBox x:Name="ChatUrlBox" Style="{StaticResource DarkInput}" Height="34"
-                 VerticalContentAlignment="Center" Margin="0,0,0,8"/>
-        <TextBlock Style="{StaticResource Body}" Text="{l:L Set_ChatNick}" Margin="0,0,0,6"/>
-        <TextBox x:Name="ChatNickBox" Style="{StaticResource DarkInput}" Height="34" MaxLength="32"
-                 VerticalContentAlignment="Center"/>
-      </StackPanel>
-    </Border>
-
     <!-- ===== Система ===== -->
     <TextBlock Style="{StaticResource H2}" FontSize="14" Text="{l:L Set_Sec_System}" Margin="0,0,0,8"/>
 

@@ -539,6 +539,7 @@ internal static class LangStrings
         ["Srv_Site"] = "На сайте",
 
         // --- Чат лаунчера (бета) ---
+        ["Chat_SetTitle"] = "Настройки чата",
         ["Chat_Sub"] = "Общий чат сервера и личные сообщения — видят только те, кто на этом же сервере Roblox и тоже запускает игры через NekoStrap.",
         ["Chat_WipTitle"] = "⚠ В разработке",
         ["Chat_Wip"] = "Функция ещё не готова и может работать нестабильно. Чату нужен собственный сервер чата NekoStrap — без него ничего не работает. Общаться можно только в игре и только с теми, кто на том же сервере.",
@@ -562,7 +563,7 @@ internal static class LangStrings
         ["Chat_DmOpenFmt"] = "ЛС — пишешь игроку. Назад в общий чат — кнопка «Общий». Клик по игроку справа — смена адресата.",
         ["Chat_DmHintFmt"] = "Двойной клик — написать ЛС этому игроку",
         ["Chat_NotInGame"] = "Чат работает только в игре — зайди на сервер, и здесь появятся сообщения.",
-        ["Chat_HintOff"] = "Чат выключен — включи его в Настройках → Чат лаунчера.",
+        ["Chat_HintOff"] = "Чат выключен — включи его тумблером «Включить чат» ниже.",
         ["Chat_HintLive"] = "Ты в игре — пиши сообщения. Видят только игроки этого сервера с NekoStrap.",
         ["Chat_Overlay"] = "Оверлей",
         ["Chat_OverlayTitle"] = "Чат",
@@ -578,7 +579,6 @@ internal static class LangStrings
         ["Set_ChatDm_D"] = "писать можно только тем, кто на том же сервере",
         ["Set_ChatOverlay_L"] = "Летающий оверлей чата",
         ["Set_ChatOverlay_D"] = "показывать при входе в игру (тащится зажатием, сворачивается)",
-        ["Set_ChatUrl"] = "Адрес сервера чата (ws://host:8787/ws)",
         ["Set_ChatNick"] = "Ник в чате (пусто = ник Roblox)",
         ["Tray_ChatOpen"] = "Открыть оверлей чата",
         ["Tray_ChatPage"] = "Чат (страница)",
@@ -1115,6 +1115,7 @@ internal static class LangStrings
         ["Srv_Site"] = "Website",
 
         // --- Launcher chat (beta) ---
+        ["Chat_SetTitle"] = "Chat settings",
         ["Chat_Sub"] = "Server-wide chat and private messages — visible only to people on the same Roblox server who also launch through NekoStrap.",
         ["Chat_WipTitle"] = "⚠ Work in progress",
         ["Chat_Wip"] = "This feature is not finished yet and may be unstable. Chat needs its own NekoStrap chat server — nothing works without it. Chatting works only in-game and only with people on the same server.",
@@ -1138,7 +1139,7 @@ internal static class LangStrings
         ["Chat_DmOpenFmt"] = "DM — you're whispering this player. Back to server chat — the \"Server\" button. Double-click a player on the right to change recipient.",
         ["Chat_DmHintFmt"] = "Double-click to DM this player",
         ["Chat_NotInGame"] = "Chat works only in-game — join a server and messages will appear here.",
-        ["Chat_HintOff"] = "Chat is off — enable it in Settings → Launcher chat.",
+        ["Chat_HintOff"] = "Chat is off — flip the \"Enable chat\" switch below.",
         ["Chat_HintLive"] = "You're in game — type a message. Only NekoStrap players on this server can see it.",
         ["Chat_Overlay"] = "Overlay",
         ["Chat_OverlayTitle"] = "Chat",
@@ -1154,7 +1155,6 @@ internal static class LangStrings
         ["Set_ChatDm_D"] = "you can only message people on the same server",
         ["Set_ChatOverlay_L"] = "Floating chat overlay",
         ["Set_ChatOverlay_D"] = "show on game join (drag while held, can be collapsed)",
-        ["Set_ChatUrl"] = "Chat server address (ws://host:8787/ws)",
         ["Set_ChatNick"] = "Chat nickname (empty = Roblox name)",
         ["Tray_ChatOpen"] = "Open chat overlay",
         ["Tray_ChatPage"] = "Chat (page)",

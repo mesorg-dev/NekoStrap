@@ -23,6 +23,9 @@ public partial class ChatPage : UserControl
     /// <summary>Открыть летающий оверлей чата.</summary>
     public event Action? OpenOverlayClicked;
 
+    /// <summary>Сохранить настройки чата (ник).</summary>
+    public event Action? SaveClicked;
+
     private const int MaxMessages = 300;
 
     private long _selfUid;
@@ -104,6 +107,20 @@ public partial class ChatPage : UserControl
             RefreshModeButtons();
         }
     }
+
+    // ================= Настройки =================
+
+    public CheckBox ChatEnabledCheck => ChatEnabledBox;
+    public CheckBox ChatDmCheck => ChatDmBox;
+    public CheckBox ChatOverlayCheck => ChatOverlayBox;
+
+    public string ChatNickText
+    {
+        get => ChatNickBox.Text.Trim();
+        set => ChatNickBox.Text = value;
+    }
+
+    private void SaveButton_Click(object sender, RoutedEventArgs e) => SaveClicked?.Invoke();
 
     // ================= Сообщения =================
 

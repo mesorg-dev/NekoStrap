@@ -2615,11 +2615,10 @@ public partial class MainWindow : Window
         _settingsPage.RobloxNoTrayCheck.IsChecked = _config.RobloxNoTray;
         _settingsPage.RobloxNoStartupCheck.IsChecked = _config.RobloxNoStartup;
         _settingsPage.RobloxPathText = _config.RobloxPath;
-        _settingsPage.ChatEnabledCheck.IsChecked = _config.ChatEnabled;
-        _settingsPage.ChatDmCheck.IsChecked = _config.ChatDmEnabled;
-        _settingsPage.ChatOverlayCheck.IsChecked = _config.ChatOverlayOnJoin;
-        _settingsPage.ChatUrlText = _config.ChatServerUrl;
-        _settingsPage.ChatNickText = _config.ChatNickname;
+        _chatPage.ChatEnabledCheck.IsChecked = _config.ChatEnabled;
+        _chatPage.ChatDmCheck.IsChecked = _config.ChatDmEnabled;
+        _chatPage.ChatOverlayCheck.IsChecked = _config.ChatOverlayOnJoin;
+        _chatPage.ChatNickText = _config.ChatNickname;
         _chatPage.SetDmEnabled(_config.ChatEnabled && _config.ChatDmEnabled);
         _modsPage.FleasionCheck.IsChecked = _config.FleasionEnabled;
     }
@@ -2649,9 +2648,7 @@ public partial class MainWindow : Window
         _config.TrackPlaytime = _settingsPage.TrackPlaytimeCheck.IsChecked == true;
         _config.RobloxNoTray = _settingsPage.RobloxNoTrayCheck.IsChecked == true;
         _config.RobloxNoStartup = _settingsPage.RobloxNoStartupCheck.IsChecked == true;
-        string prevChatUrl = _config.ChatServerUrl;
-        _config.ChatServerUrl = _settingsPage.ChatUrlText;
-        _config.ChatNickname = _settingsPage.ChatNickText;
+        _config.ChatNickname = _chatPage.ChatNickText;
         _config.FleasionEnabled = _modsPage.FleasionCheck.IsChecked == true;
         ClickSound.Enabled = _config.Sounds;
         ApplyDiscord();
@@ -2665,9 +2662,15 @@ public partial class MainWindow : Window
             _config.InstalledVersion = RobloxPaths.FindInstalledVersion() ?? "";
         }
         _config.Save(RobloxPaths.ConfigPath);
-        if (!string.Equals(prevChatUrl, _config.ChatServerUrl, StringComparison.Ordinal))
-            SyncChatWithSession();
         RefreshHomeMeta();
+    }
+
+    /// <summary>Сохранить настройки чата кнопкой на странице чата.</summary>
+    private void SaveChatFromUi()
+    {
+        _config.ChatNickname = _chatPage.ChatNickText;
+        _config.Save(RobloxPaths.ConfigPath);
+        _homePage.SetStatus(Lang.Get("Set_Saved"), true);
     }
 
     /// <summary>Тумблеры применяются СРАЗУ, без кнопки «Сохранить».</summary>
@@ -2717,20 +2720,20 @@ public partial class MainWindow : Window
             _config.RobloxNoStartup = v;
             RobloxAppFixes.Apply(_config.RobloxNoTray, _config.RobloxNoStartup);
         });
-        Bool(_settingsPage.ChatEnabledCheck, v =>
+        Bool(_chatPage.ChatEnabledCheck, v =>
         {
             _config.ChatEnabled = v;
             _chatPage.SetDmEnabled(v && _config.ChatDmEnabled);
             SyncChatWithSession();
             RefreshChatHint();
         });
-        Bool(_settingsPage.ChatDmCheck, v =>
+        Bool(_chatPage.ChatDmCheck, v =>
         {
             _config.ChatDmEnabled = v;
             _chat.DmAllowed = v;
             _chatPage.SetDmEnabled(_config.ChatEnabled && v);
         });
-        Bool(_settingsPage.ChatOverlayCheck, v => _config.ChatOverlayOnJoin = v);
+        Bool(_chatPage.ChatOverlayCheck, v => _config.ChatOverlayOnJoin = v);
     }
 
     private int ParseFpsValue()
@@ -2745,6 +2748,7 @@ public partial class MainWindow : Window
     /// <summary>Связать страницу/оверлей чата с клиентом и событиями.</summary>
     private void WireChat()
     {
+        _chatPage.SaveClicked += SaveChatFromUi;
         _chatPage.ServerMessageSend += text => _ = SendChatAsync(text, 0);
         _chatPage.DmMessageSend += (to, text) => _ = SendChatAsync(text, to);
         _chatPage.OpenOverlayClicked += () => ShowChatOverlay();
@@ -2850,7 +2854,7 @@ public partial class MainWindow : Window
                 name = "Player" + uid % 10000;
 
             _chat.DmAllowed = _config.ChatDmEnabled;
-            string url = ChatClient.NormalizeUrl(_config.ChatServerUrl);
+            string url = ChatClient.NormalizeUrl(LauncherConfig.DefaultChatServerUrl);
             if (url.Length == 0)
             {
                 _chatPage.SetStatus(Lang.Get("Chat_BadUrl"), false);
@@ -3331,7 +3335,7 @@ public partial class MainWindow : Window
         chatOverlayItem.CheckedChanged += (_, _) =>
         {
             _config.ChatOverlayOnJoin = chatOverlayItem.Checked;
-            _settingsPage.ChatOverlayCheck.IsChecked = chatOverlayItem.Checked;
+            _chatPage.ChatOverlayCheck.IsChecked = chatOverlayItem.Checked;
             SaveQuiet();
         };
         menu.Items.Add(chatOverlayItem);

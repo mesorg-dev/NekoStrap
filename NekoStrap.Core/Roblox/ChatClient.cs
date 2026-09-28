@@ -244,6 +244,16 @@ namespace NekoStrap.Roblox
                         UsersChanged?.Invoke(list);
                         break;
                     }
+                    case "welcome":
+                    {
+                        // Сервер выдаёт uid сам (клиентским доверять нельзя —
+                        // его подделкой перехватывают чужие ЛС). Меняем сразу,
+                        // до прихода истории и списка игроков.
+                        if (root.TryGetProperty("you", out var ye) &&
+                            ye.TryGetInt64(out long yv) && yv > 0)
+                            SelfUid = yv;
+                        break;
+                    }
                     case "msg":
                     case "dm":
                     {
@@ -265,6 +275,9 @@ namespace NekoStrap.Roblox
                         };
                         // ЛС выключены в настройках — входящие не показываем.
                         if (msg.To > 0 && !DmAllowed) break;
+                        // Чужой ЛС (не мой и не адресованный мне) не показываем:
+                        // история/подделка не должны светить переписку других.
+                        if (msg.To > 0 && msg.To != SelfUid && msg.From != SelfUid) break;
                         if (msg.Text.Length == 0) break;
                         if (IsDuplicate(msg)) break;
                         MessageReceived?.Invoke(msg);

@@ -66,7 +66,7 @@ public partial class ChatOverlayWindow : Window
             _ => (Brush)FindResource("FgDimmerBrush"),
         };
         HintLabel.Text = state == ChatState.Connected
-            ? Lang.Get("Chat_WipShort")
+            ? Lang.Get("Chat_Connected")
             : Lang.Get(state == ChatState.Connecting ? "Chat_Connecting" : "Chat_Disconnected");
     }
 

@@ -6,15 +6,6 @@
     <TextBlock Style="{StaticResource H1}" Text="{l:L Nav_Chat}" Margin="0,0,0,6"/>
     <TextBlock Style="{StaticResource Body}" TextWrapping="Wrap" Text="{l:L Chat_Sub}" Margin="0,0,0,10"/>
 
-    <!-- Пометка «в разработке» -->
-    <Border Style="{StaticResource Card}" Margin="0,0,0,12" Padding="14,10">
-      <StackPanel>
-        <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" FontWeight="Bold"
-                   Foreground="{DynamicResource FgBrush}" Text="{l:L Chat_WipTitle}" Margin="0,0,0,4"/>
-        <TextBlock Style="{StaticResource Mono}" TextWrapping="Wrap" Text="{l:L Chat_Wip}"/>
-      </StackPanel>
-    </Border>
-
     <Border Style="{StaticResource Card}" Margin="0,0,0,12">
       <DockPanel LastChildFill="True">
         <!-- Статус + режим -->

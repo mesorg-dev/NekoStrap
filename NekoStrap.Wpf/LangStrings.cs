@@ -549,12 +549,9 @@ internal static class LangStrings
         ["Srv_Link"] = "Ссылка",
         ["Srv_Site"] = "На сайте",
 
-        // --- Чат лаунчера (бета) ---
+        // --- Чат лаунчера ---
         ["Chat_SetTitle"] = "Настройки чата",
         ["Chat_Sub"] = "Две комнаты: «Все» — общий чат всех, кто подключён из лаунчера, и «Сервер» — чат твоего текущего сервера Roblox (видят только NekoStrap-игроки на нём). Плюс личные сообщения внутри комнаты.",
-        ["Chat_WipTitle"] = "⚠ В разработке",
-        ["Chat_Wip"] = "Функция ещё не готова и может работать нестабильно. Чату нужен собственный сервер чата NekoStrap — без него ничего не работает. В комнате «Сервер» общаются только те, кто на том же сервере Roblox; в комнате «Все» — все, кто подключён.",
-        ["Chat_WipShort"] = "в разработке",
         ["Chat_Off"] = "чат выключен",
         ["Chat_Connecting"] = "подключение…",
         ["Chat_Connected"] = "подключено",
@@ -584,8 +581,6 @@ internal static class LangStrings
         ["Chat_Minimize"] = "Свернуть",
         ["Chat_Close"] = "Закрыть",
         ["Btn_Send"] = "Отправить",
-        ["Set_ChatTitle"] = "Чат лаунчера (бета)",
-        ["Set_ChatWip"] = "В разработке — пока нестабильно и требует свой сервер чата (см. README, раздел «Чат»).",
         ["Set_Chat_L"] = "Включить чат",
         ["Set_Chat_D"] = "две комнаты: общий чат лаунчера + чат сервера, ЛС",
         ["Set_ChatDm_L"] = "Личные сообщения",
@@ -1137,12 +1132,9 @@ internal static class LangStrings
         ["Srv_Link"] = "Link",
         ["Srv_Site"] = "Website",
 
-        // --- Launcher chat (beta) ---
+        // --- Launcher chat ---
         ["Chat_SetTitle"] = "Chat settings",
         ["Chat_Sub"] = "Two rooms: \"Everyone\" — the launcher-wide chat for everyone connected, and \"Server\" — your current Roblox server chat (only NekoStrap players on it see it). Plus DMs within the room.",
-        ["Chat_WipTitle"] = "⚠ Work in progress",
-        ["Chat_Wip"] = "This feature is not finished yet and may be unstable. Chat needs its own NekoStrap chat server — nothing works without it. The \"Server\" room is for people on the same Roblox server only; the \"Everyone\" room is for everyone connected.",
-        ["Chat_WipShort"] = "wip",
         ["Chat_Off"] = "chat is off",
         ["Chat_Connecting"] = "connecting…",
         ["Chat_Connected"] = "connected",
@@ -1172,8 +1164,6 @@ internal static class LangStrings
         ["Chat_Minimize"] = "Minimize",
         ["Chat_Close"] = "Close",
         ["Btn_Send"] = "Send",
-        ["Set_ChatTitle"] = "Launcher chat (beta)",
-        ["Set_ChatWip"] = "Work in progress — unstable for now and needs your own chat server (see README, \"Chat\" section).",
         ["Set_Chat_L"] = "Enable chat",
         ["Set_Chat_D"] = "two rooms: launcher-wide chat + server chat, DMs",
         ["Set_ChatDm_L"] = "Private messages",

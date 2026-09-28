@@ -45,15 +45,15 @@
       </Border>
 
       <!-- Нижняя полоса: тоже за неё можно тащить зажатием.
-           Дocks Bottom ДО Body: LastChildFill отдаёт остаток телу,
-           иначе футер растягивается вправо и «в разработке» вылезает
+           Docks Bottom ДО Body: LastChildFill отдаёт остаток телу,
+           иначе футер растягивается вправо и подсказка вылезает
            у правого края поверх ленты. -->
       <Border x:Name="FooterBar" DockPanel.Dock="Bottom" Height="22" Background="{StaticResource ChromeBrush}"
               BorderBrush="{StaticResource LineBrush}" BorderThickness="0,1,0,0"
               CornerRadius="0,0,3,3" MouseLeftButtonDown="TitleBar_MouseDown">
         <TextBlock x:Name="HintLabel" Style="{StaticResource Mono}" FontSize="10"
                    Foreground="{DynamicResource FgDimmerBrush}" VerticalAlignment="Center"
-                   Margin="10,0,0,0" Text="{l:L Chat_WipShort}"/>
+                   Margin="10,0,0,0" Text="{l:L Chat_Disconnected}"/>
       </Border>
 
       <!-- Тело: список + ввод (последний ребёнок → fill) -->

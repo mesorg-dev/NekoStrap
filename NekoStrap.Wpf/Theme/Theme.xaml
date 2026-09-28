@@ -332,7 +332,11 @@
     <Setter Property="SelectionBrush" Value="{StaticResource LineBrush}"/>
     <Setter Property="FontFamily" Value="{DynamicResource UiFont}"/>
     <Setter Property="FontSize" Value="12"/>
-    <Setter Property="Padding" Value="12,8"/>
+    <!-- Вертикальный Padding маленький: поля Height 32–36 должны вмещать
+         строку целиком, иначе (старые 8) текст подрезался — видна была
+         только нижняя половина. -->
+    <Setter Property="Padding" Value="12,6"/>
+    <Setter Property="VerticalContentAlignment" Value="Center"/>
     <Setter Property="BorderThickness" Value="0"/>
     <Setter Property="Template">
       <Setter.Value>
@@ -340,7 +344,10 @@
           <Border Background="{TemplateBinding Background}" CornerRadius="2"
                   BorderBrush="{StaticResource LineBrush}" BorderThickness="1"
                   Padding="{TemplateBinding Padding}">
-            <ScrollViewer x:Name="PART_ContentHost" VerticalAlignment="Center"/>
+            <!-- Выравнивание берём из свойства поля, а не хардкодим:
+                 так кегль/шрифт из темы не вылезают за высоту. -->
+            <ScrollViewer x:Name="PART_ContentHost"
+                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
           </Border>
         </ControlTemplate>
       </Setter.Value>

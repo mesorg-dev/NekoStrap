@@ -25,6 +25,8 @@ namespace NekoStrap.Roblox
             new("cursor", "content\\textures\\Cursors\\KeyboardMouse",    "Quick_Cursor",   "image"),
             new("ui",     "content\\textures",                            "Quick_UI",       "image"),
             new("ground", "PlatformContent\\pc\\textures",                "Quick_Platform", "image"),
+            // Небо (скайбокс): шесть граней куба .tex, их же меняют модпаки.
+            new("sky",    "PlatformContent\\pc\\textures\\sky",           "Quick_Sky",      "tex"),
             new("custom", "",                                             "Quick_Custom",   "any"),
         };
 

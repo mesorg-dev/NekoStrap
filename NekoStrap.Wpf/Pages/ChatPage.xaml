@@ -32,6 +32,12 @@
                      VerticalAlignment="Center"/>
             <TextBlock x:Name="StateLabel" Style="{StaticResource Mono}" Text="{l:L Chat_Off}"
                        VerticalAlignment="Center" Margin="8,0,0,0"/>
+            <Button x:Name="RoomGlobalBtn" Style="{StaticResource PrimaryButton}"
+                    Content="{l:L Chat_RoomGlobal}" Width="90" Height="30" Margin="16,0,0,0"
+                    Click="RoomGlobalButton_Click"/>
+            <Button x:Name="RoomServerBtn" Style="{StaticResource OutlineButton}"
+                    Content="{l:L Chat_RoomServer}" Width="90" Height="30" Margin="8,0,0,0"
+                    Click="RoomServerButton_Click"/>
           </StackPanel>
         </DockPanel>
 
@@ -101,9 +107,6 @@
             <TextBlock Style="{StaticResource Mono}" Text="{l:L Set_ChatOverlay_D}"/>
           </StackPanel>
         </CheckBox>
-        <TextBlock Style="{StaticResource Body}" Text="{l:L Set_ChatNick}" Margin="0,0,0,6"/>
-        <TextBox x:Name="ChatNickBox" Style="{StaticResource DarkInput}" Height="34" MaxLength="32"
-                 VerticalContentAlignment="Center"/>
         <Button Style="{StaticResource PrimaryButton}" Content="{l:L Btn_SaveSettings}"
                 Width="220" Height="44" HorizontalAlignment="Left" Margin="0,12,0,0" Click="SaveButton_Click"/>
       </StackPanel>

@@ -1,0 +1,60 @@
+<Window x:Class="NekoStrap.Wpf.PickDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:l="clr-namespace:NekoStrap.Wpf"
+        Width="480" SizeToContent="Height"
+        WindowStyle="None" ResizeMode="NoResize" WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False" Background="{StaticResource BgBrush}"
+        PreviewKeyDown="Window_PreviewKeyDown">
+  <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="1">
+    <DockPanel LastChildFill="True">
+      <Border DockPanel.Dock="Top" Height="36" Background="{StaticResource ChromeBrush}"
+              BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,0,1"
+              MouseLeftButtonDown="TitleBar_MouseDown">
+        <DockPanel LastChildFill="False">
+          <TextBlock x:Name="TitleText" FontFamily="{DynamicResource HeadingFont}" FontSize="13"
+                     FontWeight="Bold" Foreground="{DynamicResource FgBrush}"
+                     VerticalAlignment="Center" Margin="14,0,0,0"/>
+          <Button Style="{StaticResource TitleBarButton}" Height="36" DockPanel.Dock="Right" Click="CloseButton_Click">
+            <Path Data="M0,0L10,10 M10,0L0,10" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                  StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Width="10" Height="10"/>
+          </Button>
+        </DockPanel>
+      </Border>
+
+      <StackPanel Margin="16,14,16,16">
+        <TextBlock x:Name="HintText" Style="{StaticResource Mono}" TextWrapping="Wrap" Margin="0,0,0,10"/>
+        <Border Background="{StaticResource LineSoftBrush}" BorderBrush="{StaticResource LineBrush}"
+                BorderThickness="1" Height="260">
+          <ListBox x:Name="ItemsList" Background="Transparent" BorderThickness="0" Padding="4"
+                   DisplayMemberPath="Label" SelectionChanged="ItemsList_SelectionChanged"
+                   MouseDoubleClick="ItemsList_DoubleClick">
+            <ListBox.ItemContainerStyle>
+              <Style TargetType="ListBoxItem" BasedOn="{StaticResource DarkListRow}">
+                <Setter Property="Foreground" Value="{DynamicResource FgDimBrush}"/>
+                <Style.Triggers>
+                  <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Foreground" Value="{DynamicResource FgBrush}"/>
+                  </Trigger>
+                </Style.Triggers>
+              </Style>
+            </ListBox.ItemContainerStyle>
+          </ListBox>
+        </Border>
+        <StackPanel x:Name="ManualRow" Orientation="Horizontal" Margin="0,10,0,0" Visibility="Collapsed">
+          <TextBlock Text="{l:L Dlg_PickManual}" Style="{StaticResource Mono}"
+                     VerticalAlignment="Center" Margin="0,0,8,0"/>
+          <TextBox x:Name="ManualBox" Style="{StaticResource DarkInput}" Width="200" Height="34"
+                   VerticalContentAlignment="Center" TextChanged="ManualBox_TextChanged"/>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+          <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_Cancel}" Width="120" Height="36"
+                  Click="CancelButton_Click"/>
+          <Button x:Name="OkButton" Style="{StaticResource PrimaryButton}" Content="{l:L Btn_Ok}"
+                  Width="120" Height="36" Margin="10,0,0,0" IsEnabled="False"
+                  Click="OkButton_Click"/>
+        </StackPanel>
+      </StackPanel>
+    </DockPanel>
+  </Border>
+</Window>

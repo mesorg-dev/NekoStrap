@@ -44,15 +44,41 @@ namespace NekoStrap.Roblox
                 }
             }
             catch { /* битый файл — с нуля */ }
+            store.MergeDuplicates();
             return store;
         }
 
         public void Add(long placeId, string name, long seconds)
         {
             if (seconds <= 0) return;
+            name = name.Trim();
             TotalSeconds += seconds;
             string key = placeId > 0 ? placeId.ToString() : "_";
-            if (!Games.TryGetValue(key, out var g))
+            Games.TryGetValue(key, out var g);
+            // Одна игра может жить на нескольких placeId (телепорты внутри
+            // экспириенса) — склеиваем записи с одинаковым названием, чтобы
+            // в истории не было строк «Evade 1 ч» и «Evade 5 мин».
+            if (name.Length > 0 && (g == null || g.Name.Length == 0 ||
+                string.Equals(g.Name.Trim(), name, StringComparison.OrdinalIgnoreCase)))
+            {
+                string? dupKey = FindDuplicateKey(name, key);
+                if (dupKey != null)
+                {
+                    var dup = Games[dupKey];
+                    Games.Remove(dupKey);
+                    if (g == null)
+                    {
+                        g = dup;
+                        Games[key] = g;
+                    }
+                    else
+                    {
+                        g.Seconds += dup.Seconds;
+                        if (dup.LastPlayed > g.LastPlayed) g.LastPlayed = dup.LastPlayed;
+                    }
+                }
+            }
+            if (g == null)
             {
                 g = new GameTime();
                 Games[key] = g;
@@ -61,6 +87,49 @@ namespace NekoStrap.Roblox
             if (name.Length > 0) g.Name = name;
             g.LastPlayed = DateTime.UtcNow;
             Save();
+        }
+
+        /// <summary>Ключ записи с тем же названием (не считая текущей).</summary>
+        private string? FindDuplicateKey(string name, string skipKey)
+        {
+            if (name.Length == 0) return null;
+            foreach (var kv in Games)
+            {
+                if (kv.Key == skipKey) continue;
+                if (string.Equals((kv.Value.Name ?? "").Trim(), name,
+                        StringComparison.OrdinalIgnoreCase))
+                    return kv.Key;
+            }
+            return null;
+        }
+
+        /// <summary>Схлопнуть уже накопленные дубли (старые файлы playtime.json).</summary>
+        private void MergeDuplicates()
+        {
+            bool merged = false;
+            var groups = Games
+                .GroupBy(kv => (kv.Value.Name ?? "").Trim(), StringComparer.OrdinalIgnoreCase)
+                .Where(g => g.Key.Length > 0);
+            foreach (var group in groups)
+            {
+                var list = group.ToList();
+                if (list.Count < 2) continue;
+                var target = list
+                    .OrderByDescending(x => x.Value.LastPlayed)
+                    .ThenByDescending(x => x.Value.Seconds)
+                    .First().Value;
+                foreach (var kv in list)
+                {
+                    if (ReferenceEquals(kv.Value, target)) continue;
+                    target.Seconds += kv.Value.Seconds;
+                    if (kv.Value.LastPlayed > target.LastPlayed)
+                        target.LastPlayed = kv.Value.LastPlayed;
+                    Games.Remove(kv.Key);
+                    merged = true;
+                }
+                target.Name = target.Name.Trim();
+            }
+            if (merged) Save();
         }
 
         public long ForPlace(long placeId)

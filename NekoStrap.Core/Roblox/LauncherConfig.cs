@@ -104,7 +104,7 @@ namespace NekoStrap.Roblox
 
         // Внешний вид: шрифты по ролям (пусто = встроенные по умолчанию).
         public string ThemeFontHeading { get; set; } = "Unbounded";
-        public string ThemeFontBody { get; set; } = "Inter";
+        public string ThemeFontBody { get; set; } = "Verdana";
         public string ThemeFontMono { get; set; } = "JetBrains Mono";
         // Цвета текста hex (#RRGGBB, пусто = дефолт палитры).
         public string ThemeFg { get; set; } = "";
@@ -138,7 +138,9 @@ namespace NekoStrap.Roblox
         public bool ChatOverlayOnJoin { get; set; } = true;   // оверлей при входе в игру
         // Чат: единственный наш сервер чата, адреса в конфиге нет.
         public const string DefaultChatServerUrl = "wss://nekostrap.duckdns.org/ws";
-        public string ChatNickname { get; set; } = "";        // пусто = ник Roblox
+        // "global" = общий чат лаунчера (всегда), "server" = чат текущего
+        // роблокс-сервера (только в живой сессии).
+        public string ChatRoom { get; set; } = "global";
         public long ChatUserId { get; set; }                  // стабильный uid (генерится один раз)
         public int ChatOverlayX { get; set; } = -1;           // позиция оверлея
         public int ChatOverlayY { get; set; } = -1;

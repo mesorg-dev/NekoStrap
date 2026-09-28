@@ -121,8 +121,8 @@ public partial class MainWindow : Window
         _modsPage.QuickPickRequested += id => PickQuickAsset(id);
         _modsPage.QuickResetRequested += id => ResetQuickAsset(id);
         _modsPage.QuickTargetEdited += (id, path) => EditQuickTarget(id, path);
-        _modsPage.ProfileBindRequested += (_, _) => BindProfileToLastGame(mod: true);
-        _modsPage.ProfileUnbindRequested += (_, _) => UnbindProfileFromLastGame(mod: true);
+        _modsPage.ProfileBindRequested += (_, _) => BindProfileToGame(mod: true);
+        _modsPage.ProfileUnbindRequested += (_, _) => UnbindProfileFromGame(mod: true);
         _modsPage.ProfileExportRequested += (_, _) => ExportModProfile();
         _modsPage.ProfileImportRequested += (_, _) => ImportModProfile();
 
@@ -130,8 +130,8 @@ public partial class MainWindow : Window
         _flagsPage.ProfileApplyClicked += (name) => ApplyFlagProfile(name);
         _flagsPage.ProfileSaveClicked += (_, _) => SaveFlagProfile();
         _flagsPage.ProfileDeleteClicked += (_, _) => DeleteFlagProfile();
-        _flagsPage.ProfileBindRequested += (_, _) => BindProfileToLastGame(mod: false);
-        _flagsPage.ProfileUnbindRequested += (_, _) => UnbindProfileFromLastGame(mod: false);
+        _flagsPage.ProfileBindRequested += (_, _) => BindProfileToGame(mod: false);
+        _flagsPage.ProfileUnbindRequested += (_, _) => UnbindProfileFromGame(mod: false);
         _flagsPage.DeleteAllClicked += (_, _) => DeleteAllFlags();
         _flagsPage.SaveClicked += (_, _) => SaveFlags();
         _flagsPage.ImportClicked += (_, _) => ImportFlags();
@@ -255,6 +255,8 @@ public partial class MainWindow : Window
             CheckForAppUpdatesQuiet();
             ScheduleBackgroundRobloxUpdate();
             ApplyConfigToUi();
+            SyncChat(); // глобальный чат (или сервер, если игра уже идёт)
+            RefreshChatHint();
             RefreshFavorites();
             ApplySoundsFromConfig();
             RefreshAppearanceSettings();
@@ -919,7 +921,8 @@ public partial class MainWindow : Window
     {
         if (_closed) return;
         int seq = ++_sessionSeq;
-        SyncChatWithSession();
+        SyncChat();
+        RefreshChatHint();
         if (_config.ChatEnabled && _config.ChatOverlayOnJoin &&
             session.PlaceId > 0 && session.JobId.Length > 0)
             ShowChatOverlay();
@@ -1394,14 +1397,9 @@ public partial class MainWindow : Window
         return true;
     }
 
-    private void BindProfileToLastGame(bool mod)
+    /// <summary>Привязать активный профиль к выбранной игре (п.3: не только к последней).</summary>
+    private void BindProfileToGame(bool mod)
     {
-        long placeId = _config.LastGamePlaceId;
-        if (placeId <= 0)
-        {
-            _homePage.SetStatus(Lang.Get("AutoP_NoLastGame"), false);
-            return;
-        }
         string value = mod ? ModManager.ActiveProfile() : _config.ActiveFlagProfile;
         if (value.Length == 0)
         {
@@ -1409,36 +1407,89 @@ public partial class MainWindow : Window
             return;
         }
 
-        var b = GameProfiles.Get(placeId) ?? new GameBinding
+        var known = KnownGames();
+        var dlg = new PickDialog(Lang.Get("Dlg_PickGame_T"), Lang.Get("Dlg_PickGame_H"),
+            known.Select(g => new PickItem(GameLabel(g.placeId, g.name), g.placeId.ToString())),
+            allowManual: true);
+        if (dlg.ShowDialog() != true || dlg.Picked == null) return;
+
+        if (!long.TryParse(dlg.Picked.Value, out long placeId) || placeId <= 0)
         {
-            PlaceId = placeId,
-            GameName = _config.LastGameName
-        };
-        if (b.GameName.Length == 0) b.GameName = _config.LastGameName;
+            _homePage.SetStatus(Lang.Format("AutoP_BadIdFmt", dlg.Picked.Value), false);
+            return;
+        }
+
+        string gameName = "";
+        foreach (var g in known)
+            if (g.placeId == placeId) { gameName = g.name; break; }
+
+        var b = GameProfiles.Get(placeId) ?? new GameBinding { PlaceId = placeId };
+        if (b.GameName.Length == 0) b.GameName = gameName;
         if (mod) b.ModProfile = value; else b.FlagProfile = value;
         GameProfiles.Set(b);
 
-        RefreshGameBindings();
+        if (mod) _modsPage.SetBindStatus(BindStatus(b, mod: true));
+        else _flagsPage.SetBindStatus(BindStatus(b, mod: false));
         _homePage.SetStatus(Lang.Format("AutoP_BoundFmt", value, GameTitle(b)), true);
     }
 
-    private void UnbindProfileFromLastGame(bool mod)
+    /// <summary>Снять привязку профиля у выбранной игры — список только привязанных.</summary>
+    private void UnbindProfileFromGame(bool mod)
     {
-        long placeId = _config.LastGamePlaceId;
-        if (placeId <= 0)
+        var bound = GameProfiles.List()
+            .Where(b => (mod ? b.ModProfile : b.FlagProfile).Length > 0)
+            .OrderBy(b => b.GameName, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        if (bound.Count == 0)
         {
-            _homePage.SetStatus(Lang.Get("AutoP_NoLastGame"), false);
+            _homePage.SetStatus(Lang.Get("AutoP_NoBoundGames"), false);
             return;
         }
+
+        var dlg = new PickDialog(Lang.Get("Dlg_PickUnbind_T"), Lang.Get("Dlg_PickUnbind_H"),
+            bound.Select(b => new PickItem(GameLabel(b.PlaceId, b.GameName), b.PlaceId.ToString())));
+        if (dlg.ShowDialog() != true || dlg.Picked == null) return;
+        if (!long.TryParse(dlg.Picked.Value, out long placeId) || placeId <= 0) return;
+
         var b = GameProfiles.Get(placeId);
-        if (b != null)
-        {
-            if (mod) b.ModProfile = ""; else b.FlagProfile = "";
-            GameProfiles.Set(b); // пустое поле = запись удаляется
-            _homePage.SetStatus(Lang.Get("AutoP_Unbound"), true);
-        }
-        RefreshGameBindings();
+        if (b == null) return;
+        if (mod) b.ModProfile = ""; else b.FlagProfile = "";
+        GameProfiles.Set(b); // пустое поле = запись удаляется
+
+        if (mod) _modsPage.SetBindStatus(BindStatus(GameProfiles.Get(placeId), mod: true));
+        else _flagsPage.SetBindStatus(BindStatus(GameProfiles.Get(placeId), mod: false));
+        _homePage.SetStatus(Lang.Get("AutoP_Unbound"), true);
     }
+
+    /// <summary>Все известные игры (история, избранное, сессии) — для диалога выбора.</summary>
+    private List<(long placeId, string name, DateTime last)> KnownGames()
+    {
+        var map = new Dictionary<long, (string name, DateTime last)>();
+        void Put(long id, string name, DateTime last)
+        {
+            if (id <= 0) return;
+            if (!map.TryGetValue(id, out var cur)) cur = ("", DateTime.MinValue);
+            string n = name.Trim().Length > 0 ? name.Trim() : cur.name;
+            map[id] = (n, last > cur.last ? last : cur.last);
+        }
+
+        foreach (var kv in _playtime.Games)
+            if (long.TryParse(kv.Key, out long id)) Put(id, kv.Value.Name, kv.Value.LastPlayed);
+        foreach (var f in FavoritesStore.Load())
+            Put(f.PlaceId, f.Name, f.AddedAt);
+        foreach (var s in _recent.List())
+            Put(s.PlaceId, s.Name, s.JoinedAt);
+        Put(_config.LastGamePlaceId, _config.LastGameName, DateTime.UtcNow);
+
+        return map
+            .Select(kv => (placeId: kv.Key, name: kv.Value.name, last: kv.Value.last))
+            .OrderByDescending(g => g.last)
+            .ThenBy(g => g.name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static string GameLabel(long placeId, string name) =>
+        name.Length > 0 ? $"{name}  ·  {placeId}" : placeId.ToString();
 
     /// <summary>Статус привязок на обеих страницах (по последней игре).</summary>
     private void RefreshGameBindings()
@@ -1683,6 +1734,7 @@ public partial class MainWindow : Window
         "audio" => $"{Lang.Get("Dlg_AudioFiles")} (*.ogg;*.wav;*.mp3)|*.ogg;*.wav;*.mp3",
         "font" => $"{Lang.Get("Dlg_FontFiles")} (*.ttf;*.otf)|*.ttf;*.otf",
         "image" => $"{Lang.Get("Dlg_ImageFiles")} (*.png;*.jpg;*.jpeg;*.webp;*.bmp)|*.png;*.jpg;*.jpeg;*.webp;*.bmp",
+        "tex" => $"{Lang.Get("Dlg_TexFiles")} (*.tex)|*.tex",
         _ => $"{Lang.Get("Dlg_AllFiles")} (*.*)|*.*"
     };
 
@@ -1949,17 +2001,29 @@ public partial class MainWindow : Window
     private void DeleteFlagProfile()
     {
         string name = _flagsPage.ProfileNameText;
-        if (name.Length == 0)
+        if (name.Length > 0)
         {
-            MessageBox.Show(Lang.Get("Prof_NeedNameDel"), "NekoStrap",
-                MessageBoxButton.OK, MessageBoxImage.Information);
-            return;
+            if (FlagProfiles.Get(name) == null)
+            {
+                MessageBox.Show(Lang.Format("Prof_NoSuchFmt", name), "NekoStrap",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
         }
-        if (FlagProfiles.Get(name) == null)
+        else
         {
-            MessageBox.Show(Lang.Format("Prof_NoSuchFmt", name), "NekoStrap",
-                MessageBoxButton.OK, MessageBoxImage.Information);
-            return;
+            // П.4: не заставлять вводить имя — показываем список профилей.
+            var profiles = FlagProfiles.List();
+            if (profiles.Count == 0)
+            {
+                MessageBox.Show(Lang.Get("Flags_ProfilesEmpty"), "NekoStrap",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+            var dlg = new PickDialog(Lang.Get("Dlg_PickProfile_T"), Lang.Get("Dlg_PickProfile_H"),
+                profiles.Select(p => new PickItem(p, p)));
+            if (dlg.ShowDialog() != true || dlg.Picked == null) return;
+            name = dlg.Picked.Value;
         }
         if (MessageBox.Show(Lang.Format("Prof_DelConfirm", name), "NekoStrap",
                 MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
@@ -2142,7 +2206,11 @@ public partial class MainWindow : Window
 
     private void RefreshVersions()
     {
-        _versionsPage.SetVersions(VersionManager.List(), _config.InstalledVersion, _config.PreviousVersion);
+        var versions = VersionManager.List();
+        _versionsPage.SetVersions(versions, _config.InstalledVersion, _config.PreviousVersion);
+        // Переустановка доступна всегда, когда есть что переустанавливать:
+        // раньше кнопка включалась только после неудачной проверки файлов.
+        _versionsPage.SetRepairEnabled(versions.Count > 0 && !_busy);
         string? studio = _config.StudioVersion;
         _versionsPage.SetStudioStatus(
             RobloxPaths.IsVersionGuid(studio) &&
@@ -2195,11 +2263,12 @@ public partial class MainWindow : Window
             if (!report.HasBaseline && report.Ok)
                 sb.AppendLine().Append(Lang.Get("Int_NoBaseline"));
             _versionsPage.SetIntegrityStatus(sb.ToString());
-            _versionsPage.SetRepairEnabled(!report.Ok);
+            _versionsPage.SetRepairEnabled(true);
         }
         catch (Exception ex)
         {
             _versionsPage.SetIntegrityStatus(Lang.Get("Int_CheckErr") + ex.Message);
+            _versionsPage.SetRepairEnabled(true);
         }
         finally
         {
@@ -2229,7 +2298,9 @@ public partial class MainWindow : Window
         }
         if (PlayerIsRunning(_playerProcess))
         {
-            _versionsPage.SetIntegrityStatus(Lang.Get("Int_Running"));
+            // Раньше тут был только текст статуса — казалось, что кнопка не работает.
+            MessageBox.Show(Lang.Get("Int_Running"), "NekoStrap",
+                MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
         if (MessageBox.Show(Lang.Format("Int_RepairAsk", guid), "NekoStrap",
@@ -2611,14 +2682,14 @@ public partial class MainWindow : Window
         _settingsPage.MinimizeToTrayCheck.IsChecked = _config.MinimizeToTray;
         _settingsPage.CloseToTrayCheck.IsChecked = _config.CloseToTray;
         _settingsPage.NotificationsCheck.IsChecked = _config.NotificationsEnabled;
-        _settingsPage.TrackPlaytimeCheck.IsChecked = _config.TrackPlaytime;
+        _historyPage.TrackPlaytimeCheck.IsChecked = _config.TrackPlaytime;
         _settingsPage.RobloxNoTrayCheck.IsChecked = _config.RobloxNoTray;
         _settingsPage.RobloxNoStartupCheck.IsChecked = _config.RobloxNoStartup;
         _settingsPage.RobloxPathText = _config.RobloxPath;
         _chatPage.ChatEnabledCheck.IsChecked = _config.ChatEnabled;
         _chatPage.ChatDmCheck.IsChecked = _config.ChatDmEnabled;
         _chatPage.ChatOverlayCheck.IsChecked = _config.ChatOverlayOnJoin;
-        _chatPage.ChatNickText = _config.ChatNickname;
+        _chatPage.SetRoomMode(!IsServerRoom());
         _chatPage.SetDmEnabled(_config.ChatEnabled && _config.ChatDmEnabled);
         _modsPage.FleasionCheck.IsChecked = _config.FleasionEnabled;
     }
@@ -2645,10 +2716,9 @@ public partial class MainWindow : Window
         _config.MinimizeToTray = _settingsPage.MinimizeToTrayCheck.IsChecked == true;
         _config.CloseToTray = _settingsPage.CloseToTrayCheck.IsChecked == true;
         _config.NotificationsEnabled = _settingsPage.NotificationsCheck.IsChecked == true;
-        _config.TrackPlaytime = _settingsPage.TrackPlaytimeCheck.IsChecked == true;
+        _config.TrackPlaytime = _historyPage.TrackPlaytimeCheck.IsChecked == true;
         _config.RobloxNoTray = _settingsPage.RobloxNoTrayCheck.IsChecked == true;
         _config.RobloxNoStartup = _settingsPage.RobloxNoStartupCheck.IsChecked == true;
-        _config.ChatNickname = _chatPage.ChatNickText;
         _config.FleasionEnabled = _modsPage.FleasionCheck.IsChecked == true;
         ClickSound.Enabled = _config.Sounds;
         ApplyDiscord();
@@ -2668,7 +2738,6 @@ public partial class MainWindow : Window
     /// <summary>Сохранить настройки чата кнопкой на странице чата.</summary>
     private void SaveChatFromUi()
     {
-        _config.ChatNickname = _chatPage.ChatNickText;
         _config.Save(RobloxPaths.ConfigPath);
         _homePage.SetStatus(Lang.Get("Set_Saved"), true);
     }
@@ -2701,7 +2770,7 @@ public partial class MainWindow : Window
         Bool(_settingsPage.MinimizeToTrayCheck, v => _config.MinimizeToTray = v);
         Bool(_settingsPage.CloseToTrayCheck, v => _config.CloseToTray = v);
         Bool(_settingsPage.NotificationsCheck, v => _config.NotificationsEnabled = v);
-        Bool(_settingsPage.TrackPlaytimeCheck, v =>
+        Bool(_historyPage.TrackPlaytimeCheck, v =>
         {
             _config.TrackPlaytime = v;
             if (!v)
@@ -2724,7 +2793,7 @@ public partial class MainWindow : Window
         {
             _config.ChatEnabled = v;
             _chatPage.SetDmEnabled(v && _config.ChatDmEnabled);
-            SyncChatWithSession();
+            SyncChat();
             RefreshChatHint();
         });
         Bool(_chatPage.ChatDmCheck, v =>
@@ -2752,6 +2821,13 @@ public partial class MainWindow : Window
         _chatPage.ServerMessageSend += text => _ = SendChatAsync(text, 0);
         _chatPage.DmMessageSend += (to, text) => _ = SendChatAsync(text, to);
         _chatPage.OpenOverlayClicked += () => ShowChatOverlay();
+        _chatPage.RoomChanged += global =>
+        {
+            _config.ChatRoom = global ? "global" : "server";
+            SaveQuiet();
+            SyncChat();
+            RefreshChatHint();
+        };
 
         _chat.StateChanged += state =>
             _ = Dispatcher.BeginInvoke(new Action(() =>
@@ -2818,23 +2894,45 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Чат живёт только вместе с игрой: подключаемся при живой сессии с
-    /// JobId (одна комната = один роблокс-сервер), иначе отключаемся.
-    /// Достаточно самой сессии из лога — не важно, кто запустил клиент.
+    /// Две комнаты: «global» — общий чат лаунчера, живёт всегда (видят все,
+    /// кто подключён); «server» — чат текущего роблокс-сервера
+    /// (комната placeId_jobId), только вместе с живой сессией.
+    /// Выбранная комната хранится в конфиге (ChatRoom).
     /// </summary>
-    private void SyncChatWithSession()
+    private void SyncChat()
     {
-        var session = _watcher.Current;
-        if (!_config.ChatEnabled || session == null ||
-            session.PlaceId <= 0 || session.JobId.Length == 0)
+        string? room = null;
+        if (_config.ChatEnabled)
         {
+            if (!IsServerRoom())
+            {
+                room = "global";
+            }
+            else
+            {
+                var session = _watcher.Current;
+                if (session != null && session.PlaceId > 0 && session.JobId.Length > 0)
+                    room = session.PlaceId + "_" + session.JobId;
+            }
+        }
+        if (room == null)
+        {
+            // Отключились осознанно — сбрасываем комнату, чтобы при
+            // следующем подключении лента началась свежей с сервера.
+            _chatRoom = "";
             _ = _chat.DisconnectAsync();
             return;
         }
-        _ = ConnectChatAsync(session);
+        // Уже в нужной комнате — не дёргаем реконнект (ChatClient и так
+        // переподключается сам, если оборвалось).
+        if (string.Equals(_chatRoom, room, StringComparison.Ordinal)) return;
+        _ = ConnectChatAsync(room);
     }
 
-    private async Task ConnectChatAsync(GameSession session)
+    private bool IsServerRoom() =>
+        string.Equals(_config.ChatRoom, "server", StringComparison.OrdinalIgnoreCase);
+
+    private async Task ConnectChatAsync(string room)
     {
         try
         {
@@ -2845,11 +2943,9 @@ public partial class MainWindow : Window
                 _config.ChatUserId = uid;
                 SaveQuiet();
             }
-            string name = _config.ChatNickname;
-            if (name.Length == 0)
-            {
-                try { name = AccountStore.Load().Active?.Name ?? ""; } catch { /* ignore */ }
-            }
+            // Авто-ник: имя активного аккаунта Roblox, иначе Player####.
+            string name = "";
+            try { name = AccountStore.Load().Active?.Name ?? ""; } catch { /* ignore */ }
             if (name.Length == 0)
                 name = "Player" + uid % 10000;
 
@@ -2860,8 +2956,7 @@ public partial class MainWindow : Window
                 _chatPage.SetStatus(Lang.Get("Chat_BadUrl"), false);
                 return;
             }
-            string room = session.PlaceId + "_" + session.JobId;
-            // Новый сервер (другая комната) — чистим ленту от прошлого захода.
+            // Новая комната — чистим ленту от прошлого захода.
             if (!string.Equals(_chatRoom, room, StringComparison.Ordinal))
             {
                 _chatRoom = room;
@@ -2883,6 +2978,11 @@ public partial class MainWindow : Window
         if (!_config.ChatEnabled)
         {
             _chatPage.SetHint(Lang.Get("Chat_HintOff"));
+            return;
+        }
+        if (!IsServerRoom())
+        {
+            _chatPage.SetHint(Lang.Get("Chat_HintGlobal"));
             return;
         }
         var session = _watcher.Current;

@@ -7,8 +7,9 @@ using NekoStrap.Roblox;
 namespace NekoStrap.Wpf.Pages;
 
 /// <summary>
-/// Страница чата в лаунчере: общий чат роблокс-сервера + ЛС по списку игроков.
-/// Виден только тот, кто на том же сервере и тоже использует NekoStrap.
+/// Страница чата в лаунчере: две комнаты («Все» — общий чат лаунчера для
+/// всех подключённых, «Сервер» — чат текущего роблокс-сервера) + ЛС игрокам
+/// из текущей комнаты. Ник — авто (имя аккаунта Roblox), ввода ника нет.
 /// Код по конвенции проекта: страница не лезет в сеть сама — шлёт события,
 /// всё коммутирует MainWindow.
 /// </summary>
@@ -23,19 +24,25 @@ public partial class ChatPage : UserControl
     /// <summary>Открыть летающий оверлей чата.</summary>
     public event Action? OpenOverlayClicked;
 
-    /// <summary>Сохранить настройки чата (ник).</summary>
+    /// <summary>Сохранить настройки чата.</summary>
     public event Action? SaveClicked;
+
+    /// <summary>Смена комнаты: true = общий (global), false = сервер.</summary>
+    public event Action<bool>? RoomChanged;
 
     private const int MaxMessages = 300;
 
     private long _selfUid;
     private long _dmTarget; // 0 = общий чат
     private bool _dmEnabled = true;
+    private bool _globalRoom = true;
+    private string _baseHint = "";
     private readonly List<ChatUser> _users = new();
 
     public ChatPage()
     {
         InitializeComponent();
+        _baseHint = Lang.Get("Chat_NotInGame");
     }
 
     // ================= Состояние =================
@@ -69,7 +76,20 @@ public partial class ChatPage : UserControl
         StateDot.Fill = (Brush)FindResource(ok ? "GoodBrush" : "FgDimBrush");
     }
 
-    public void SetHint(string text) => HintLabel.Text = text;
+    /// <summary>Базовая подсказка (когда нет открытого ЛС).</summary>
+    public void SetHint(string text)
+    {
+        _baseHint = text;
+        RefreshHint();
+    }
+
+    private void RefreshHint()
+    {
+        HintLabel.Text = _dmTarget > 0
+            ? Lang.Format("Chat_DmOpenFmt",
+                _users.FirstOrDefault(u => u.Uid == _dmTarget)?.Name ?? "?")
+            : _baseHint;
+    }
 
     public void SetDmEnabled(bool enabled)
     {
@@ -114,10 +134,32 @@ public partial class ChatPage : UserControl
     public CheckBox ChatDmCheck => ChatDmBox;
     public CheckBox ChatOverlayCheck => ChatOverlayBox;
 
-    public string ChatNickText
+    /// <summary>Какая комната активна: true = общий, false = сервер.</summary>
+    public void SetRoomMode(bool global)
     {
-        get => ChatNickBox.Text.Trim();
-        set => ChatNickBox.Text = value;
+        _globalRoom = global;
+        RefreshRoomButtons();
+    }
+
+    private void RoomGlobalButton_Click(object sender, RoutedEventArgs e) => SwitchRoom(true);
+
+    private void RoomServerButton_Click(object sender, RoutedEventArgs e) => SwitchRoom(false);
+
+    private void SwitchRoom(bool global)
+    {
+        if (global == _globalRoom) return;
+        _globalRoom = global;
+        RefreshRoomButtons();
+        RoomChanged?.Invoke(global);
+        InputBox.Focus();
+    }
+
+    private void RefreshRoomButtons()
+    {
+        var on = (Style)FindResource("PrimaryButton");
+        var off = (Style)FindResource("OutlineButton");
+        RoomGlobalBtn.Style = _globalRoom ? on : off;
+        RoomServerBtn.Style = _globalRoom ? off : on;
     }
 
     private void SaveButton_Click(object sender, RoutedEventArgs e) => SaveClicked?.Invoke();
@@ -239,10 +281,7 @@ public partial class ChatPage : UserControl
             ? Lang.Format("Chat_DmWithFmt",
                 _users.FirstOrDefault(u => u.Uid == _dmTarget)?.Name ?? "?")
             : Lang.Get("Chat_Dm");
-        HintLabel.Text = dmMode
-            ? Lang.Format("Chat_DmOpenFmt",
-                _users.FirstOrDefault(u => u.Uid == _dmTarget)?.Name ?? "?")
-            : Lang.Get("Chat_NotInGame");
+        RefreshHint();
     }
 
     private void OverlayButton_Click(object sender, RoutedEventArgs e)
@@ -254,6 +293,7 @@ public partial class ChatPage : UserControl
     public void RefreshLabels()
     {
         RefreshModeButtons();
+        RefreshRoomButtons();
         SetDmEnabled(_dmEnabled);
     }
 }

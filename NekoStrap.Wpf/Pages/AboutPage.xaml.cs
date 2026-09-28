@@ -56,7 +56,7 @@ public partial class AboutPage : UserControl
 
     private void DiscordButton_Click(object sender, RoutedEventArgs e)
     {
-        OpenLink("https://discord.com/");
+        OpenLink("https://discord.gg/65ktwNSVG");
     }
 
     private void TelegramButton_Click(object sender, RoutedEventArgs e)

@@ -111,12 +111,6 @@
         </CheckBox>
         <TextBox x:Name="FpsValueBox" Style="{StaticResource DarkInput}" Width="100" Height="34"
                  VerticalContentAlignment="Center" HorizontalAlignment="Left" Margin="0,0,0,8"/>
-        <CheckBox x:Name="TrackPlaytimeBox" Style="{StaticResource Switch}" Margin="0,0,0,8">
-          <StackPanel>
-            <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_Playtime_L}"/>
-            <TextBlock Style="{StaticResource Mono}" Text="{l:L Set_Playtime_D}"/>
-          </StackPanel>
-        </CheckBox>
         <Rectangle Height="1" Fill="{StaticResource LineBrush}" Margin="0,4,0,8"/>
         <TextBlock Style="{StaticResource Body}" Text="{l:L Set_Threads_L}" Margin="0,0,0,6"/>
         <ComboBox x:Name="ThreadsCombo" Style="{StaticResource DarkCombo}" Width="120" Margin="0,0,0,6"

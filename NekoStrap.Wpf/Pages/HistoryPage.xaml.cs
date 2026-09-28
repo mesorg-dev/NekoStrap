@@ -47,6 +47,8 @@ public partial class HistoryPage : UserControl
 
     public bool SortByRecent { get; private set; } = true;
 
+    public CheckBox TrackPlaytimeCheck => TrackPlaytimeBox;
+
     private readonly ObservableCollection<GameRow> _games = new();
     private readonly ObservableCollection<SessionRow> _sessions = new();
 

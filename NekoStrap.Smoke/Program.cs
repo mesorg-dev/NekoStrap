@@ -217,8 +217,8 @@ internal static class Program
             var chat = (ChatPage)GetField(win, "_chatPage")!;
             Check("Chat: сеттеры+сообщения", () =>
             {
-                chat.ChatNickText = "Neko";
-                if (chat.ChatNickText != "Neko") throw new Exception("ChatNickText врёт");
+                chat.SetRoomMode(false);
+                chat.SetRoomMode(true);
                 chat.SetState(ChatState.Connecting);
                 chat.SetState(ChatState.Connected);
                 chat.SetStatus("тест", true);

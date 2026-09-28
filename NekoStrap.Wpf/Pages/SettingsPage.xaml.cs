@@ -84,9 +84,14 @@ public partial class SettingsPage : UserControl
 
     // ================= Внешний вид =================
 
-    public static readonly string[] HeadingFonts = { "Unbounded", "Segoe UI", "Verdana", "Trebuchet MS" };
-    public static readonly string[] BodyFonts = { "Inter", "Segoe UI", "Verdana" };
-    public static readonly string[] MonoFonts = { "JetBrains Mono", "Consolas", "Courier New" };
+    // Индекс 0 = дефолт (кнопка «Сбросить»): Verdana — широкий и жирный
+    // на маленьких кеглях, читается лучше тонкого Inter.
+    public static readonly string[] HeadingFonts =
+        { "Unbounded", "Segoe UI", "Verdana", "Trebuchet MS", "Arial Black", "Impact", "Georgia" };
+    public static readonly string[] BodyFonts =
+        { "Verdana", "Inter", "Segoe UI", "Tahoma", "Trebuchet MS", "Arial" };
+    public static readonly string[] MonoFonts =
+        { "JetBrains Mono", "Consolas", "Courier New", "Lucida Console" };
 
     private static readonly string[] Palette =
     {
@@ -410,7 +415,6 @@ public partial class SettingsPage : UserControl
     public CheckBox MinimizeToTrayCheck => MinimizeToTrayBox;
     public CheckBox CloseToTrayCheck => CloseToTrayBox;
     public CheckBox NotificationsCheck => NotificationsBox;
-    public CheckBox TrackPlaytimeCheck => TrackPlaytimeBox;
     public CheckBox RobloxNoTrayCheck => RobloxNoTrayBox;
     public CheckBox RobloxNoStartupCheck => RobloxNoStartupBox;
     public CheckBox GlassCheck => GlassCheckBox;

@@ -3,6 +3,7 @@ bin/
 obj/
 build/
 build-wpf/
+build-wpf.new/
 dist/
 TestResults/
 *.user
@@ -13,6 +14,8 @@ _ReSharper*/
 
 # ---> single-file publish outputs (165 МБ, в релизы кладёт CI)
 *.exe
+*.dll
+*.pdb
 
 # ---> OS / editors
 .DS_Store

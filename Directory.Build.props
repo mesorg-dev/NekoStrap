@@ -11,7 +11,7 @@
        CI передаёт /p:Version из тега — глобальное свойство
        перекрывает это значение, как и раньше. -->
   <PropertyGroup>
-    <Version>1.3.3</Version>
+    <Version>1.3.4</Version>
   </PropertyGroup>
 
 </Project>

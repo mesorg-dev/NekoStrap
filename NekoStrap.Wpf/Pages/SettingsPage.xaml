@@ -110,12 +110,19 @@
           </StackPanel>
         </CheckBox>
         <TextBox x:Name="FpsValueBox" Style="{StaticResource DarkInput}" Width="100" Height="34"
-                 VerticalContentAlignment="Center" HorizontalAlignment="Left" Margin="0,0,0,8"/>
+                 VerticalContentAlignment="Center" HorizontalAlignment="Left" Margin="0,0,0,4"
+                 TextChanged="FpsValueBox_TextChanged"/>
+        <TextBlock x:Name="FpsRangeHint" Style="{StaticResource Mono}" FontStyle="Italic"
+                   Text="{l:L Set_Fps_Range}" Margin="0,0,0,8"/>
         <Rectangle Height="1" Fill="{StaticResource LineBrush}" Margin="0,4,0,8"/>
         <TextBlock Style="{StaticResource Body}" Text="{l:L Set_Threads_L}" Margin="0,0,0,6"/>
         <ComboBox x:Name="ThreadsCombo" Style="{StaticResource DarkCombo}" Width="120" Margin="0,0,0,6"
                   HorizontalAlignment="Left" SelectionChanged="ThreadsCombo_SelectionChanged"/>
         <TextBlock Style="{StaticResource Mono}" Text="{l:L Set_Threads_D}"/>
+        <TextBlock Style="{StaticResource Body}" Text="{l:L Set_Prio_L}" Margin="0,10,0,6"/>
+        <ComboBox x:Name="PriorityCombo" Style="{StaticResource DarkCombo}" Width="220" Margin="0,0,0,6"
+                  HorizontalAlignment="Left" SelectionChanged="PriorityCombo_SelectionChanged"/>
+        <TextBlock Style="{StaticResource Mono}" TextWrapping="Wrap" Text="{l:L Set_Prio_D}"/>
       </StackPanel>
     </Border>
 
@@ -269,6 +276,54 @@
       </StackPanel>
     </Border>
 
+    <!-- Оверлей производительности поверх игры -->
+    <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+      <StackPanel>
+        <TextBlock Style="{StaticResource H2}" FontSize="13" Text="{l:L Set_PerfTitle}" Margin="0,0,0,4"/>
+        <TextBlock Style="{StaticResource Body}" TextWrapping="Wrap" Margin="0,0,0,8"
+                   Text="{l:L Set_PerfDesc}"/>
+        <CheckBox x:Name="PerfOverlayBox" Style="{StaticResource Switch}" Margin="0,0,0,8">
+          <StackPanel>
+            <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_Perf_L}"/>
+            <TextBlock Style="{StaticResource Mono}" TextWrapping="Wrap" Text="{l:L Set_Perf_D}"/>
+          </StackPanel>
+        </CheckBox>
+        <TextBlock Style="{StaticResource H2}" FontSize="12" Text="{l:L Set_PerfMetrics}" Margin="0,0,0,4"/>
+        <CheckBox x:Name="PerfPingBox" Style="{StaticResource Switch}" Margin="0,0,0,4">
+          <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_PerfPing_L}"/>
+        </CheckBox>
+        <CheckBox x:Name="PerfCpuBox" Style="{StaticResource Switch}" Margin="0,0,0,4">
+          <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_PerfCpu_L}"/>
+        </CheckBox>
+        <CheckBox x:Name="PerfRamBox" Style="{StaticResource Switch}" Margin="0,0,0,4">
+          <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_PerfRam_L}"/>
+        </CheckBox>
+        <CheckBox x:Name="PerfGpuBox" Style="{StaticResource Switch}" Margin="0,0,0,4">
+          <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_PerfGpu_L}"/>
+        </CheckBox>
+        <CheckBox x:Name="PerfServerBox" Style="{StaticResource Switch}" Margin="0,0,0,4">
+          <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_PerfServer_L}"/>
+        </CheckBox>
+        <CheckBox x:Name="PerfTimeBox" Style="{StaticResource Switch}" Margin="0,0,0,4">
+          <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_PerfTime_L}"/>
+        </CheckBox>
+        <CheckBox x:Name="PerfGlassBox" Style="{StaticResource Switch}" Margin="0,6,0,4">
+          <StackPanel>
+            <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_PerfGlass_L}"/>
+            <TextBlock Style="{StaticResource Mono}" TextWrapping="Wrap" Text="{l:L Set_PerfGlass_D}"/>
+          </StackPanel>
+        </CheckBox>
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+          <TextBlock Style="{StaticResource Body}" Text="{l:L Set_PerfOpacity}" Margin="0,0,10,0"/>
+          <TextBlock x:Name="PerfOpacityValue" Style="{StaticResource MonoBright}" Text="90%"/>
+        </StackPanel>
+        <Slider x:Name="PerfOpacityBar" Style="{StaticResource ThemedSlider}" Minimum="20" Maximum="100"
+                Value="90" ValueChanged="PerfOpacityBar_Changed"/>
+        <Button x:Name="PerfShowButton" Style="{StaticResource OutlineButton}" Content="{l:L Btn_PerfShow}"
+                Width="240" Height="34" Margin="0,10,0,0" Click="PerfShowButton_Click"/>
+      </StackPanel>
+    </Border>
+
     <!-- ===== Система ===== -->
     <TextBlock Style="{StaticResource H2}" FontSize="14" Text="{l:L Set_Sec_System}" Margin="0,0,0,8"/>
 
@@ -298,6 +353,21 @@
           <Button Style="{StaticResource PrimaryButton}" Content="{l:L Btn_CdnOn}" Width="170" Height="38" Click="CdnOnButton_Click"/>
           <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_CdnOff}" Width="150" Height="38" Margin="10,0,0,0" Click="CdnOffButton_Click"/>
         </StackPanel>
+      </StackPanel>
+    </Border>
+
+    <!-- Телеметрия -->
+    <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+      <StackPanel>
+        <TextBlock Style="{StaticResource H2}" FontSize="13" Text="{l:L Set_Telemetry_L}" Margin="0,0,0,4"/>
+        <CheckBox x:Name="TelemetryBlockBox" Style="{StaticResource Switch}" Margin="0,0,0,6">
+          <StackPanel>
+            <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_Telemetry_L}"/>
+            <TextBlock Style="{StaticResource Mono}" TextWrapping="Wrap" Text="{l:L Set_Telemetry_D}"/>
+          </StackPanel>
+        </CheckBox>
+        <TextBlock x:Name="TelemetryStatus" Style="{StaticResource Mono}" FontStyle="Italic"
+                   TextWrapping="Wrap" Margin="0,2,0,0"/>
       </StackPanel>
     </Border>
 

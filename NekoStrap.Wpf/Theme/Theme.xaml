@@ -11,6 +11,8 @@
   <Color x:Key="FgDim">#98989E</Color>
   <Color x:Key="FgDimmer">#5C5C62</Color>
   <Color x:Key="Good">#78DC82</Color>
+  <Color x:Key="Bad">#FF8087</Color>
+  <Color x:Key="Warn">#FFC857</Color>
 
   <SolidColorBrush x:Key="BgBrush" Color="{StaticResource Bg}"/>
   <SolidColorBrush x:Key="BgPanelBrush" Color="{StaticResource BgPanel}"/>
@@ -24,6 +26,8 @@
   <SolidColorBrush x:Key="FgDimBrush" Color="{StaticResource FgDim}"/>
   <SolidColorBrush x:Key="FgDimmerBrush" Color="{StaticResource FgDimmer}"/>
   <SolidColorBrush x:Key="GoodBrush" Color="{StaticResource Good}"/>
+  <SolidColorBrush x:Key="BadBrush" Color="{StaticResource Bad}"/>
+  <SolidColorBrush x:Key="WarnBrush" Color="{StaticResource Warn}"/>
 
   <FontFamily x:Key="UiFont">./Fonts/#Inter, Segoe UI</FontFamily>
   <FontFamily x:Key="HeadingFont">./Fonts/#Unbounded, Segoe UI</FontFamily>
@@ -57,6 +61,32 @@
     <Setter Property="FontWeight" Value="Bold"/>
   </Style>
 
+  <!-- ============ Тултипы ============
+       Без своего стиля WPF рисует светлое окно поверх тёмной темы. -->
+  <Style TargetType="ToolTip">
+    <Setter Property="Background" Value="{DynamicResource CardBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource FgBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="Padding" Value="9,6"/>
+    <Setter Property="FontFamily" Value="{DynamicResource UiFont}"/>
+    <Setter Property="FontSize" Value="11.5"/>
+    <Setter Property="MaxWidth" Value="380"/>
+  </Style>
+
+  <!-- ============ Фокус с клавиатуры ============
+       Штатный штрих почти чёрный — в тёмной теме Tab не виден. -->
+  <Style x:Key="NekoFocusVisual">
+    <Setter Property="Control.Template">
+      <Setter.Value>
+        <ControlTemplate>
+          <Rectangle Margin="1" StrokeThickness="1.5" StrokeDashArray="1 2"
+                     Stroke="{StaticResource GoodBrush}" SnapsToDevicePixels="True"/>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
   <!-- ============ Карточка ============ -->
   <Style x:Key="Card" TargetType="Border">
     <Setter Property="Background" Value="{DynamicResource CardBrush}"/>
@@ -70,6 +100,7 @@
 
   <!-- ============ Кнопки ============ -->
   <Style x:Key="PrimaryButton" TargetType="Button">
+    <Setter Property="FocusVisualStyle" Value="{StaticResource NekoFocusVisual}"/>
     <Setter Property="Background" Value="{StaticResource FgBrush}"/>
     <Setter Property="Foreground" Value="{StaticResource BgBrush}"/>
     <Setter Property="FontFamily" Value="{DynamicResource UiFont}"/>
@@ -101,6 +132,7 @@
   </Style>
 
   <Style x:Key="OutlineButton" TargetType="Button">
+    <Setter Property="FocusVisualStyle" Value="{StaticResource NekoFocusVisual}"/>
     <Setter Property="Background" Value="Transparent"/>
     <Setter Property="Foreground" Value="{DynamicResource FgDimBrush}"/>
     <Setter Property="FontFamily" Value="{DynamicResource UiFont}"/>
@@ -155,6 +187,7 @@
 
   <!-- ============ Навигация сайдбара ============ -->
   <Style x:Key="NavRadio" TargetType="RadioButton">
+    <Setter Property="FocusVisualStyle" Value="{StaticResource NekoFocusVisual}"/>
     <Setter Property="Height" Value="46"/>
     <Setter Property="Foreground" Value="{DynamicResource FgDimBrush}"/>
     <Setter Property="FontFamily" Value="{DynamicResource UiFont}"/>
@@ -225,6 +258,7 @@
 
   <!-- ============ Тумблер (CheckBox) ============ -->
   <Style x:Key="Switch" TargetType="CheckBox">
+    <Setter Property="FocusVisualStyle" Value="{StaticResource NekoFocusVisual}"/>
     <Setter Property="Foreground" Value="{DynamicResource FgBrush}"/>
     <Setter Property="FontFamily" Value="{DynamicResource UiFont}"/>
     <Setter Property="Cursor" Value="Hand"/>
@@ -326,6 +360,7 @@
        Фон прозрачный: сквозь поле видно стекло карточки. На сплошных
        местах (диалоги без стекла) под ним сплошной фон окна — вид тот же. -->
   <Style x:Key="DarkInput" TargetType="TextBox">
+    <Setter Property="FocusVisualStyle" Value="{StaticResource NekoFocusVisual}"/>
     <Setter Property="Background" Value="Transparent"/>
     <Setter Property="Foreground" Value="{DynamicResource FgBrush}"/>
     <Setter Property="CaretBrush" Value="{DynamicResource FgBrush}"/>
@@ -639,6 +674,7 @@
     </Setter>
   </Style>
   <Style x:Key="DarkCombo" TargetType="ComboBox">
+    <Setter Property="FocusVisualStyle" Value="{StaticResource NekoFocusVisual}"/>
     <Setter Property="Foreground" Value="{DynamicResource FgBrush}"/>
     <Setter Property="FontFamily" Value="{DynamicResource UiFont}"/>
     <Setter Property="FontSize" Value="12"/>

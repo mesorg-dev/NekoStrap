@@ -7,12 +7,12 @@
     <TextBlock Style="{StaticResource Body}" Text="{l:L Hist_Sub}" Margin="0,0,0,10"/>
 
     <WrapPanel Margin="0,0,0,12">
-      <Button Style="{StaticResource PrimaryButton}" Content="{l:L Btn_Play}" Height="38" Padding="16,0" Margin="0,0,10,0" Click="PlayButton_Click"/>
+      <Button x:Name="PlayButton" Style="{StaticResource PrimaryButton}" Content="{l:L Btn_Play}" Height="38" Padding="16,0" Margin="0,0,10,0" Click="PlayButton_Click"/>
       <Button x:Name="SortRecentButton" Style="{StaticResource PrimaryButton}" Content="{l:L Hist_Recent}" Height="38" Padding="16,0" Margin="0,0,10,0" Click="SortRecentButton_Click"/>
       <Button x:Name="SortTopButton" Style="{StaticResource OutlineButton}" Content="{l:L Hist_Top}" Height="38" Padding="16,0" Margin="0,0,10,0" Click="SortTopButton_Click"/>
-      <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_Delete}" Height="38" Padding="16,0" Margin="0,0,10,0" Click="DeleteButton_Click"/>
-      <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_Clear}" Height="38" Padding="16,0" Margin="0,0,10,0" Click="ClearButton_Click"/>
-      <Button Style="{StaticResource OutlineButton}" Content="{l:L Hist_Favorite}" Height="38" Padding="16,0" Click="FavoriteButton_Click"/>
+      <Button x:Name="DeleteButton" Style="{StaticResource OutlineButton}" Content="{l:L Btn_Delete}" Height="38" Padding="16,0" Margin="0,0,10,0" Click="DeleteButton_Click"/>
+      <Button x:Name="ClearButton" Style="{StaticResource OutlineButton}" Content="{l:L Btn_Clear}" Height="38" Padding="16,0" Margin="0,0,10,0" Click="ClearButton_Click"/>
+      <Button x:Name="FavoriteButton" Style="{StaticResource OutlineButton}" Content="{l:L Hist_Favorite}" Height="38" Padding="16,0" Click="FavoriteButton_Click"/>
     </WrapPanel>
 
     <CheckBox x:Name="TrackPlaytimeBox" Style="{StaticResource Switch}" Margin="0,0,0,10">
@@ -23,17 +23,23 @@
     </CheckBox>
 
     <Border Style="{StaticResource Card}" Margin="0,0,0,10" Padding="18">
-      <ListView x:Name="HistoryList" Height="260" Background="Transparent" BorderThickness="0"
-                SelectionMode="Single" ItemContainerStyle="{StaticResource DarkListRow}">
-        <ListView.View>
-          <GridView ColumnHeaderContainerStyle="{StaticResource DarkGridHeader}">
-            <GridViewColumn Header="{l:L Hist_ColGame}" Width="280" DisplayMemberBinding="{Binding Name}"/>
-            <GridViewColumn Header="{l:L Hist_ColPlayed}" Width="120" DisplayMemberBinding="{Binding Played}"/>
-            <GridViewColumn Header="{l:L Hist_ColLast}" Width="160" DisplayMemberBinding="{Binding Last}"/>
-            <GridViewColumn Header="PlaceId" Width="120" DisplayMemberBinding="{Binding PlaceText}"/>
-          </GridView>
-        </ListView.View>
-      </ListView>
+      <Grid>
+        <ListView x:Name="HistoryList" Height="260" Background="Transparent" BorderThickness="0"
+                  SelectionMode="Single" ItemContainerStyle="{StaticResource DarkListRow}">
+          <ListView.View>
+            <GridView ColumnHeaderContainerStyle="{StaticResource DarkGridHeader}">
+              <GridViewColumn Header="{l:L Hist_ColGame}" Width="280" DisplayMemberBinding="{Binding Name}"/>
+              <GridViewColumn Header="{l:L Hist_ColPlayed}" Width="120" DisplayMemberBinding="{Binding Played}"/>
+              <GridViewColumn Header="{l:L Hist_ColLast}" Width="160" DisplayMemberBinding="{Binding Last}"/>
+              <GridViewColumn Header="PlaceId" Width="120" DisplayMemberBinding="{Binding PlaceText}"/>
+            </GridView>
+          </ListView.View>
+        </ListView>
+        <TextBlock x:Name="HistoryEmpty" Style="{StaticResource Mono}" FontStyle="Italic"
+                   Text="{l:L Empty_HistGames}" TextWrapping="Wrap" TextAlignment="Center"
+                   HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="420"
+                   Visibility="Collapsed"/>
+      </Grid>
     </Border>
 
     <TextBlock Style="{StaticResource Mono}" FontStyle="Italic" Margin="0,0,0,6"
@@ -44,30 +50,36 @@
                Text="{l:L Hist_SessionsTitle}"/>
 
     <WrapPanel Margin="0,0,0,12">
-      <Button Style="{StaticResource PrimaryButton}" Content="{l:L Hist_Rejoin}" Height="38" Padding="16,0" Margin="0,0,10,0" Click="RejoinButton_Click"/>
-      <Button Style="{StaticResource OutlineButton}" Content="{l:L Hist_JoinPlace}" Height="38" Padding="16,0" Margin="0,0,10,0" Click="JoinButton_Click"/>
-      <Button Style="{StaticResource OutlineButton}" Content="{l:L Hist_CopyPlace}" Height="38" Padding="16,0" Margin="0,0,10,0" Click="CopyPlaceButton_Click"/>
-      <Button Style="{StaticResource OutlineButton}" Content="{l:L Hist_CopyLink}" Height="38" Padding="16,0" Margin="0,0,10,0" Click="CopyLinkButton_Click"/>
-      <Button Style="{StaticResource OutlineButton}" Content="{l:L Hist_OnSite}" Height="38" Padding="16,0" Margin="0,0,10,0" Click="SiteButton_Click"/>
-      <Button Style="{StaticResource OutlineButton}" Content="{l:L Hist_DelSession}" Height="38" Padding="16,0" Margin="0,0,10,0" Click="DeleteSessionButton_Click"/>
-      <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_Clear}" Height="38" Padding="16,0" Click="ClearSessionsButton_Click"/>
+      <Button x:Name="RejoinButton" Style="{StaticResource PrimaryButton}" Content="{l:L Hist_Rejoin}" Height="38" Padding="16,0" Margin="0,0,10,0" Click="RejoinButton_Click"/>
+      <Button x:Name="JoinButton" Style="{StaticResource OutlineButton}" Content="{l:L Hist_JoinPlace}" Height="38" Padding="16,0" Margin="0,0,10,0" Click="JoinButton_Click"/>
+      <Button x:Name="CopyPlaceButton" Style="{StaticResource OutlineButton}" Content="{l:L Hist_CopyPlace}" Height="38" Padding="16,0" Margin="0,0,10,0" Click="CopyPlaceButton_Click"/>
+      <Button x:Name="CopyLinkButton" Style="{StaticResource OutlineButton}" Content="{l:L Hist_CopyLink}" Height="38" Padding="16,0" Margin="0,0,10,0" Click="CopyLinkButton_Click"/>
+      <Button x:Name="SiteButton" Style="{StaticResource OutlineButton}" Content="{l:L Hist_OnSite}" Height="38" Padding="16,0" Margin="0,0,10,0" Click="SiteButton_Click"/>
+      <Button x:Name="DeleteSessionButton" Style="{StaticResource OutlineButton}" Content="{l:L Hist_DelSession}" Height="38" Padding="16,0" Margin="0,0,10,0" Click="DeleteSessionButton_Click"/>
+      <Button x:Name="ClearSessionsButton" Style="{StaticResource OutlineButton}" Content="{l:L Btn_Clear}" Height="38" Padding="16,0" Click="ClearSessionsButton_Click"/>
     </WrapPanel>
 
     <Border Style="{StaticResource Card}" Margin="0,0,0,10" Padding="18">
-      <ListView x:Name="SessionList" Height="300" Background="Transparent" BorderThickness="0"
-                SelectionMode="Single" ItemContainerStyle="{StaticResource DarkListRow}"
-                MouseDoubleClick="SessionList_DoubleClick">
-        <ListView.View>
-          <GridView ColumnHeaderContainerStyle="{StaticResource DarkGridHeader}">
-            <GridViewColumn Header="{l:L Hist_ColGame}" Width="210" DisplayMemberBinding="{Binding Game}"/>
-            <GridViewColumn Header="PlaceId" Width="100" DisplayMemberBinding="{Binding PlaceText}"/>
-            <GridViewColumn Header="{l:L Hist_ColServer}" Width="130" DisplayMemberBinding="{Binding Job}"/>
-            <GridViewColumn Header="{l:L Hist_ColJoin}" Width="130" DisplayMemberBinding="{Binding When}"/>
-            <GridViewColumn Header="{l:L Hist_ColDuration}" Width="100" DisplayMemberBinding="{Binding Duration}"/>
-            <GridViewColumn Header="IP" Width="110" DisplayMemberBinding="{Binding Ip}"/>
-          </GridView>
-        </ListView.View>
-      </ListView>
+      <Grid>
+        <ListView x:Name="SessionList" Height="300" Background="Transparent" BorderThickness="0"
+                  SelectionMode="Single" ItemContainerStyle="{StaticResource DarkListRow}"
+                  MouseDoubleClick="SessionList_DoubleClick">
+          <ListView.View>
+            <GridView ColumnHeaderContainerStyle="{StaticResource DarkGridHeader}">
+              <GridViewColumn Header="{l:L Hist_ColGame}" Width="210" DisplayMemberBinding="{Binding Game}"/>
+              <GridViewColumn Header="PlaceId" Width="100" DisplayMemberBinding="{Binding PlaceText}"/>
+              <GridViewColumn Header="{l:L Hist_ColServer}" Width="130" DisplayMemberBinding="{Binding Job}"/>
+              <GridViewColumn Header="{l:L Hist_ColJoin}" Width="130" DisplayMemberBinding="{Binding When}"/>
+              <GridViewColumn Header="{l:L Hist_ColDuration}" Width="100" DisplayMemberBinding="{Binding Duration}"/>
+              <GridViewColumn Header="IP" Width="110" DisplayMemberBinding="{Binding Ip}"/>
+            </GridView>
+          </ListView.View>
+        </ListView>
+        <TextBlock x:Name="SessionEmpty" Style="{StaticResource Mono}" FontStyle="Italic"
+                   Text="{l:L Empty_HistSess}" TextWrapping="Wrap" TextAlignment="Center"
+                   HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="420"
+                   Visibility="Collapsed"/>
+      </Grid>
     </Border>
 
     <TextBlock Style="{StaticResource Mono}" FontStyle="Italic" TextWrapping="Wrap"

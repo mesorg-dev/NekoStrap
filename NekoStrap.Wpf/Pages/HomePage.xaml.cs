@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using NekoStrap.Roblox;
 
 namespace NekoStrap.Wpf.Pages;
 
@@ -33,6 +34,9 @@ public partial class HomePage : UserControl
     /// <summary>Пользователь запросил поиск (по кнопке или Enter).</summary>
     public event Action<string>? SearchQueryEntered;
 
+    /// <summary>Пользователь печатает в поиске (дебаунс делает MainWindow).</summary>
+    public event Action<string>? SearchQueryChanged;
+
     /// <summary>Двойной клик по результату: открыть плейс.</summary>
     public event Action<long, string>? SearchPlayRequested;
 
@@ -42,6 +46,7 @@ public partial class HomePage : UserControl
     {
         InitializeComponent();
         ProgressTrack.SizeChanged += (_, _) => UpdateProgressWidth();
+        BuildInviteBoxes();
     }
 
     private void PlayButton_Click(object sender, RoutedEventArgs e)
@@ -68,6 +73,12 @@ public partial class HomePage : UserControl
 
     private void SearchBox_KeyDown(object sender, KeyEventArgs e)
     {
+        if (e.Key == Key.Escape)
+        {
+            SearchBox.Text = "";
+            e.Handled = true;
+            return;
+        }
         if (e.Key != Key.Enter) return;
         SubmitSearch();
         e.Handled = true;
@@ -78,6 +89,11 @@ public partial class HomePage : UserControl
         string q = SearchBox.Text.Trim();
         if (q.Length == 0) return;
         SearchQueryEntered?.Invoke(q);
+    }
+
+    private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        SearchQueryChanged?.Invoke(SearchBox.Text.Trim());
     }
 
     private void SearchList_DoubleClick(object sender, MouseButtonEventArgs e)
@@ -92,6 +108,9 @@ public partial class HomePage : UserControl
         SearchStatus.Text = Lang.Get("Search_Busy");
         SearchList.Visibility = Visibility.Collapsed;
     }
+
+    /// <summary>Только подпись под поиском (список не трогаем).</summary>
+    public void SetSearchStatus(string text) => SearchStatus.Text = text;
 
     /// <summary>Итог поиска: строки и подпись (пусто / ошибка / сколько нашлось).</summary>
     public void ShowSearchResults(List<SearchRow> rows, string status)
@@ -209,5 +228,271 @@ public partial class HomePage : UserControl
     public void ClearServer()
     {
         SetServer("—", "—", "—");
+    }
+
+    // ================= Код приглашения =================
+
+    /// <summary>Создать код на свой текущий сервер (лимит входов, срок в сек).</summary>
+    public event Action<int, int>? InviteCreateRequested;
+
+    /// <summary>Пользователь ввёл код друга и нажал «Войти».</summary>
+    public event Action<string>? InviteJoinRequested;
+
+    /// <summary>Бросить свой код: сервер не трогаем, просто прячем карточку.</summary>
+    public event Action? InviteDropRequested;
+
+    /// <summary>Метка (tag = число) + ключ подписи. Порядок = порядок в UI.</summary>
+    private static readonly (int Tag, string Key)[] InviteUsesLabels =
+    {
+        (1, "Inv_Uses1"),
+        (3, "Inv_Uses3"),
+        (10, "Inv_Uses10"),
+        (0, "Inv_UsesInf"),
+    };
+
+    private static readonly (int Tag, string Key)[] InviteTtlLabels =
+    {
+        (3600, "Inv_Ttl1h"),
+        (86400, "Inv_Ttl24h"),
+        (604800, "Inv_Ttl7d"),
+        (2592000, "Inv_Ttl30d"),
+    };
+
+    private enum InviteState { NeedGame, Ready, Busy, Created, Error }
+
+    private bool _inviteSession;
+    private bool _inviteBusy;
+    private string _inviteCode = "";
+    private InviteState _inviteCreateState = InviteState.NeedGame;
+    private string _inviteCreateCode = "";
+    // Правая колонка помнит свой текст независимо: либо ключ статуса,
+    // либо (в отдельной переменной) код ошибки — иначе один затирает другой.
+    private string _inviteJoinStatusKey = "Inv_JoinHint";
+    private string _inviteJoinErrorCode = "";
+
+    private void BuildInviteBoxes()
+    {
+        FillInviteBox(InviteUsesBox, InviteUsesLabels, 0);
+        FillInviteBox(InviteTtlBox, InviteTtlLabels, 1);
+    }
+
+    private void FillInviteBox(ComboBox box, (int Tag, string Key)[] items, int selected)
+    {
+        box.Items.Clear();
+        foreach (var (tag, key) in items)
+            box.Items.Add(new ComboBoxItem { Content = Lang.Get(key), Tag = tag });
+        box.SelectedIndex = Math.Clamp(selected, 0, items.Length - 1);
+    }
+
+    /// <summary>Лимит входов: 1/3/10, 0 = без лимита.</summary>
+    public int InviteUses =>
+        InviteUsesBox.SelectedItem is ComboBoxItem it && it.Tag is int n ? n : 1;
+
+    /// <summary>Срок жизни кода в секундах.</summary>
+    public int InviteTtlSec =>
+        InviteTtlBox.SelectedItem is ComboBoxItem it && it.Tag is int n ? n : 86400;
+
+    /// <summary>Пересобрать подписи при смене языка; выбор сохраняется.</summary>
+    public void RefreshInviteLabels()
+    {
+        int uses = InviteUsesBox.SelectedIndex, ttl = InviteTtlBox.SelectedIndex;
+        FillInviteBox(InviteUsesBox, InviteUsesLabels, uses);
+        FillInviteBox(InviteTtlBox, InviteTtlLabels, ttl);
+        ApplyCreateStatus();
+        ApplyJoinStatus();
+    }
+
+    /// <summary>Можно ли создавать код: только в живой сессии.</summary>
+    public void SetInviteSession(bool hasSession)
+    {
+        _inviteSession = hasSession;
+        if (!hasSession)
+            _inviteCreateState = InviteState.NeedGame;
+        else if (_inviteCreateState == InviteState.NeedGame)
+            _inviteCreateState = InviteState.Ready;
+        ApplyCreateStatus();
+    }
+
+    public void SetInviteBusy(bool busy)
+    {
+        _inviteBusy = busy;
+        if (busy) _inviteCreateState = InviteState.Busy;
+        else if (_inviteCreateState == InviteState.Busy)
+            _inviteCreateState = _inviteSession ? InviteState.Created : InviteState.NeedGame;
+        ApplyCreateStatus();
+    }
+
+    /// <summary>Код создан (или подтверждён сервером при старте).</summary>
+    public void ShowInviteCode(string code, int uses, int maxUses, DateTime expires)
+    {
+        _inviteCode = code;
+        InviteCodeText.Text = string.Join(" ", code);
+        InviteCodeMeta.Text = InviteMetaText(uses, maxUses, expires);
+        InviteCodeCard.Visibility = Visibility.Visible;
+        _inviteCreateState = InviteState.Created;
+        ApplyCreateStatus();
+    }
+
+    public void HideInviteCode()
+    {
+        _inviteCode = "";
+        InviteCodeCard.Visibility = Visibility.Collapsed;
+        _inviteCreateState = _inviteSession ? InviteState.Ready : InviteState.NeedGame;
+        ApplyCreateStatus();
+    }
+
+    /// <summary>Пусто = кода нет.</summary>
+    public string InviteCode => _inviteCode;
+
+    /// <summary>Ошибка на левую колонку: пришла из сети или от валидации.</summary>
+    public void SetInviteCreateError(string code)
+    {
+        _inviteCreateState = InviteState.Error;
+        _inviteCreateCode = code;
+        _inviteBusy = false;
+        ApplyCreateStatus();
+    }
+
+    /// <summary>Ошибка на правую колонку (вход по коду).</summary>
+    public void SetInviteJoinError(string code)
+    {
+        _inviteJoinErrorCode = code;
+        _inviteJoinStatusKey = "";
+        ApplyJoinStatus();
+    }
+
+    public void SetInviteJoinStatus(string key)
+    {
+        _inviteJoinErrorCode = "";
+        _inviteJoinStatusKey = key;
+        ApplyJoinStatus();
+    }
+
+    /// <summary>Кнопка «Войти» живёт только при полном коде.</summary>
+    public void SyncInviteJoinButton() =>
+        InviteJoinButton.IsEnabled = InviteClient.IsValidCode(InviteJoinBox.Text) && !_inviteBusy;
+
+    public void SetInviteJoinBusy(bool busy)
+    {
+        _inviteBusy = busy;
+        InviteJoinBox.IsEnabled = !busy;
+        if (busy) SetInviteJoinStatus("Inv_JoinBusy");
+        SyncInviteJoinButton();
+    }
+
+    private void ApplyCreateStatus()
+    {
+        InviteCreateStatus.Text = _inviteCreateState switch
+        {
+            InviteState.Busy => Lang.Get("Inv_Busy"),
+            InviteState.Created => Lang.Get("Inv_Created"),
+            InviteState.Ready => Lang.Get("Inv_Ready"),
+            InviteState.Error => InviteErrorText(_inviteCreateCode),
+            _ => Lang.Get("Inv_NeedGame"),
+        };
+        InviteCreateButton.IsEnabled = !_inviteBusy && _inviteSession;
+        InviteCreateStatus.Foreground = _inviteCreateState == InviteState.Error
+            ? (System.Windows.Media.Brush)FindResource("BadBrush")
+            : (System.Windows.Media.Brush)FindResource("FgDimmerBrush");
+    }
+
+    private void ApplyJoinStatus()
+    {
+        InviteJoinStatus.Text = _inviteJoinErrorCode.Length > 0
+            ? InviteErrorText(_inviteJoinErrorCode)
+            : Lang.Get(_inviteJoinStatusKey);
+        InviteJoinStatus.Foreground = _inviteJoinErrorCode.Length > 0
+            ? (System.Windows.Media.Brush)FindResource("BadBrush")
+            : (System.Windows.Media.Brush)FindResource("FgDimmerBrush");
+    }
+
+    /// <summary>Мета под кодом: лимит + срок.</summary>
+    public static string InviteMetaText(int uses, int maxUses, DateTime expires)
+    {
+        string until = expires > DateTime.MinValue
+            ? expires.ToLocalTime().ToString("dd.MM.yyyy HH:mm", Lang.Culture)
+            : "—";
+        if (maxUses <= 0) return Lang.Format("Inv_MetaInfFmt", until);
+        if (maxUses == 1) return Lang.Format("Inv_MetaOneFmt", until);
+        return Lang.Format("Inv_MetaFmt", Math.Min(uses, maxUses), maxUses, until);
+    }
+
+    /// <summary>Ключ перевода для кода ошибки сервера/клиента.</summary>
+    public static string InviteErrorKey(string code) => code switch
+    {
+        NekoStrap.Roblox.InviteErrors.Offline => "InvErr_Offline",
+        NekoStrap.Roblox.InviteErrors.Timeout => "InvErr_Timeout",
+        NekoStrap.Roblox.InviteErrors.Cancelled => "InvErr_Cancelled",
+        NekoStrap.Roblox.InviteErrors.Unsupported => "InvErr_Unsupported",
+        NekoStrap.Roblox.InviteErrors.Gone => "InvErr_Gone",
+        NekoStrap.Roblox.InviteErrors.Expired => "InvErr_Expired",
+        NekoStrap.Roblox.InviteErrors.Used => "InvErr_Used",
+        NekoStrap.Roblox.InviteErrors.BadCode => "InvErr_BadCode",
+        NekoStrap.Roblox.InviteErrors.RateLimit => "InvErr_RateLimit",
+        NekoStrap.Roblox.InviteErrors.BadPlace => "InvErr_BadPlace",
+        NekoStrap.Roblox.InviteErrors.CodeFull => "InvErr_CodeFull",
+        _ => "InvErr_Internal",
+    };
+
+    public static string InviteErrorText(string code) => Lang.Get(InviteErrorKey(code));
+
+    // ---------- обработчики ----------
+
+    private void InviteCreate_Click(object sender, RoutedEventArgs e)
+    {
+        if (_inviteBusy || !_inviteSession) return;
+        InviteCreateRequested?.Invoke(InviteUses, InviteTtlSec);
+    }
+
+    private void InviteJoin_Click(object sender, RoutedEventArgs e) => SubmitInvite();
+
+    private void InviteJoinBox_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter) return;
+        SubmitInvite();
+        e.Handled = true;
+    }
+
+    private void SubmitInvite()
+    {
+        if (_inviteBusy) return;
+        string code = InviteClient.NormalizeCode(InviteJoinBox.Text);
+        if (code.Length != InviteClient.CodeLength)
+        {
+            SetInviteJoinError(InviteErrors.BadCode);
+            return;
+        }
+        InviteJoinRequested?.Invoke(code);
+    }
+
+    private void InviteJoinBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        // WPF не умеет CharacterCasing — приводим сами: всегда наш алфавит.
+        string clean = InviteClient.NormalizeCode(InviteJoinBox.Text);
+        if (clean != InviteJoinBox.Text)
+        {
+            int caret = InviteJoinBox.CaretIndex;
+            InviteJoinBox.Text = clean;
+            InviteJoinBox.CaretIndex = Math.Min(caret, clean.Length);
+        }
+        SyncInviteJoinButton();
+    }
+
+    private async void InviteCopy_Click(object sender, RoutedEventArgs e)
+    {
+        if (_inviteCode.Length == 0) return;
+        string code = _inviteCode;
+        try { Clipboard.SetText(code); } catch { /* буфер занят */ }
+        // Короткая отдельная строка вместо тоста: карточка и так на виду.
+        string meta = InviteCodeMeta.Text;
+        InviteCodeMeta.Text = Lang.Get("Inv_Copied");
+        await Task.Delay(1500);
+        if (_inviteCode == code) InviteCodeMeta.Text = meta;
+    }
+
+    private void InviteDrop_Click(object sender, RoutedEventArgs e)
+    {
+        HideInviteCode();
+        InviteDropRequested?.Invoke();
     }
 }

@@ -38,6 +38,11 @@ public partial class FlagConflictDialog : Window
             DragMove();
     }
 
+    private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape) Finish(FlagConflictChoice.Keep);
+    }
+
     private void CloseButton_Click(object sender, RoutedEventArgs e) => Finish(FlagConflictChoice.Keep);
     private void KeepButton_Click(object sender, RoutedEventArgs e) => Finish(FlagConflictChoice.Keep);
     private void ReplaceButton_Click(object sender, RoutedEventArgs e) => Finish(FlagConflictChoice.Replace);

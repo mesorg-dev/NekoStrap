@@ -7,6 +7,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using NekoStrap.Roblox;
 
 namespace NekoStrap.Wpf.Pages;
 
@@ -70,6 +71,48 @@ public partial class FastFlagsPage : UserControl
     public event EventHandler? ProfileUnbindRequested;
     public event EventHandler? DeleteAllClicked;
 
+    /// <summary>Таблицу правил пользователь — есть несохранённые изменения.</summary>
+    public event EventHandler? Changed;
+
+    /// <summary>Ошибка валидации флага (имя, значение, сообщение).</summary>
+    public event Action<string, string, string>? ValidationError;
+
+    private bool _loading;
+
+    private void RaiseChanged()
+    {
+        if (_loading) return;
+        Changed?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Индикатор «не сохранено»: точка + подсказка у SaveButton.</summary>
+    public void SetDirty(bool dirty)
+    {
+        DirtyMark.Visibility = dirty ? Visibility.Visible : Visibility.Collapsed;
+        var res = FindResource(dirty ? "PrimaryButton" : "OutlineButton") as Style;
+        if (res != null) SaveButton.Style = res;
+    }
+
+    /// <summary>
+    /// Пустая таблица и фильтр без совпадений объясняют себя; «Удалить»
+    /// ждёт выделения, «Удалить всё» — хотя бы одной строки.
+    /// </summary>
+    private void UpdateEmptyAndEnabled()
+    {
+        bool any = _rows.Count > 0;
+        int shown = _rows.Count(r => _filter.Length == 0 ||
+            r.Name.Contains(_filter, StringComparison.OrdinalIgnoreCase));
+        FlagsEmpty.Text = any ? Lang.Get("Search_Empty") : Lang.Get("Empty_Flags");
+        FlagsEmpty.Visibility = shown > 0 ? Visibility.Collapsed : Visibility.Visible;
+        DeleteButton.IsEnabled = FlagsGrid.SelectedItem != null;
+        DeleteAllButton.IsEnabled = any;
+    }
+
+    private void FlagsGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        DeleteButton.IsEnabled = FlagsGrid.SelectedItem != null;
+    }
+
     private readonly ObservableCollection<FlagRow> _rows = new();
     private readonly ICollectionView _view;
     private string _filter = "";
@@ -95,7 +138,12 @@ public partial class FastFlagsPage : UserControl
         _view = CollectionViewSource.GetDefaultView(_rows);
         _view.Filter = o => o is FlagRow r &&
             (_filter.Length == 0 || r.Name.Contains(_filter, StringComparison.OrdinalIgnoreCase));
-        _rows.CollectionChanged += (_, _) => RefreshPresetStates();
+        _rows.CollectionChanged += (_, _) =>
+        {
+            RefreshPresetStates();
+            UpdateEmptyAndEnabled();
+            RaiseChanged();
+        };
 
         _ghostText = new TextBlock { Margin = new Thickness(0) };
         _ghostText.SetResourceReference(TextBlock.FontFamilyProperty, "MonoFont");
@@ -122,6 +170,7 @@ public partial class FastFlagsPage : UserControl
         };
 
         BuildPresetButtons();
+        UpdateEmptyAndEnabled();
     }
 
     /// <summary>Перестроить кнопки пресетов (смена языка). Состояния
@@ -163,6 +212,7 @@ public partial class FastFlagsPage : UserControl
     {
         _filter = SearchBox.Text.Trim();
         _view.Refresh();
+        UpdateEmptyAndEnabled();
     }
 
     private void AddButton_Click(object sender, RoutedEventArgs e)
@@ -269,12 +319,57 @@ public partial class FastFlagsPage : UserControl
 
     private void FlagsGrid_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
     {
-        // Коммит ещё не применён — обновляем состояния после него.
+        if (e.EditAction == DataGridEditAction.Commit &&
+            e.Row.Item is FlagRow row &&
+            e.EditingElement is TextBox box)
+        {
+            // Столбец 0 = имя, 1 = значение (заголовки локализованы —
+            // сверяемся по индексу, а не по тексту). Валидируем только
+            // известные флаги: новые пользовательские должны проходить.
+            if (e.Column.DisplayIndex == 1 &&
+                FastFlagRegistry.IsKnown(row.Name))
+            {
+                var res = FastFlagRegistry.Validate(row.Name, box.Text.Trim());
+                if (!res.Valid)
+                {
+                    string text = FlagErrorText(row.Name, res);
+                    ValidationError?.Invoke(row.Name, box.Text.Trim(), text);
+                    e.Cancel = true;
+                    return;
+                }
+            }
+        }
+        RaiseChanged();
         _ = Dispatcher.BeginInvoke(new Action(() =>
         {
             _view.Refresh();
             RefreshPresetStates();
         }));
+    }
+
+    /// <summary>
+    /// Текст ошибки валидации на текущем языке. Реестр отдаёт только код —
+    /// Core не знает о локализации, поэтому строку собираем здесь.
+    /// </summary>
+    internal static string FlagErrorText(string name, FastFlagResult res)
+    {
+        string hint = FastFlagRegistry.TryGet(name, out var info) && info != null
+            ? FastFlagRegistry.GetHint(info)
+            : "";
+        string text = res.Error switch
+        {
+            FastFlagError.UnknownFlag => Lang.Format("FlagErr_UnknownFmt", name),
+            FastFlagError.NotBoolean => Lang.Format("FlagErr_NotBoolFmt", res.Detail),
+            FastFlagError.NotInteger => Lang.Format("FlagErr_NotIntFmt", res.Detail),
+            FastFlagError.BelowMin => Lang.Format("FlagErr_MinFmt", res.Detail,
+                info?.MinValue?.ToString() ?? ""),
+            FastFlagError.AboveMax => Lang.Format("FlagErr_MaxFmt", res.Detail,
+                info?.MaxValue?.ToString() ?? ""),
+            FastFlagError.NotAllowed => Lang.Format("FlagErr_AllowedFmt", res.Detail,
+                info?.AllowedValues == null ? "" : string.Join(", ", info.AllowedValues)),
+            _ => "",
+        };
+        return hint.Length > 0 ? text + "  (" + hint + ")" : text;
     }
 
     /// <summary>Удаляет выделенные строки (кнопка и клавиша Delete).</summary>
@@ -638,11 +733,20 @@ public partial class FastFlagsPage : UserControl
 
     public void SetFlags(Dictionary<string, string> flags)
     {
-        _rows.Clear();
-        foreach (var (k, v) in flags.OrderBy(x => x.Key))
-            _rows.Add(new FlagRow { Name = k, Value = v });
-        _view.Refresh();
-        RefreshPresetStates();
+        // Программная подгрузка — не пользовательская правка, dirty не ставим.
+        _loading = true;
+        try
+        {
+            _rows.Clear();
+            foreach (var (k, v) in flags.OrderBy(x => x.Key))
+                _rows.Add(new FlagRow { Name = k, Value = v });
+            _view.Refresh();
+            RefreshPresetStates();
+        }
+        finally
+        {
+            _loading = false;
+        }
     }
 
     public Dictionary<string, string> CollectFlags()

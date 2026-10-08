@@ -11,12 +11,15 @@
       <TextBox x:Name="SearchBox" Style="{StaticResource DarkInput}" Width="200" Height="38"
                VerticalContentAlignment="Center" Margin="0,0,10,0" TextChanged="SearchBox_TextChanged"/>
       <Button Style="{StaticResource PrimaryButton}" Content="{l:L Btn_AddFlag}" Height="38" Padding="16,0" Margin="0,0,10,0" Click="AddButton_Click"/>
-      <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_Save}" Height="38" Padding="16,0" Margin="0,0,10,0" Click="SaveButton_Click"/>
+      <Button x:Name="SaveButton" Style="{StaticResource OutlineButton}" Content="{l:L Btn_Save}" Height="38" Padding="16,0" Margin="0,0,10,0" Click="SaveButton_Click"/>
+      <TextBlock x:Name="DirtyMark" Text="●" FontSize="11" Foreground="{StaticResource WarnBrush}"
+                 VerticalAlignment="Center" Margin="-4,0,10,0" Visibility="Collapsed"
+                 ToolTip="{l:L Flags_UnsavedTip}"/>
       <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_Import}" Height="38" Padding="16,0" Margin="0,0,10,0" Click="ImportButton_Click"/>
       <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_Paste}" Height="38" Padding="16,0" Margin="0,0,10,0" Click="PasteButton_Click"/>
       <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_Export}" Height="38" Padding="16,0" Margin="0,0,10,0" Click="ExportButton_Click"/>
-      <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_Delete}" Height="38" Padding="16,0" Click="DeleteButton_Click"/>
-      <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_DeleteAll}" Height="38" Padding="16,0" Margin="10,0,0,0" Click="DeleteAllButton_Click"/>
+      <Button x:Name="DeleteButton" Style="{StaticResource OutlineButton}" Content="{l:L Btn_Delete}" Height="38" Padding="16,0" Click="DeleteButton_Click"/>
+      <Button x:Name="DeleteAllButton" Style="{StaticResource OutlineButton}" Content="{l:L Btn_DeleteAll}" Height="38" Padding="16,0" Margin="10,0,0,0" Click="DeleteAllButton_Click"/>
     </WrapPanel>
 
     <Border x:Name="FlagsCard" Style="{StaticResource Card}" Margin="0,0,0,12" Padding="18">
@@ -25,7 +28,8 @@
           <DataGrid x:Name="FlagsGrid" Style="{StaticResource DarkGrid}" Height="300"
                     CellEditEnding="FlagsGrid_CellEditEnding" PreviewKeyDown="FlagsGrid_PreviewKeyDown"
                     PreviewMouseLeftButtonDown="FlagsGrid_PreviewMouseLeftButtonDown"
-                    PreviewMouseMove="FlagsGrid_PreviewMouseMove">
+                    PreviewMouseMove="FlagsGrid_PreviewMouseMove"
+                    SelectionChanged="FlagsGrid_SelectionChanged">
             <DataGrid.Columns>
               <DataGridTextColumn Header="{l:L Flags_ColName}" Binding="{Binding Name}" Width="*"
                                   EditingElementStyle="{StaticResource DarkGridEdit}"/>
@@ -38,6 +42,10 @@
             <Rectangle x:Name="InsertLine" Height="2" Fill="{DynamicResource FgBrush}"
                        Visibility="Collapsed"/>
           </Canvas>
+          <TextBlock x:Name="FlagsEmpty" Style="{StaticResource Mono}" FontStyle="Italic"
+                     Text="{l:L Empty_Flags}" TextWrapping="Wrap" TextAlignment="Center"
+                     HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,24,0,0"
+                     MaxWidth="420" IsHitTestVisible="False" Visibility="Collapsed"/>
         </Grid>
         <TextBlock x:Name="DropHint" Style="{StaticResource Mono}" FontStyle="Italic"
                    Text="{l:L Flags_DragHint}" Margin="0,8,0,0"/>

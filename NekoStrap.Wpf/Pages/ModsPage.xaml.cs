@@ -49,6 +49,19 @@ public partial class ModsPage : UserControl
     {
         InitializeComponent();
         ModsList.ItemsSource = _rows;
+        GridViewStretch.Attach(ModsList);
+        _rows.CollectionChanged += (_, _) => UpdateEmptyAndEnabled();
+        ModsList.SelectionChanged += (_, _) => UpdateEmptyAndEnabled();
+        UpdateEmptyAndEnabled();
+    }
+
+    /// <summary>Пусто — подсказка; «Выключить/Удалить» ждут выделения.</summary>
+    private void UpdateEmptyAndEnabled()
+    {
+        ModsEmpty.Visibility = _rows.Count > 0 ? Visibility.Collapsed : Visibility.Visible;
+        bool has = ModsList.SelectedItem != null;
+        ToggleButton.IsEnabled = has;
+        DeleteModButton.IsEnabled = has;
     }
 
     public CheckBox FleasionCheck => FleasionCheckBox;

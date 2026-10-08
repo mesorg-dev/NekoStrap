@@ -6,7 +6,8 @@
         Title="NekoStrap" Height="700" Width="1120" MinWidth="980" MinHeight="620"
         Icon="Assets/app.ico"
         WindowStyle="None" ResizeMode="CanResize" WindowStartupLocation="CenterScreen"
-        Background="{StaticResource BgBrush}">
+        Background="{StaticResource BgBrush}"
+        PreviewKeyDown="Root_PreviewKeyDown">
   <WindowChrome.WindowChrome>
     <!-- Нативный хром: drag/даблклик/ресайз/снап работают сами.
          GlassFrameThickness снизу = DWM-тень без AllowsTransparency
@@ -41,22 +42,44 @@
           <TextBlock Text="NekoStrap" FontFamily="{DynamicResource HeadingFont}" FontSize="13"
                      FontWeight="Bold" Foreground="{DynamicResource FgBrush}"
                      VerticalAlignment="Center" Margin="18,0,0,0"/>
-          <TextBlock Text="ROBLOX LAUNCHER" FontFamily="{DynamicResource MonoFont}" FontSize="10"
+          <TextBlock x:Name="PageTitleLabel" Text="{l:L Nav_Home}"
+                     FontFamily="{DynamicResource MonoFont}" FontSize="10"
                      Foreground="{DynamicResource FgDimmerBrush}"
-                     VerticalAlignment="Center" Margin="8,2,0,0"/>
+                     VerticalAlignment="Center" Margin="10,2,0,0"/>
           <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
             <Button x:Name="MinButton" Style="{StaticResource TitleBarButton}"
+                    ToolTip="{l:L Win_Min}"
                     WindowChrome.IsHitTestVisibleInChrome="True" Click="MinButton_Click">
               <Path Data="M0,0H10" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
                     StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Width="10" Height="10"/>
             </Button>
+            <Button x:Name="MaxButton" Style="{StaticResource TitleBarButton}"
+                    ToolTip="{l:L Win_Max}"
+                    WindowChrome.IsHitTestVisibleInChrome="True" Click="MaxButton_Click">
+              <Path x:Name="MaxIcon" Data="M0,0H10V10H0Z"
+                    Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                    StrokeThickness="1.6" Width="10" Height="10"/>
+            </Button>
             <Button x:Name="CloseButton" Style="{StaticResource TitleBarButton}"
+                    ToolTip="{l:L Win_Close}"
                     WindowChrome.IsHitTestVisibleInChrome="True" Click="CloseButton_Click">
               <Path Data="M0,0L10,10 M10,0L0,10" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
                     StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Width="10" Height="10"/>
             </Button>
           </StackPanel>
+          <!-- Последний статус лаунчера: виден с любой страницы -->
+          <TextBlock x:Name="GlobalStatusText" Text="" FontFamily="{DynamicResource MonoFont}" FontSize="10"
+                     Foreground="{DynamicResource FgDimmerBrush}" VerticalAlignment="Center"
+                     MaxWidth="360" TextTrimming="CharacterEllipsis" Margin="16,2,8,0"
+                     Visibility="Collapsed"/>
         </DockPanel>
+      </Border>
+      <!-- Глобальный прогресс: установка/фоновое обновление видны с любой страницы -->
+      <Border x:Name="GlobalProgress" Grid.Row="0" Grid.ColumnSpan="2" Height="2"
+              VerticalAlignment="Bottom" Panel.ZIndex="60" Background="Transparent"
+              IsHitTestVisible="False" Visibility="Collapsed">
+        <Border x:Name="GlobalProgressFill" HorizontalAlignment="Left" Width="0"
+                Background="{StaticResource FgBrush}"/>
       </Border>
 
       <!-- Сайдбар -->
@@ -84,7 +107,7 @@
             <RadioButton x:Name="NavMods" Style="{StaticResource NavRadio}" GroupName="Nav"
                          Tag="{StaticResource IconMods}" Content="{l:L Nav_Mods}" Checked="Nav_Checked"/>
             <RadioButton x:Name="NavFlags" Style="{StaticResource NavRadio}" GroupName="Nav"
-                         Tag="{StaticResource IconFlags}" Content="FastFlags" Checked="Nav_Checked"/>
+                         Tag="{StaticResource IconFlags}" Content="{l:L Nav_Flags}" Checked="Nav_Checked"/>
             <RadioButton x:Name="NavVersions" Style="{StaticResource NavRadio}" GroupName="Nav"
                          Tag="{StaticResource IconVersions}" Content="{l:L Nav_Versions}" Checked="Nav_Checked"/>
             <RadioButton x:Name="NavHistory" Style="{StaticResource NavRadio}" GroupName="Nav"
@@ -111,6 +134,54 @@
       <ScrollViewer Grid.Row="1" Grid.Column="1" Style="{StaticResource DarkScrollViewer}">
         <ContentControl x:Name="PageHost" Margin="32,26,32,32"/>
       </ScrollViewer>
+
+      <!-- Тосты: сообщения поверх контента, без модалок -->
+      <StackPanel x:Name="ToastHost" Grid.Row="0" Grid.RowSpan="2" Grid.ColumnSpan="2"
+                  Panel.ZIndex="200" HorizontalAlignment="Right" VerticalAlignment="Top"
+                  Margin="0,54,14,0" IsHitTestVisible="False"/>
+
+      <!-- Command Palette (Ctrl+K) -->
+      <Border x:Name="PaletteHost" Grid.Row="0" Grid.RowSpan="2" Grid.ColumnSpan="2"
+              Panel.ZIndex="300" Visibility="Collapsed"
+              HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,120,0,0">
+        <Border.Style>
+          <Style TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource CardBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource LineBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Width" Value="640"/>
+            <Setter Property="MaxHeight" Value="420"/>
+          </Style>
+        </Border.Style>
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+          </Grid.RowDefinitions>
+          <Border Background="{StaticResource LineSoftBrush}" CornerRadius="6,6,0,0" Padding="14,10">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+              </Grid.ColumnDefinitions>
+              <TextBlock Text="⌘K" FontFamily="{DynamicResource MonoFont}" FontSize="11"
+                         Foreground="{DynamicResource FgDimBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+              <TextBox x:Name="PaletteSearchBox" Grid.Column="1" Style="{StaticResource DarkInput}"
+                       Height="32" VerticalContentAlignment="Center" FontSize="14"
+                       TextChanged="PaletteSearchBox_TextChanged"
+                       KeyDown="PaletteSearchBox_KeyDown"/>
+              <TextBlock Grid.Column="2" Style="{StaticResource Mono}" FontSize="10"
+                         Foreground="{DynamicResource FgDimmerBrush}" VerticalAlignment="Center"
+                         Margin="10,0,0,0" Text="{l:L Palette_Hint}"/>
+            </Grid>
+          </Border>
+          <ScrollViewer Grid.Row="1" Style="{StaticResource DarkScrollViewer}" MaxHeight="360">
+            <StackPanel x:Name="PaletteResultsPanel" Margin="8"/>
+          </ScrollViewer>
+        </Grid>
+      </Border>
     </Grid>
   </Grid>
 </Window>

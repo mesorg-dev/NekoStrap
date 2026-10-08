@@ -1,6 +1,7 @@
 ﻿using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using NekoStrap.Roblox;
@@ -262,6 +263,50 @@ internal static class Program
                 });
                 ov.ResetMessages();
                 ov.Close();
+            });
+
+            Check("PerfOverlay: конструируется+сеттеры+ресурсы", () =>
+            {
+                // Все кисти/стили, на которые сылается окно и его код.
+                foreach (string key in new[]
+                {
+                    "MonoFont", "FgBrush", "FgDimBrush", "FgDimmerBrush",
+                    "GoodBrush", "WarnBrush", "BadBrush", "ChromeBrush",
+                    "LineBrush", "TitleBarButton", "Mono", "MonoBright",
+                })
+                    if (Application.Current?.TryFindResource(key) == null)
+                        throw new Exception("нет ресурса " + key);
+
+                var ov = new PerfOverlayWindow();
+                ov.ApplyRows(true, true, true, false, true, true);
+                ov.ApplyStyle(glass: true, opacity: 90);
+                ov.ApplyStyle(glass: false, opacity: 55);
+                ov.RefreshLabels();
+                // Обычные данные — и все «нет данных» (-1, пусто).
+                ov.SetValues(42, "—", 37.6, 2048.0, 12.5, "192.168.1.5:53640", "12:34");
+                ov.SetValues(-1, "~58 мс", -1, 0, -1, "", "");
+                ov.ApplyRows(false, false, false, false, false, false);
+                ov.Close();
+            });
+
+            Check("GamePerf: сэмпл CPU/RAM/GPU без игрока и с собой", () =>
+            {
+                using var perf = new GamePerf();
+                perf.Update(null);
+                if (perf.CpuPercent != -1 || perf.GpuPercent != -1 || perf.RamMb != 0)
+                    throw new Exception("Update(null) не сбросил метрики");
+                var self = System.Diagnostics.Process.GetCurrentProcess();
+                perf.Update(self); // первый тик — только база CPU
+                if (perf.RamMb <= 0)
+                    throw new Exception("RAM не измерилась");
+                perf.Update(self);
+                if (perf.CpuPercent < 0 || perf.CpuPercent > 100)
+                    throw new Exception("CPU вне диапазона: " + perf.CpuPercent);
+                if (perf.GpuPercent != -1 && (perf.GpuPercent < 0 || perf.GpuPercent > 100))
+                    throw new Exception("GPU вне диапазона: " + perf.GpuPercent);
+                perf.Update(null);
+                if (perf.CpuPercent != -1 || perf.GpuPercent != -1)
+                    throw new Exception("после Update(null) GPU/CPU не сбросились");
             });
 
             Check("UiTheme: все комбинации", () =>
@@ -807,6 +852,13 @@ internal static class Program
                 if (newer("abc", "v1.0.0")) throw new Exception("мусор текущей приняли");
             });
 
+            RunLocalizationChecks();
+            RunFlagRegistryChecks();
+            RunPaletteChecks(win);
+            RunPriorityChecks(win);
+            RunTableStretchCheck();
+            RunConfigRoundtripCheck();
+
             RunLoadChecks();
         }
         catch (Exception ex)
@@ -815,6 +867,479 @@ internal static class Program
             _fail++;
         }
         return Report();
+    }
+
+    // ================= Локализация =================
+
+    /// <summary>Репозиторий: ищем NekoStrap.sln, поднимаясь от каталога сборки.</summary>
+    private static string FindRepoRoot()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir != null)
+        {
+            if (File.Exists(Path.Combine(dir.FullName, "NekoStrap.sln")))
+                return dir.FullName;
+            dir = dir.Parent;
+        }
+        throw new Exception("не найден NekoStrap.sln от " + AppContext.BaseDirectory);
+    }
+
+    /// <summary>Исходники UI без артефактов сборки.</summary>
+    private static IEnumerable<string> SourceFiles(string root) =>
+        Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories)
+            .Where(f =>
+            {
+                string rel = f[root.Length..];
+                if (rel.Contains("\\obj\\") || rel.Contains("\\bin\\")) return false;
+                return f.EndsWith(".cs", StringComparison.OrdinalIgnoreCase)
+                    || f.EndsWith(".xaml", StringComparison.OrdinalIgnoreCase);
+            });
+
+    /// <summary>
+    /// Строковые аргументы вызовов Lang.Get/Lang.Format: скобки считаем по
+    /// балансу, кавычки пропускаем — так внутри строки не спотыкаемся.
+    /// </summary>
+    private static IEnumerable<string> LangCallLiterals(string src)
+    {
+        string[] calls = { "Lang.Get(", "Lang.Format(" };
+        int pos = 0;
+        while (pos < src.Length)
+        {
+            int hit = -1, len = 0;
+            foreach (string call in calls)
+            {
+                int i = src.IndexOf(call, pos, StringComparison.Ordinal);
+                if (i >= 0 && (hit < 0 || i < hit)) { hit = i; len = call.Length; }
+            }
+            if (hit < 0) yield break;
+
+            int start = hit + len, depth = 1, i2 = start;
+            while (i2 < src.Length && depth > 0)
+            {
+                char c = src[i2];
+                if (c == '"')
+                {
+                    i2++;
+                    while (i2 < src.Length && src[i2] != '"')
+                    {
+                        if (src[i2] == '\\') i2++;
+                        i2++;
+                    }
+                }
+                else if (c == '(') depth++;
+                else if (c == ')') depth--;
+                i2++;
+            }
+            string args = src.Substring(start, Math.Max(0, i2 - start - 1));
+            foreach (Match m in Regex.Matches(args, "\"([A-Za-z0-9_]{2,})\""))
+                yield return m.Groups[1].Value;
+            pos = i2;
+        }
+    }
+
+    private static bool Cyrillic(string s) => s.Any(c => c >= 'а' && c <= 'я' || c >= 'А' && c <= 'Я');
+
+    private static void RunLocalizationChecks()
+    {
+        Check("Локализация: RU и EN дают одинаковый набор ключей", () =>
+        {
+            var onlyRu = LangStrings.Ru.Keys.Except(LangStrings.En.Keys)
+                .OrderBy(k => k, StringComparer.Ordinal).ToList();
+            var onlyEn = LangStrings.En.Keys.Except(LangStrings.Ru.Keys)
+                .OrderBy(k => k, StringComparer.Ordinal).ToList();
+            if (onlyRu.Count > 0 || onlyEn.Count > 0)
+                throw new Exception("только в RU: [" + string.Join(", ", onlyRu)
+                    + "]  только в EN: [" + string.Join(", ", onlyEn) + "]");
+            if (LangStrings.Ru.Count < 400) throw new Exception("словарь подозрительно мал: " + LangStrings.Ru.Count);
+        });
+
+        Check("Локализация: каждый ключ из кода и XAML существует", () =>
+        {
+            var used = new SortedSet<string>(StringComparer.Ordinal);
+            foreach (string file in SourceFiles(FindRepoRoot()))
+            {
+                string text = File.ReadAllText(file);
+                if (file.EndsWith(".xaml", StringComparison.OrdinalIgnoreCase))
+                {
+                    foreach (Match m in Regex.Matches(text, @"\bl:L\s+([A-Za-z0-9_]{2,})"))
+                        used.Add(m.Groups[1].Value);
+                }
+                else
+                {
+                    foreach (string k in LangCallLiterals(text)) used.Add(k);
+                }
+            }
+            // SoundTitle зовёт Lang.Get напрямую из своего свитча — сканер
+            // вызовы внутри класса Lang не видит, поэтому перечисляем сами.
+            foreach (string k in new[]
+            {
+                "Sound_Click", "Sound_Hover", "Sound_Open",
+                "Sound_Close", "Sound_On", "Sound_Off",
+            })
+                used.Add(k);
+
+            // Ключи приглашений отдаются через переменные/свитчи
+            // (InviteErrorKey, InviteUsesLabels, SetInviteJoinStatus) —
+            // литерал не лежит в вызове Lang.Get, и сканер его не поймает.
+            foreach (string k in new[]
+            {
+                "Inv_Uses1", "Inv_Uses3", "Inv_Uses10", "Inv_UsesInf",
+                "Inv_Ttl1h", "Inv_Ttl24h", "Inv_Ttl7d", "Inv_Ttl30d",
+                "Inv_JoinHint", "Inv_JoinOk", "Inv_JoinBusy",
+                "InvErr_Offline", "InvErr_Timeout", "InvErr_Cancelled",
+                "InvErr_Unsupported", "InvErr_Gone", "InvErr_Expired",
+                "InvErr_Used", "InvErr_BadCode", "InvErr_RateLimit",
+                "InvErr_BadPlace", "InvErr_CodeFull", "InvErr_Internal",
+            })
+                used.Add(k);
+
+
+            var missing = used.Where(k =>
+                !LangStrings.Ru.ContainsKey(k) && !LangStrings.En.ContainsKey(k)).ToList();
+            if (used.Count < 250)
+                throw new Exception("просканировано подозрительно мало ключей: " + used.Count);
+            if (missing.Count > 0)
+                throw new Exception("нет перевода: " + string.Join(", ", missing));
+            Console.WriteLine("  (проверено ключей: " + used.Count + ")");
+        });
+    }
+
+    // ================= Реестр FastFlags =================
+
+    private static void RunFlagRegistryChecks()
+    {
+        Check("Реестр флагов: типы, диапазоны, допустимые значения", () =>
+        {
+            static FastFlagResult V(string n, string v) => FastFlagRegistry.Validate(n, v);
+            static void Ok(string n, string v)
+            {
+                var r = V(n, v);
+                if (!r.Valid) throw new Exception($"{n}='{v}' отвергнут: {r.Error}");
+            }
+            static void Err(string n, string v, FastFlagError want)
+            {
+                var r = V(n, v);
+                if (r.Valid) throw new Exception($"{n}='{v}' прошёл, а ждали {want}");
+                if (r.Error != want) throw new Exception($"{n}='{v}': {r.Error}, ждали {want}");
+                // Неизвестный флаг несёт в Detail своё имя, остальным нужен введённый текст.
+                string wantDetail = want == FastFlagError.UnknownFlag ? n : v;
+                if (r.Detail != wantDetail)
+                    throw new Exception($"Detail={r.Detail}, ждали {wantDetail}");
+            }
+
+            if (FastFlagRegistry.All.Count < 20) throw new Exception("реестр почти пуст");
+            if (FastFlagRegistry.Categories.Count() < 5) throw new Exception("категорий мало");
+
+            Ok("FFlagDisablePostFx", "true");
+            Ok("FFlagDisablePostFx", "FALSE");
+            Err("FFlagDisablePostFx", "1", FastFlagError.NotBoolean);
+            Err("FFlagDisablePostFx", "", FastFlagError.NotBoolean);
+
+            Ok("DFIntTaskSchedulerTargetFps", "60");
+            Err("DFIntTaskSchedulerTargetFps", "abc", FastFlagError.NotInteger);
+            Err("DFIntTaskSchedulerTargetFps", "4", FastFlagError.BelowMin);
+            Err("DFIntTaskSchedulerTargetFps", "5000", FastFlagError.AboveMax);
+
+            Ok("FIntDebugForceMSAASamples", "4");
+            Err("FIntDebugForceMSAASamples", "3", FastFlagError.NotAllowed);
+
+            Err("AbsolutelyUnknownFlag", "true", FastFlagError.UnknownFlag);
+
+            // Ни один известный флаг не должен отваливаться как неизвестный.
+            foreach (var kv in FastFlagRegistry.All)
+            {
+                if (V(kv.Key, "x").Error == FastFlagError.UnknownFlag)
+                    throw new Exception("реестр не находит свой флаг: " + kv.Key);
+                if (!kv.Key.StartsWith("FFlag", StringComparison.Ordinal) &&
+                    !kv.Key.StartsWith("DFFlag", StringComparison.Ordinal) &&
+                    !kv.Key.StartsWith("FInt", StringComparison.Ordinal) &&
+                    !kv.Key.StartsWith("DFInt", StringComparison.Ordinal) &&
+                    !kv.Key.StartsWith("FString", StringComparison.Ordinal) &&
+                    !kv.Key.StartsWith("DString", StringComparison.Ordinal))
+                    throw new Exception("имя не похоже на Roblox-флаг: " + kv.Key);
+            }
+        });
+
+        Check("Реестр флагов: подсказки формата", () =>
+        {
+            static FastFlagInfo I(string n)
+            {
+                if (!FastFlagRegistry.TryGet(n, out var info) || info == null)
+                    throw new Exception("нет в реестре: " + n);
+                return info;
+            }
+            if (FastFlagRegistry.GetHint(I("FFlagDisablePostFx")) != "true/false")
+                throw new Exception("подсказка булева сломана");
+            if (FastFlagRegistry.GetHint(I("DFIntTaskSchedulerTargetFps")) != "5..1000")
+                throw new Exception("подсказка диапазона сломана");
+            if (FastFlagRegistry.GetHint(I("FIntDebugForceMSAASamples")) != "{0|2|4|8}")
+                throw new Exception("подсказка списка сломана");
+            if (FastFlagRegistry.IsKnown("NopeFlag") || FastFlagRegistry.IsKnown(""))
+                throw new Exception("IsKnown врёт");
+            if (FastFlagRegistry.GetByCategory("Rendering").Count() < 3)
+                throw new Exception("категория Rendering почти пуста");
+        });
+
+        Check("Ошибки флагов: текст собирается на текущем языке", () =>
+        {
+            string prev = Lang.Current;
+            try
+            {
+                static string T(string name, FastFlagError err, string detail) =>
+                    FastFlagsPage.FlagErrorText(name,
+                        FastFlagResult.Fail(err, detail));
+
+                Lang.Set("ru");
+                string ruBool = T("FFlagDisablePostFx", FastFlagError.NotBoolean, "abc");
+                if (!ruBool.Contains("abc", StringComparison.Ordinal)) throw new Exception("нет значения: " + ruBool);
+                if (!Cyrillic(ruBool)) throw new Exception("не по-русски: " + ruBool);
+                string ruRange = T("DFIntTaskSchedulerTargetFps", FastFlagError.AboveMax, "5000");
+                if (!ruRange.Contains("1000", StringComparison.Ordinal)) throw new Exception("потерян максимум: " + ruRange);
+                string ruAllowed = T("FIntDebugForceMSAASamples", FastFlagError.NotAllowed, "3");
+                if (!ruAllowed.Contains("0", StringComparison.Ordinal)) throw new Exception("потерян список: " + ruAllowed);
+                if (Cyrillic(T("NopeFlag", FastFlagError.UnknownFlag, "NopeFlag")) == false)
+                    throw new Exception("неизвестный флаг не локализован");
+
+                Lang.Set("en");
+                foreach (var (name, err, detail) in new[]
+                {
+                    ("FFlagDisablePostFx", FastFlagError.NotBoolean, "abc"),
+                    ("DFIntTaskSchedulerTargetFps", FastFlagError.BelowMin, "4"),
+                    ("FIntDebugForceMSAASamples", FastFlagError.NotAllowed, "3"),
+                    ("NopeFlag", FastFlagError.UnknownFlag, "NopeFlag"),
+                })
+                {
+                    string en = T(name, err, detail);
+                    if (en.Length == 0) throw new Exception("пустой текст для " + err);
+                    if (Cyrillic(en)) throw new Exception("остался русский: " + en);
+                }
+            }
+            finally { Lang.Set(prev); }
+        });
+    }
+
+    // ================= Командная палитра =================
+
+    private static void BuildPalette(MainWindow win)
+    {
+        typeof(MainWindow)
+            .GetMethod("BuildPaletteItems", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .Invoke(win, null);
+    }
+
+    private static List<MainWindow.PaletteItem> PaletteItems(MainWindow win) =>
+        (List<MainWindow.PaletteItem>)typeof(MainWindow)
+            .GetField("_paletteItems", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .GetValue(win)!;
+
+    private static void RunPaletteChecks(MainWindow win)
+    {
+        string prev = Lang.Current;
+        try
+        {
+            Check("Палитра: пункты полностью локализованы на обоих языках", () =>
+            {
+                foreach (string lang in new[] { "ru", "en" })
+                {
+                    Lang.Set(lang);
+                    BuildPalette(win);
+                    var items = PaletteItems(win);
+                    if (items.Count < 20) throw new Exception(lang + ": пунктов всего " + items.Count);
+                    foreach (var it in items)
+                    {
+                        if (it.Title.Length == 0 || it.Description.Length == 0)
+                            throw new Exception(lang + ": пустая строка у «" + it.Keywords + "»");
+                        if (it.Title.Contains('{') || it.Description.Contains('{'))
+                            throw new Exception(lang + ": не подставлен аргумент: " + it.Description);
+                        if (it.Title == it.Description)
+                            throw new Exception(lang + ": заголовок совпал с описанием");
+                        if (it.Keywords.Length == 0)
+                            throw new Exception(lang + ": у «" + it.Title + "» нет синонимов поиска");
+                        // RU обязан говорить по-русски, EN — не обязан быть русским.
+                        if (lang == "ru" && !Cyrillic(it.Description))
+                            throw new Exception("описание не переведено: " + it.Title + " / " + it.Description);
+                        if (lang == "en" && (Cyrillic(it.Title) || Cyrillic(it.Description)))
+                            throw new Exception("в EN остался русский: " + it.Title + " / " + it.Description);
+                    }
+                }
+            });
+
+            Check("Палитра: ранжирование запроса", () =>
+            {
+                Lang.Set("ru");
+                BuildPalette(win);
+                var items = PaletteItems(win);
+                var home = items.First(i => i.Keywords.Contains("home", StringComparison.Ordinal));
+                var flags = items.First(i => i.Keywords.Contains("флаги", StringComparison.Ordinal));
+
+                if (MainWindow.CalcScore(home, Array.Empty<string>()) != 1)
+                    throw new Exception("пустой запрос должен пускать все пункты");
+                if (MainWindow.CalcScore(home, new[] { "главн" }) <= 0)
+                    throw new Exception("русский синоним не найден");
+                if (MainWindow.CalcScore(home, new[] { "home" }) <= 0)
+                    throw new Exception("английский синоним не найден");
+                if (MainWindow.CalcScore(home, new[] { "home", "несуществующееслово" }) != 0)
+                    throw new Exception("слова должны совмещаться по И");
+                if (MainWindow.CalcScore(flags, new[] { "главн" }) != 0)
+                    throw new Exception("чужое слово попало в чужой пункт");
+                if (MainWindow.CalcScore(home, new[] { "глав" }) <=
+                    MainWindow.CalcScore(flags, new[] { "флаг" }))
+                    throw new Exception("совпадение в заголовке должно быть выше");
+            });
+        }
+        finally
+        {
+            Lang.Set(prev);
+        }
+    }
+
+    // ================= Приоритет процесса =================
+
+    private static void RunPriorityChecks(MainWindow win)
+    {
+        Check("Приоритет: маппинг настроек на ProcessPriorityClass", () =>
+        {
+            static System.Diagnostics.ProcessPriorityClass P(string? s) => ProcessOptimizer.ResolvePriority(s);
+            if (P("") != System.Diagnostics.ProcessPriorityClass.Normal) throw new Exception("пусто ≠ Normal");
+            if (P(null) != System.Diagnostics.ProcessPriorityClass.Normal) throw new Exception("null ≠ Normal");
+            if (P("мусор") != System.Diagnostics.ProcessPriorityClass.Normal) throw new Exception("мусор ≠ Normal");
+            if (P("high") != System.Diagnostics.ProcessPriorityClass.High) throw new Exception("high");
+            if (P("HIGH") != System.Diagnostics.ProcessPriorityClass.High) throw new Exception("регистр");
+            if (P("realtime") != System.Diagnostics.ProcessPriorityClass.High)
+                throw new Exception("realtime обязан сводиться к High, а не к RealTime");
+            if (P("below normal") != System.Diagnostics.ProcessPriorityClass.BelowNormal) throw new Exception("below normal");
+            if (P("belownormal") != System.Diagnostics.ProcessPriorityClass.BelowNormal) throw new Exception("belownormal");
+            if (P("abovenormal") != System.Diagnostics.ProcessPriorityClass.AboveNormal) throw new Exception("abovenormal");
+            if (P("idle") != System.Diagnostics.ProcessPriorityClass.Idle) throw new Exception("idle");
+
+            foreach (string opt in ProcessOptimizer.PriorityOptions)
+            {
+                var got = P(opt);
+                if (got == System.Diagnostics.ProcessPriorityClass.RealTime)
+                    throw new Exception("опция '" + opt + "' даёт RealTime — это опасно");
+            }
+            if (ProcessOptimizer.PriorityOptions.Distinct().Count() != ProcessOptimizer.PriorityOptions.Length)
+                throw new Exception("опции дублируются");
+        });
+
+        Check("Настройки: приоритет читается, пишется и переживает смену языка", () =>
+        {
+            var sp = (SettingsPage)GetField(win, "_settingsPage")!;
+            string fired = "";
+            void Sub(string v) => fired = v;
+            sp.PriorityChanged += Sub;
+            try
+            {
+                if (sp.RobloxPriorityValue != "")
+                    throw new Exception("дефолт должен быть системным: " + sp.RobloxPriorityValue);
+
+                sp.RobloxPriorityValue = "high";
+                if (sp.RobloxPriorityValue != "high") throw new Exception("запись не читается");
+
+                sp.RobloxPriorityValue = "такой-приоритет-не-бывает";
+                if (sp.RobloxPriorityValue != "")
+                    throw new Exception("чужая метка должна сводиться к дефолту: " + sp.RobloxPriorityValue);
+
+                if (fired.Length > 0) throw new Exception("программная установка не должна слать событие");
+
+                // Смена языка пересобирает подписи, но не теряет выбор.
+                sp.RobloxPriorityValue = "belownormal";
+                string prevLang = Lang.Current;
+                try
+                {
+                    Lang.Set(Lang.Current == "ru" ? "en" : "ru");
+                    sp.RefreshPriorityBox();
+                    if (sp.RobloxPriorityValue != "belownormal")
+                        throw new Exception("после смены языка выбор потерялся: " + sp.RobloxPriorityValue);
+                }
+                finally { Lang.Set(prevLang); sp.RefreshPriorityBox(); }
+
+                if (fired.Length > 0) throw new Exception("RefreshPriorityBox слал событие");
+            }
+            finally { sp.PriorityChanged -= Sub; }
+        });
+    }
+
+    // ================= Таблицы и конфиг =================
+
+    private static void RunTableStretchCheck()
+    {
+        Check("Таблицы: последняя колонка тянется под ширину", () =>
+        {
+            var list = new System.Windows.Controls.ListView();
+            var gv = new System.Windows.Controls.GridView();
+            gv.Columns.Add(new System.Windows.Controls.GridViewColumn { Header = "A", Width = 100 });
+            gv.Columns.Add(new System.Windows.Controls.GridViewColumn { Header = "B", Width = 100 });
+            gv.Columns.Add(new System.Windows.Controls.GridViewColumn { Header = "C", Width = 60 });
+            list.View = gv;
+            list.Width = 600;
+            GridViewStretch.Attach(list);
+
+            list.Measure(new System.Windows.Size(600, 200));
+            list.Arrange(new System.Windows.Rect(0, 0, 600, 200));
+            list.UpdateLayout();
+
+            double last = gv.Columns[2].Width;
+            // 600 - паддинг строки (20) - две колонки по 100 = 380
+            if (last <= 60) throw new Exception("колонка не растянулась: " + last);
+            if (last < 300 || last > 420)
+                throw new Exception("ожидалось ~380, получено " + last);
+        });
+    }
+
+    private static void RunConfigRoundtripCheck()
+    {
+        Check("Конфиг: новые поля переживают сохранение и загрузку", () =>
+        {
+            string dir = Path.Combine(Path.GetTempPath(), "nekosmoke_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(dir);
+            try
+            {
+                string path = Path.Combine(dir, "config.json");
+                var cfg = new LauncherConfig
+                {
+                    RobloxPriority = "abovenormal",
+                    BlockTelemetry = true,
+                    PerfOverlay = true,
+                    PerfOverlayGlass = false,
+                    PerfOverlayOpacity = 55,
+                    PerfShowGpu = false,
+                    PerfOverlayX = 12,
+                    PerfOverlayY = 34,
+                };
+                cfg.Save(path);
+                var back = LauncherConfig.Load(path);
+                if (back.RobloxPriority != "abovenormal") throw new Exception("RobloxPriority: " + back.RobloxPriority);
+                if (!back.BlockTelemetry) throw new Exception("BlockTelemetry не сохранился");
+                if (!back.PerfOverlay || back.PerfOverlayGlass) throw new Exception("PerfOverlay/Glass: " + back.PerfOverlay + "/" + back.PerfOverlayGlass);
+                if (back.PerfOverlayOpacity != 55) throw new Exception("PerfOverlayOpacity: " + back.PerfOverlayOpacity);
+                if (back.PerfShowGpu) throw new Exception("PerfShowGpu не сохранился");
+                if (back.PerfOverlayX != 12 || back.PerfOverlayY != 34)
+                    throw new Exception("позиция оверлея: " + back.PerfOverlayX + "/" + back.PerfOverlayY);
+
+                // Битый файл — не падение, а чистый дефолт.
+                File.WriteAllText(path, "{ это не json");
+                var fresh = LauncherConfig.Load(path);
+                if (fresh.RobloxPriority != "") throw new Exception("битый конфиг не сброшен");
+            }
+            finally { try { Directory.Delete(dir, true); } catch { } }
+        });
+
+        Check("Телеметрия: список доменов валиден, hosts не трогаем", () =>
+        {
+            if (TelemetryBlocker.Domains.Length == 0) throw new Exception("список пуст");
+            if (TelemetryBlocker.Domains.Distinct(StringComparer.OrdinalIgnoreCase).Count()
+                != TelemetryBlocker.Domains.Length)
+                throw new Exception("домены дублируются");
+            foreach (string d in TelemetryBlocker.Domains)
+            {
+                if (d.Contains(' ') || d.Contains('\t')) throw new Exception("пробел в домене: " + d);
+                if (!d.Contains('.')) throw new Exception("не домен: " + d);
+            }
+            // Только чтение: Apply/Set здесь не вызываем, это права админа.
+            _ = TelemetryBlocker.IsApplied();
+            _ = TelemetryBlocker.IsAdministrator();
+        });
     }
 
     // ================= Загрузка пакетов =================
@@ -1294,9 +1819,19 @@ internal static class Program
         catch (Exception ex)
         {
             _fail++;
-            Console.WriteLine("FAIL " + name + " :: " + ex.GetType().Name + ": " + ex.Message);
+            Console.WriteLine("FAIL " + name + " :: " + Flatten(ex));
             Console.WriteLine(ex.StackTrace);
         }
+    }
+
+    /// <summary>Текст ошибки вместе с причиной: у XAML внешнее
+    /// сообщение бесполезно без InnerException.</summary>
+    private static string Flatten(Exception ex)
+    {
+        var parts = new List<string>();
+        for (var e = ex; e != null; e = e.InnerException)
+            parts.Add(e.GetType().Name + ": " + e.Message);
+        return string.Join(" <- ", parts);
     }
 
     private static int Report()
@@ -1305,3 +1840,5 @@ internal static class Program
         return _fail;
     }
 }
+
+

@@ -66,6 +66,91 @@
       </Border>
     </Grid>
 
+    <!-- Код приглашения: пропуск на свой сервер для друга -->
+    <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+      <StackPanel>
+        <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="13" FontWeight="Bold"
+                   Foreground="{DynamicResource FgDimBrush}" Text="{l:L Inv_Title}" Margin="0,0,0,6"/>
+        <TextBlock Style="{StaticResource Body}" Text="{l:L Inv_Sub}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+          </Grid.ColumnDefinitions>
+
+          <!-- Создать свой код -->
+          <StackPanel Grid.Column="0">
+            <TextBlock Style="{StaticResource Mono}" Text="{l:L Inv_Create}" Margin="0,0,0,8"/>
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+              </Grid.ColumnDefinitions>
+              <StackPanel Grid.Column="0" Margin="0,0,6,0">
+                <TextBlock Style="{StaticResource Mono}" Text="{l:L Inv_Uses_L}" Margin="0,0,0,4"/>
+                <ComboBox x:Name="InviteUsesBox" Style="{StaticResource DarkCombo}"
+                          HorizontalAlignment="Stretch" Height="34"/>
+              </StackPanel>
+              <StackPanel Grid.Column="1" Margin="6,0,0,0">
+                <TextBlock Style="{StaticResource Mono}" Text="{l:L Inv_Ttl_L}" Margin="0,0,0,4"/>
+                <ComboBox x:Name="InviteTtlBox" Style="{StaticResource DarkCombo}"
+                          HorizontalAlignment="Stretch" Height="34"/>
+              </StackPanel>
+            </Grid>
+            <Button x:Name="InviteCreateButton" Style="{StaticResource PrimaryButton}"
+                    Content="{l:L Inv_CreateBtn}" Height="36" MinWidth="160"
+                    Margin="0,10,0,0" HorizontalAlignment="Left" Click="InviteCreate_Click"/>
+            <TextBlock x:Name="InviteCreateStatus" Style="{StaticResource Mono}" FontStyle="Italic"
+                       TextWrapping="Wrap" Text="{l:L Inv_NeedGame}" Margin="0,8,0,0"/>
+          </StackPanel>
+
+          <Rectangle Grid.Column="1" Width="1" Fill="{StaticResource LineBrush}" Margin="18,2"/>
+
+          <!-- Войти по коду друга -->
+          <StackPanel Grid.Column="2">
+            <TextBlock Style="{StaticResource Mono}" Text="{l:L Inv_Join}" Margin="0,0,0,8"/>
+            <StackPanel Orientation="Horizontal">
+              <TextBox x:Name="InviteJoinBox" Style="{StaticResource DarkInput}"
+                       Height="40" Width="132" MaxLength="4" Text=""
+                       TextAlignment="Center" VerticalContentAlignment="Center"
+                       FontFamily="{DynamicResource MonoFont}" FontSize="20" FontWeight="Bold"
+                       TextChanged="InviteJoinBox_TextChanged"
+                       KeyDown="InviteJoinBox_KeyDown"/>
+              <Button x:Name="InviteJoinButton" Style="{StaticResource PrimaryButton}"
+                      Content="{l:L Inv_JoinBtn}" Height="40" MinWidth="112"
+                      Margin="10,0,0,0" Click="InviteJoin_Click"/>
+            </StackPanel>
+            <TextBlock x:Name="InviteJoinStatus" Style="{StaticResource Mono}" FontStyle="Italic"
+                       TextWrapping="Wrap" Text="{l:L Inv_JoinHint}" Margin="0,8,0,0"/>
+          </StackPanel>
+        </Grid>
+
+        <!-- Свой код: показывается после создания (и при старте, если код ещё жив) -->
+        <Border x:Name="InviteCodeCard" Visibility="Collapsed"
+                Background="{StaticResource LineSoftBrush}" CornerRadius="6"
+                Padding="16,12" Margin="0,14,0,0">
+          <DockPanel LastChildFill="True">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+              <Button x:Name="InviteCopyButton" Style="{StaticResource OutlineButton}"
+                      Content="{l:L Inv_Copy}" Height="32" MinWidth="110" Padding="14,0"
+                      Click="InviteCopy_Click"/>
+              <Button x:Name="InviteDropButton" Style="{StaticResource OutlineButton}"
+                      Content="{l:L Inv_Drop}" Height="32" MinWidth="90" Padding="14,0"
+                      Margin="8,0,0,0" Click="InviteDrop_Click"/>
+            </StackPanel>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock x:Name="InviteCodeText" FontFamily="{DynamicResource MonoFont}"
+                         FontSize="30" FontWeight="Bold"
+                         Foreground="{DynamicResource FgBrush}" Text="—"/>
+              <TextBlock x:Name="InviteCodeMeta" Style="{StaticResource Mono}" Text="" Margin="0,4,0,0"/>
+            </StackPanel>
+          </DockPanel>
+        </Border>
+      </StackPanel>
+    </Border>
+
     <!-- Избранное -->
     <Border Style="{StaticResource Card}" Margin="0,0,0,16">
       <StackPanel>
@@ -86,7 +171,8 @@
           <Button DockPanel.Dock="Right" Style="{StaticResource OutlineButton}" Content="{l:L Search_Btn}"
                   Width="110" Height="36" Margin="10,0,0,0" Click="SearchButton_Click"/>
           <TextBox x:Name="SearchBox" Style="{StaticResource DarkInput}" Height="36"
-                   VerticalContentAlignment="Center" KeyDown="SearchBox_KeyDown"/>
+                   VerticalContentAlignment="Center" KeyDown="SearchBox_KeyDown"
+                   TextChanged="SearchBox_TextChanged"/>
         </DockPanel>
         <TextBlock x:Name="SearchStatus" Style="{StaticResource Mono}" FontStyle="Italic"
                    Text="{l:L Search_Hint}" TextWrapping="Wrap" Margin="0,0,0,4"/>
@@ -164,3 +250,5 @@
     </Border>
   </StackPanel>
 </UserControl>
+
+

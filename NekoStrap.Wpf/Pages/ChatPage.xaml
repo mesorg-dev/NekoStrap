@@ -45,11 +45,60 @@
               <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             <Border Grid.Row="0" Background="{StaticResource LineSoftBrush}" CornerRadius="2" Height="340">
-              <ScrollViewer x:Name="MessagesScroll" Style="{StaticResource DarkScrollViewer}"
-                            VerticalScrollBarVisibility="Auto"
-                            HorizontalScrollBarVisibility="Disabled" Padding="10,8">
-                <StackPanel x:Name="MessagesPanel"/>
-              </ScrollViewer>
+              <Grid>
+                <ListBox x:Name="MessagesList" Background="Transparent" BorderThickness="0"
+                         BorderBrush="Transparent" Margin="10,8"
+                         SelectionMode="Single" VirtualizingStackPanel.VirtualizationMode="Recycling"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto">
+                  <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                      <Setter Property="Padding" Value="0"/>
+                      <Setter Property="Margin" Value="0,1,0,1"/>
+                      <Setter Property="Background" Value="Transparent"/>
+                      <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                      <Setter Property="Template">
+                        <Setter.Value>
+                          <ControlTemplate TargetType="ListBoxItem">
+                            <Border x:Name="bg" Background="Transparent" Padding="{TemplateBinding Padding}">
+                              <ContentPresenter/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                              <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bg" Property="Background" Value="{StaticResource LineSoftBrush}"/>
+                              </Trigger>
+                              <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="bg" Property="Background" Value="{StaticResource LineSoftBrush}"/>
+                              </Trigger>
+                            </ControlTemplate.Triggers>
+                          </ControlTemplate>
+                        </Setter.Value>
+                      </Setter>
+                    </Style>
+                  </ListBox.ItemContainerStyle>
+                  <ListBox.ItemTemplate>
+                    <DataTemplate>
+                      <TextBlock Text="{Binding Text}" TextWrapping="Wrap" FontSize="12"
+                                 FontFamily="{DynamicResource MonoFont}">
+                        <TextBlock.Style>
+                          <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="{DynamicResource FgDimBrush}"/>
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding Mine}" Value="True">
+                                <Setter Property="Foreground" Value="{DynamicResource FgBrush}"/>
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </TextBlock.Style>
+                      </TextBlock>
+                    </DataTemplate>
+                  </ListBox.ItemTemplate>
+                </ListBox>
+                <TextBlock x:Name="ChatEmpty" Style="{StaticResource Mono}" FontStyle="Italic"
+                           Text="{l:L Empty_Chat}" TextWrapping="Wrap" TextAlignment="Center"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="280"
+                           Visibility="Collapsed"/>
+              </Grid>
             </Border>
             <DockPanel Grid.Row="1" Margin="0,8,0,0" LastChildFill="True">
               <Button Style="{StaticResource PrimaryButton}" Content="{l:L Btn_Send}" Width="100" Height="36"

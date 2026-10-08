@@ -49,8 +49,15 @@ namespace NekoStrap.Roblox
         public bool RobloxNoTray { get; set; } = true;
         public bool RobloxNoStartup { get; set; } = true;
 
+        // Приоритет процесса клиента при запуске: "" = системный по умолчанию,
+        // иначе одна из каноничных меток ProcessOptimizer.ResolvePriority.
+        public string RobloxPriority { get; set; } = "";
+
         // Расширения.
         public bool FleasionEnabled { get; set; }
+
+        // Блокировка телеметрии Roblox через hosts (требует админа).
+        public bool BlockTelemetry { get; set; }
 
         // Studio (ставится по желанию, живёт рядом в Versions).
         public string StudioVersion { get; set; } = "";
@@ -145,6 +152,30 @@ namespace NekoStrap.Roblox
         public int ChatOverlayX { get; set; } = -1;           // позиция оверлея
         public int ChatOverlayY { get; set; } = -1;
 
+        // Оверлей производительности поверх игры: пинг/CPU/RAM/GPU/сервер/время.
+        // PerfOverlay = показывать при входе в игру (мастер-тумблер секции).
+        public bool PerfOverlay { get; set; }
+        public bool PerfOverlayGlass { get; set; } = true;    // liquid glass (акрил)
+        public int PerfOverlayOpacity { get; set; } = 90;     // % непрозрачности тинта
+        public int PerfOverlayX { get; set; } = -1;           // позиция (тащится шапкой)
+        public int PerfOverlayY { get; set; } = -1;
+        // Что показывать (каждая строка отдельно).
+        public bool PerfShowPing { get; set; } = true;
+        public bool PerfShowCpu { get; set; } = true;
+        public bool PerfShowRam { get; set; } = true;
+        public bool PerfShowGpu { get; set; } = true;
+        public bool PerfShowServer { get; set; } = true;
+        public bool PerfShowTime { get; set; } = true;
+
+        // Код приглашения: пропуск на сервер друга (4 символа). Храним свой
+        // код вместе с лимитом и сроком, чтобы он пережил перезапуск лаунчера;
+        // живость проверяем пингом к серверу при старте.
+        public string InviteCode { get; set; } = "";           // "" = кода нет
+        public long InvitePlaceId { get; set; }
+        public string InviteJobId { get; set; } = "";
+        public int InviteMaxUses { get; set; } = 1;            // 0 = без лимита
+        public int InviteUses { get; set; }
+        public DateTime InviteExpiresAt { get; set; } = DateTime.MinValue;
 
         public static LauncherConfig Load(string path)
         {

@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -29,6 +30,14 @@ public partial class SettingsPage : UserControl
     public event Action? AppearanceChanged;
     public event Action? AppearanceResetClicked;
     public event Action<string>? LanguagePicked;
+    public event Action<bool>? TelemetryBlockChanged;
+
+    // Оверлей производительности поверх игры
+    public event Action<bool>? PerfOverlayChanged;
+    public event Action<bool>? PerfGlassChanged;
+    public event Action<int>? PerfOpacityChanged;
+    public event Action? PerfMetricsChanged;
+    public event Action? PerfShowClicked;
 
     private bool _sync;
     private readonly Dictionary<string, TextBlock> _soundFiles = new();
@@ -40,10 +49,30 @@ public partial class SettingsPage : UserControl
         InitializeComponent();
         SoundsBox.Checked += (_, _) => ClickSound.Enabled = SoundsBox.IsChecked == true;
         SoundsBox.Unchecked += (_, _) => ClickSound.Enabled = SoundsBox.IsChecked == true;
+        TelemetryBlockBox.Checked += (_, _) => { if (!_sync) TelemetryBlockChanged?.Invoke(true); };
+        TelemetryBlockBox.Unchecked += (_, _) => { if (!_sync) TelemetryBlockChanged?.Invoke(false); };
+        PerfOverlayBox.Checked += (_, _) => { if (!_sync) PerfOverlayChanged?.Invoke(true); };
+        PerfOverlayBox.Unchecked += (_, _) => { if (!_sync) PerfOverlayChanged?.Invoke(false); };
+        PerfGlassBox.Checked += (_, _) => { if (!_sync) PerfGlassChanged?.Invoke(true); };
+        PerfGlassBox.Unchecked += (_, _) => { if (!_sync) PerfGlassChanged?.Invoke(false); };
+        Action perfMetrics = () => { if (!_sync) PerfMetricsChanged?.Invoke(); };
+        PerfPingBox.Checked += (_, _) => perfMetrics();
+        PerfPingBox.Unchecked += (_, _) => perfMetrics();
+        PerfCpuBox.Checked += (_, _) => perfMetrics();
+        PerfCpuBox.Unchecked += (_, _) => perfMetrics();
+        PerfRamBox.Checked += (_, _) => perfMetrics();
+        PerfRamBox.Unchecked += (_, _) => perfMetrics();
+        PerfGpuBox.Checked += (_, _) => perfMetrics();
+        PerfGpuBox.Unchecked += (_, _) => perfMetrics();
+        PerfServerBox.Checked += (_, _) => perfMetrics();
+        PerfServerBox.Unchecked += (_, _) => perfMetrics();
+        PerfTimeBox.Checked += (_, _) => perfMetrics();
+        PerfTimeBox.Unchecked += (_, _) => perfMetrics();
         BuildSoundRows();
         BuildFontBoxes();
         BuildColorRows();
         BuildThreadsBox();
+        BuildPriorityBox();
     }
 
     // ================= Потоки загрузки клиента =================
@@ -80,6 +109,61 @@ public partial class SettingsPage : UserControl
         if (_sync) return;
         if (ThreadsCombo.SelectedItem is ComboBoxItem it && it.Tag is int n)
             DownloadThreadsChanged?.Invoke(n);
+    }
+
+    // ================= Приоритет процесса клиента =================
+
+    /// <summary>Каноничная метка (tag) + ключ подписи. Порядок = порядок в UI.</summary>
+    private static readonly (string Tag, string Key)[] PriorityLabels =
+    {
+        ("", "Set_Prio_Default"),
+        ("idle", "Set_Prio_Idle"),
+        ("belownormal", "Set_Prio_Below"),
+        ("abovenormal", "Set_Prio_Above"),
+        ("high", "Set_Prio_High"),
+    };
+
+    /// <summary>Пользователь выбрал приоритет — применяется сразу, без «Сохранить».</summary>
+    public event Action<string>? PriorityChanged;
+
+    private void BuildPriorityBox()
+    {
+        foreach (var (tag, key) in PriorityLabels)
+            PriorityCombo.Items.Add(new ComboBoxItem { Content = Lang.Get(key), Tag = tag });
+        _sync = true;
+        PriorityCombo.SelectedIndex = 0;
+        _sync = false;
+    }
+
+    /// <summary>Пересобрать подписи при смене языка; выбранный пункт сохраняется.</summary>
+    public void RefreshPriorityBox()
+    {
+        string current = RobloxPriorityValue;
+        PriorityCombo.Items.Clear();
+        foreach (var (tag, key) in PriorityLabels)
+            PriorityCombo.Items.Add(new ComboBoxItem { Content = Lang.Get(key), Tag = tag });
+        RobloxPriorityValue = current;
+    }
+
+    /// <summary>Каноничная метка из комбобокса ("" = системный приоритет).</summary>
+    public string RobloxPriorityValue
+    {
+        get => PriorityCombo.SelectedItem is ComboBoxItem it && it.Tag is string s ? s : "";
+        set
+        {
+            int idx = Array.FindIndex(PriorityLabels, p => p.Tag == value);
+            if (idx < 0) idx = 0;
+            _sync = true;
+            PriorityCombo.SelectedIndex = idx;
+            _sync = false;
+        }
+    }
+
+    private void PriorityCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_sync) return;
+        if (PriorityCombo.SelectedItem is ComboBoxItem it && it.Tag is string s)
+            PriorityChanged?.Invoke(s);
     }
 
     // ================= Внешний вид =================
@@ -227,6 +311,7 @@ public partial class SettingsPage : UserControl
             };
             hexBox.TextChanged += (_, _) =>
             {
+                MarkBox(hexBox, IsHexText(hexBox.Text), Lang.Get("Set_Hex_Bad"));
                 if (!_sync)
                     AppearanceChanged?.Invoke();
             };
@@ -269,6 +354,54 @@ public partial class SettingsPage : UserControl
         }
         box.SelectedIndex = 0;
     }
+
+    // ================= Валидация полей =================
+
+    /// <summary>Шесть hex-цифр (#RRGGBB, решётка необязательна).</summary>
+    private static bool IsHexText(string text)
+    {
+        string hex = text.Trim().TrimStart('#');
+        if (hex.Length != 6) return false;
+        return hex.All(c =>
+            (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'));
+    }
+
+    /// <summary>Поле подсвечивается красным с причиной в подсказке.</summary>
+    private static void MarkBox(TextBox box, bool ok, string hint)
+    {
+        if (ok)
+        {
+            box.ClearValue(Control.BorderBrushProperty);
+            box.ClearValue(FrameworkElement.ToolTipProperty);
+        }
+        else
+        {
+            box.SetResourceReference(Control.BorderBrushProperty, "BadBrush");
+            box.ToolTip = hint;
+        }
+    }
+
+    private void FpsValueBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        bool ok = FpsValid;
+        MarkBox(FpsValueBox, ok, Lang.Get("Set_Fps_Bad"));
+        FpsRangeHint.SetResourceReference(TextBlock.ForegroundProperty, ok ? "FgDimmerBrush" : "BadBrush");
+    }
+
+    /// <summary>Пусто (лимита нет) либо целое 5..10000.</summary>
+    public bool FpsValid
+    {
+        get
+        {
+            string t = FpsValueBox.Text.Trim();
+            if (t.Length == 0) return true;
+            return int.TryParse(t, out int fps) && fps >= 5 && fps <= 10000;
+        }
+    }
+
+    /// <summary>Все hex-поля валидны (пустое = палитра по умолчанию).</summary>
+    public bool ColorsValid =>
+        _colorBoxes.Values.All(b => b.Text.Trim().Length == 0 || IsHexText(b.Text));
 
     /// <summary>
     /// Ряды звуков строим кодом по списку движка: подпись + громкость +
@@ -418,6 +551,72 @@ public partial class SettingsPage : UserControl
     public CheckBox RobloxNoTrayCheck => RobloxNoTrayBox;
     public CheckBox RobloxNoStartupCheck => RobloxNoStartupBox;
     public CheckBox GlassCheck => GlassCheckBox;
+    public CheckBox TelemetryBlockCheck => TelemetryBlockBox;
+    public CheckBox PerfOverlayCheck => PerfOverlayBox;
+    public CheckBox PerfPingCheck => PerfPingBox;
+    public CheckBox PerfCpuCheck => PerfCpuBox;
+    public CheckBox PerfRamCheck => PerfRamBox;
+    public CheckBox PerfGpuCheck => PerfGpuBox;
+    public CheckBox PerfServerCheck => PerfServerBox;
+    public CheckBox PerfTimeCheck => PerfTimeBox;
+    public CheckBox PerfGlassCheck => PerfGlassBox;
+
+    /// <summary>Непрозрачность оверлея, % (со слайдера, 20..100).</summary>
+    public int PerfOpacity => Math.Clamp((int)PerfOpacityBar.Value, 20, 100);
+
+    /// <summary>Статус блокировки телеметрии (без срабатывания события).</summary>
+    public void SetTelemetryStatus(string text, bool ok)
+    {
+        TelemetryStatus.Text = text;
+        TelemetryStatus.Foreground = ok
+            ? (Brush)FindResource("GoodBrush")
+            : (Brush)FindResource("FgDimBrush");
+    }
+
+    /// <summary>Выставить состояние тумблера без срабатывания события.</summary>
+    public void SetTelemetryBlock(bool on)
+    {
+        _sync = true;
+        TelemetryBlockBox.IsChecked = on;
+        _sync = false;
+    }
+
+    // ================= Оверлей производительности =================
+
+    /// <summary>Всё по конфигу разом, без срабатывания событий.</summary>
+    public void SetPerfState(bool overlay, bool ping, bool cpu, bool ram, bool gpu,
+        bool server, bool time, bool glass, int opacity)
+    {
+        _sync = true;
+        try
+        {
+            PerfOverlayBox.IsChecked = overlay;
+            PerfPingBox.IsChecked = ping;
+            PerfCpuBox.IsChecked = cpu;
+            PerfRamBox.IsChecked = ram;
+            PerfGpuBox.IsChecked = gpu;
+            PerfServerBox.IsChecked = server;
+            PerfTimeBox.IsChecked = time;
+            PerfGlassBox.IsChecked = glass;
+            int o = Math.Clamp(opacity, 20, 100);
+            PerfOpacityBar.Value = o;
+            PerfOpacityValue.Text = o + "%";
+        }
+        finally { _sync = false; }
+    }
+
+    private void PerfOpacityBar_Changed(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        int v = (int)Math.Clamp(e.NewValue, 20, 100);
+        PerfOpacityValue.Text = v + "%";
+        if (!_sync)
+            PerfOpacityChanged?.Invoke(v);
+    }
+
+    private void PerfShowButton_Click(object sender, RoutedEventArgs e)
+    {
+        PerfShowClicked?.Invoke();
+    }
 
     public string RobloxPathText
     {

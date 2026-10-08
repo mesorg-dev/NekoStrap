@@ -62,6 +62,38 @@ public partial class HistoryPage : UserControl
         SessionList.ItemsSource = _sessions;
         _on = (Style)FindResource("PrimaryButton");
         _off = (Style)FindResource("OutlineButton");
+        GridViewStretch.Attach(HistoryList);
+        GridViewStretch.Attach(SessionList);
+        _games.CollectionChanged += (_, _) => UpdateEmptyAndEnabled();
+        _sessions.CollectionChanged += (_, _) => UpdateEmptyAndEnabled();
+        HistoryList.SelectionChanged += (_, _) => UpdateEmptyAndEnabled();
+        SessionList.SelectionChanged += (_, _) => UpdateEmptyAndEnabled();
+        UpdateEmptyAndEnabled();
+    }
+
+    /// <summary>
+    /// Пустые списки объясняют себя, а кнопки, которым нечего делать
+    /// (играть/удалять/перезаходить без выбора, чистить пустое), гаснут.
+    /// </summary>
+    private void UpdateEmptyAndEnabled()
+    {
+        HistoryEmpty.Visibility = _games.Count > 0 ? Visibility.Collapsed : Visibility.Visible;
+        SessionEmpty.Visibility = _sessions.Count > 0 ? Visibility.Collapsed : Visibility.Visible;
+
+        bool hasGame = HistoryList.SelectedItem != null;
+        PlayButton.IsEnabled = hasGame;
+        DeleteButton.IsEnabled = hasGame;
+        FavoriteButton.IsEnabled = hasGame;
+        ClearButton.IsEnabled = _games.Count > 0;
+
+        bool hasSession = SessionList.SelectedItem != null;
+        RejoinButton.IsEnabled = hasSession;
+        JoinButton.IsEnabled = hasSession;
+        CopyPlaceButton.IsEnabled = hasSession;
+        CopyLinkButton.IsEnabled = hasSession;
+        SiteButton.IsEnabled = hasSession;
+        DeleteSessionButton.IsEnabled = hasSession;
+        ClearSessionsButton.IsEnabled = _sessions.Count > 0;
     }
 
     private void PlayButton_Click(object sender, RoutedEventArgs e) => PlayClicked?.Invoke(this, EventArgs.Empty);

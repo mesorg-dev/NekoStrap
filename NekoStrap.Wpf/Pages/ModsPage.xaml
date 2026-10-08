@@ -65,33 +65,39 @@
     </Border>
 
     <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-      <Button Style="{StaticResource PrimaryButton}" Content="{l:L Btn_Add}" Height="38" Padding="16,0" Click="AddButton_Click"/>
-      <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_Refresh}" Height="38" Padding="16,0" Margin="10,0,0,0" Click="RefreshButton_Click"/>
-      <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_Toggle}" Height="38" Padding="16,0" Margin="10,0,0,0" Click="ToggleButton_Click"/>
-      <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_Delete}" Height="38" Padding="16,0" Margin="10,0,0,0" Click="DeleteButton_Click"/>
+      <Button x:Name="AddButton" Style="{StaticResource PrimaryButton}" Content="{l:L Btn_Add}" Height="38" Padding="16,0" Click="AddButton_Click"/>
+      <Button x:Name="RefreshButton" Style="{StaticResource OutlineButton}" Content="{l:L Btn_Refresh}" Height="38" Padding="16,0" Margin="10,0,0,0" Click="RefreshButton_Click"/>
+      <Button x:Name="ToggleButton" Style="{StaticResource OutlineButton}" Content="{l:L Btn_Toggle}" Height="38" Padding="16,0" Margin="10,0,0,0" Click="ToggleButton_Click"/>
+      <Button x:Name="DeleteModButton" Style="{StaticResource OutlineButton}" Content="{l:L Btn_Delete}" Height="38" Padding="16,0" Margin="10,0,0,0" Click="DeleteButton_Click"/>
     </StackPanel>
 
     <Border Style="{StaticResource Card}" Margin="0,0,0,12" Padding="18">
-      <ListView x:Name="ModsList" Height="280" Background="Transparent" BorderThickness="0"
-                SelectionMode="Extended">
-        <ListView.ItemContainerStyle>
-          <Style TargetType="ListViewItem" BasedOn="{StaticResource DarkListRow}">
-            <Style.Triggers>
-              <DataTrigger Binding="{Binding Active}" Value="False">
-                <Setter Property="Foreground" Value="{DynamicResource FgDimmerBrush}"/>
-              </DataTrigger>
-            </Style.Triggers>
-          </Style>
-        </ListView.ItemContainerStyle>
-        <ListView.View>
-          <GridView ColumnHeaderContainerStyle="{StaticResource DarkGridHeader}">
-            <GridViewColumn Header="{l:L Mods_ColFile}" Width="320" DisplayMemberBinding="{Binding Path}"/>
-            <GridViewColumn Header="{l:L Col_Status}" Width="110" DisplayMemberBinding="{Binding Status}"/>
-            <GridViewColumn Header="{l:L Col_Size}" Width="100" DisplayMemberBinding="{Binding SizeText}"/>
-            <GridViewColumn Header="{l:L Col_Author}" Width="120" DisplayMemberBinding="{Binding Author}"/>
-          </GridView>
-        </ListView.View>
-      </ListView>
+      <Grid>
+        <ListView x:Name="ModsList" Height="280" Background="Transparent" BorderThickness="0"
+                  SelectionMode="Extended">
+          <ListView.ItemContainerStyle>
+            <Style TargetType="ListViewItem" BasedOn="{StaticResource DarkListRow}">
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding Active}" Value="False">
+                  <Setter Property="Foreground" Value="{DynamicResource FgDimmerBrush}"/>
+                </DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </ListView.ItemContainerStyle>
+          <ListView.View>
+            <GridView ColumnHeaderContainerStyle="{StaticResource DarkGridHeader}">
+              <GridViewColumn Header="{l:L Mods_ColFile}" Width="320" DisplayMemberBinding="{Binding Path}"/>
+              <GridViewColumn Header="{l:L Col_Status}" Width="110" DisplayMemberBinding="{Binding Status}"/>
+              <GridViewColumn Header="{l:L Col_Size}" Width="100" DisplayMemberBinding="{Binding SizeText}"/>
+              <GridViewColumn Header="{l:L Col_Author}" Width="120" DisplayMemberBinding="{Binding Author}"/>
+            </GridView>
+          </ListView.View>
+        </ListView>
+        <TextBlock x:Name="ModsEmpty" Style="{StaticResource Mono}" FontStyle="Italic"
+                   Text="{l:L Empty_Mods}" TextWrapping="Wrap" TextAlignment="Center"
+                   HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="420"
+                   Visibility="Collapsed"/>
+      </Grid>
     </Border>
 
     <Border Style="{StaticResource Card}" Margin="0,0,0,10">

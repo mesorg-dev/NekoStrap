@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -5,6 +6,13 @@ using System.Windows.Media;
 using NekoStrap.Roblox;
 
 namespace NekoStrap.Wpf.Pages;
+
+/// <summary>Строка ленты чата: текст + признак «моя» (для цвета).</summary>
+public sealed class ChatLine
+{
+    public required string Text { get; init; }
+    public required bool Mine { get; init; }
+}
 
 /// <summary>
 /// Страница чата в лаунчере: две комнаты («Все» — общий чат лаунчера для
@@ -38,11 +46,17 @@ public partial class ChatPage : UserControl
     private bool _globalRoom = true;
     private string _baseHint = "";
     private readonly List<ChatUser> _users = new();
+    private readonly ObservableCollection<ChatLine> _messages = new();
+    private ChatState _state = ChatState.Disconnected;
 
     public ChatPage()
     {
         InitializeComponent();
         _baseHint = Lang.Get("Chat_NotInGame");
+        MessagesList.ItemsSource = _messages;
+        _messages.CollectionChanged += (_, _) =>
+            ChatEmpty.Visibility = _messages.Count > 0 ? Visibility.Collapsed : Visibility.Visible;
+        ChatEmpty.Visibility = Visibility.Visible;
     }
 
     // ================= Состояние =================
@@ -50,6 +64,7 @@ public partial class ChatPage : UserControl
     /// <summary>Точка состояния + подпись (поток UI).</summary>
     public void SetState(ChatState state)
     {
+        _state = state;
         StateLabel.Text = state switch
         {
             ChatState.Connected => Lang.Get("Chat_Connected"),
@@ -67,6 +82,8 @@ public partial class ChatPage : UserControl
             _dmTarget = 0;
             RefreshModeButtons();
         }
+        // Снимает разовую подсказку «нет соединения», если сеанс снова поднялся.
+        RefreshHint();
     }
 
     /// <summary>Человекопонятная строка статуса (своя, вне enum).</summary>
@@ -168,24 +185,16 @@ public partial class ChatPage : UserControl
 
     public void ResetForRoom()
     {
-        MessagesPanel.Children.Clear();
+        _messages.Clear();
     }
 
     public void AppendMessage(ChatMessage msg)
     {
-        var tb = new TextBlock
-        {
-            Text = FormatMessage(msg),
-            TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(0, 1, 0, 1),
-            FontSize = 12,
-        };
-        tb.SetResourceReference(FontFamilyProperty, "MonoFont");
-        tb.SetResourceReference(ForegroundProperty, msg.Mine ? "FgBrush" : "FgDimBrush");
-        MessagesPanel.Children.Add(tb);
-        while (MessagesPanel.Children.Count > MaxMessages)
-            MessagesPanel.Children.RemoveAt(0);
-        MessagesScroll.ScrollToEnd();
+        _messages.Add(new ChatLine { Text = FormatMessage(msg), Mine = msg.Mine });
+        while (_messages.Count > MaxMessages)
+            _messages.RemoveAt(0);
+        if (_messages.Count > 0)
+            MessagesList.ScrollIntoView(_messages[^1]);
     }
 
     private string FormatMessage(ChatMessage msg)
@@ -221,17 +230,29 @@ public partial class ChatPage : UserControl
     {
         string text = InputBox.Text.Trim();
         if (text.Length == 0) return;
+        // Черновик не теряем: без соединения сообщение всё равно не уйдёт.
+        if (_state != ChatState.Connected)
+        {
+            HintLabel.Text = Lang.Get("Chat_Disconnected");
+            return;
+        }
+        bool sent = false;
         if (_dmTarget > 0)
         {
             if (!_dmEnabled) return;
             DmMessageSend?.Invoke(_dmTarget, text);
+            sent = true;
         }
         else
         {
             ServerMessageSend?.Invoke(text);
+            sent = true;
         }
-        InputBox.Text = "";
-        InputBox.Focus();
+        if (sent)
+        {
+            InputBox.Text = "";
+            InputBox.Focus();
+        }
     }
 
     private void SendButton_Click(object sender, RoutedEventArgs e) => SendCurrent();

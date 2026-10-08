@@ -4,7 +4,8 @@
         xmlns:l="clr-namespace:NekoStrap.Wpf"
         Title="{l:L Dlg_FlagConflictTitle}" Width="460"
         WindowStyle="None" ResizeMode="NoResize" WindowStartupLocation="CenterOwner"
-        ShowInTaskbar="False" Background="{StaticResource BgBrush}">
+        ShowInTaskbar="False" Background="{StaticResource BgBrush}"
+        PreviewKeyDown="Window_PreviewKeyDown">
   <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="1">
     <DockPanel LastChildFill="True">
       <Border DockPanel.Dock="Top" Height="36" Background="{StaticResource ChromeBrush}"

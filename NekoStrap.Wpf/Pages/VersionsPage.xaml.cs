@@ -31,6 +31,19 @@ public partial class VersionsPage : UserControl
     {
         InitializeComponent();
         VersionsList.ItemsSource = _rows;
+        GridViewStretch.Attach(VersionsList);
+        _rows.CollectionChanged += (_, _) => UpdateEmptyAndEnabled();
+        VersionsList.SelectionChanged += (_, _) => UpdateEmptyAndEnabled();
+        UpdateEmptyAndEnabled();
+    }
+
+    /// <summary>Пустая таблица объясняет себя; активац/удаление ждут выбора.</summary>
+    private void UpdateEmptyAndEnabled()
+    {
+        VersionsEmpty.Visibility = _rows.Count > 0 ? Visibility.Collapsed : Visibility.Visible;
+        bool has = VersionsList.SelectedItem != null;
+        ActivateButton.IsEnabled = has;
+        DeleteVersionButton.IsEnabled = has;
     }
 
     private void ActivateButton_Click(object sender, RoutedEventArgs e)

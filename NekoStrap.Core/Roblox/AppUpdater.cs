@@ -35,7 +35,14 @@ namespace NekoStrap.Roblox
             {
                 try
                 {
-                    var v = typeof(AppUpdater).Assembly.GetName().Version;
+                    // Версия EXE, а не этой библиотеки: именно её показывает
+                    // пользователю и сравнивает с тегом релиза. В одиночном
+                    // exe GetEntryAssembly() и есть этот файл; раньше читалась
+                    // версия NekoStrap.Core, которая в локальной сборке могла
+                    // отстать — и лаунчер входил в бесконечное обновление.
+                    var asm = System.Reflection.Assembly.GetEntryAssembly()
+                        ?? typeof(AppUpdater).Assembly;
+                    var v = asm.GetName().Version;
                     if (v != null) return $"{v.Major}.{v.Minor}.{v.Build}";
                 }
                 catch { /* ignore */ }
@@ -152,23 +159,40 @@ namespace NekoStrap.Roblox
                 throw new InvalidOperationException("не знаю путь текущего exe");
             int pid = Environment.ProcessId;
             string bat = Path.Combine(Path.GetTempPath(), "nekostrap-update.bat");
+
+            // Пути уходят в окружение, а не в текст файла. cmd читает .bat
+            // в OEM-кодировке (CP866 на русской Windows), а File.WriteAllText
+            // пишет UTF-8 — кириллица вроде «Рабочий стол» превращалась в кашу,
+            // move/start не находили файл, и лаунчер после обновления не
+            // поднимался: «Не удается найти ...NekoStrap.exe». Сам скрипт
+            // остаётся чисто ASCII, латиницу и PID кодировка не портит.
             string script =
                 "@echo off\r\n" +
-                $"set NEKO_NEW=\"{newExePath}\"\r\n" +
-                $"set NEKO_EXE=\"{current}\"\r\n" +
-                $":waitloop\r\n" +
-                $"tasklist /FI \"PID eq {pid}\" 2>NUL | find \"{pid}\" >NUL\r\n" +
+                "setlocal\r\n" +
+                ":waitloop\r\n" +
+                $"tasklist /FI \"PID eq {pid}\" /NH 2>NUL | find \" {pid} \" >NUL\r\n" +
                 "if not errorlevel 1 (timeout /t 1 /nobreak >NUL & goto waitloop)\r\n" +
-                "move /y %NEKO_NEW% %NEKO_EXE% >NUL\r\n" +
-                "start \"\" %NEKO_EXE%\r\n" +
+                "move /y \"%NEKO_NEW%\" \"%NEKO_EXE%\" >NUL\r\n" +
+                // Если подмена не удалась (файл ещё занят), старый exe на месте —
+                // поднимаем его, чтобы лаунчер не исчез после обновления.
+                "if exist \"%NEKO_EXE%\" start \"\" \"%NEKO_EXE%\"\r\n" +
                 "del \"%~f0\"\r\n";
-            File.WriteAllText(bat, script);
-            Process.Start(new ProcessStartInfo(bat)
+            File.WriteAllText(bat, script, new System.Text.UTF8Encoding(false));
+
+            var psi = new ProcessStartInfo
             {
-                UseShellExecute = true,
+                FileName = Environment.GetEnvironmentVariable("ComSpec") ?? "cmd.exe",
+                // /s: внешние кавычки снимаются всегда, путь со пробелами остаётся одним аргументом
+                Arguments = "/d /s /c \"\"" + bat + "\"\"",
+                // UseShellExecute=false — только так дочерний процесс получает
+                // наше окружение: ShellExecuteEx блок с переменными не умеет.
+                UseShellExecute = false,
+                CreateNoWindow = true,
                 WindowStyle = ProcessWindowStyle.Hidden,
-                CreateNoWindow = true
-            });
+            };
+            psi.Environment["NEKO_NEW"] = newExePath;
+            psi.Environment["NEKO_EXE"] = current;
+            Process.Start(psi);
         }
     }
 }

@@ -11,7 +11,7 @@
          неоднозначности (Button/CheckBox/Application/...) по всему проекту. -->
     <AssemblyName>NekoStrap</AssemblyName>
     <RootNamespace>NekoStrap</RootNamespace>
-    <Version>1.3.3</Version>
+    <!-- Версия — общий источник Directory.Build.props (см. там). -->
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
   </PropertyGroup>
 

@@ -852,6 +852,23 @@ internal static class Program
                 if (newer("abc", "v1.0.0")) throw new Exception("мусор текущей приняли");
             });
 
+            Check("Апдейтер: версии Core и Wpf совпадают", () =>
+            {
+                // Тег релиза сравнивается с версией exe. Если проекты объявят
+                // версии по-разному (было: Core 1.3.2, Wpf 1.3.3), лаунчер
+                // навсегда сочтёт себя старее релиза и на каждом старте будет
+                // заново качать и ставить одну и ту же сборку.
+                var core = typeof(NekoStrap.Roblox.AppUpdater).Assembly.GetName().Version;
+                var app = typeof(NekoStrap.Wpf.AppInfo).Assembly.GetName().Version;
+                if (core == null || app == null) throw new Exception("версия не прочитана");
+                if (core != app)
+                    throw new Exception($"Core {core} != Wpf {app}: " +
+                        "разъехалась версия, автообновление зациклится " +
+                        "(общий источник — Directory.Build.props)");
+                if (core!.Major < 1) throw new Exception("подозрительная версия: " + core);
+            });
+
+
             RunLocalizationChecks();
             RunFlagRegistryChecks();
             RunPaletteChecks(win);

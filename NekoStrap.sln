@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NekoStrap.Wpf", "NekoStrap.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NekoStrap.Core", "NekoStrap.Core\NekoStrap.Core.csproj", "{D36CADB3-8A35-49E6-949D-261E3CD8205D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NekoStrap.Smoke", "NekoStrap.Smoke\NekoStrap.Smoke.csproj", "{B7E4C1A2-5D3F-4E8B-9C0A-1F2E3D4C5B6A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{D36CADB3-8A35-49E6-949D-261E3CD8205D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D36CADB3-8A35-49E6-949D-261E3CD8205D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D36CADB3-8A35-49E6-949D-261E3CD8205D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B7E4C1A2-5D3F-4E8B-9C0A-1F2E3D4C5B6A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B7E4C1A2-5D3F-4E8B-9C0A-1F2E3D4C5B6A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B7E4C1A2-5D3F-4E8B-9C0A-1F2E3D4C5B6A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B7E4C1A2-5D3F-4E8B-9C0A-1F2E3D4C5B6A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -139,11 +139,13 @@ public class FeatureExpander : Decorator
     {
         if (_built) return;
         _built = true;
-        var options = Child; // content, который страница положила в XAML
+        var options = Child;
+        // Важно: сначала отвязать options от декора (Child = chrome),
+        // иначе WPF: «already the logical child of another element».
+        Child = _chrome;
         _optsHost.Child = options;
         _titleText.SetBinding(TextBlock.TextProperty,
             new System.Windows.Data.Binding(nameof(Title)) { Source = this });
-        Child = _chrome;
         _sync = true;
         _toggle.IsChecked = IsOn;
         _sync = false;

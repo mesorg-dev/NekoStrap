@@ -22,4 +22,16 @@ jobs:
         run: dotnet build NekoStrap.sln -c Release --nologo
 
       - name: Smoke tests (UI + logic)
-        run: dotnet run --project NekoStrap.Smoke -c Release --no-build
+        shell: pwsh
+        run: |
+          $out = dotnet run --project NekoStrap.Smoke -c Release --no-build 2>&1 | Tee-Object -FilePath smoke.log
+          $out | Select-Object -Last 80
+          exit $LASTEXITCODE
+
+      - name: Upload smoke log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-log
+          path: smoke.log
+          if-no-files-found: ignore

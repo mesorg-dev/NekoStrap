@@ -24,14 +24,26 @@ jobs:
       - name: Smoke tests (UI + logic)
         shell: pwsh
         run: |
-          $out = dotnet run --project NekoStrap.Smoke -c Release --no-build 2>&1 | Tee-Object -FilePath smoke.log
-          $out | Select-Object -Last 80
-          exit $LASTEXITCODE
+          $ErrorActionPreference = 'Continue'
+          $log = Join-Path $env:RUNNER_TEMP 'smoke.log'
+          $lines = @()
+          $p = Start-Process -FilePath 'dotnet' -ArgumentList @('run','--project','NekoStrap.Smoke','-c','Release','--no-build') -NoNewWindow -Wait -PassThru -RedirectStandardOutput $log -RedirectStandardError (Join-Path $env:RUNNER_TEMP 'smoke.err')
+          if (Test-Path $log) { $lines += Get-Content $log }
+          $errPath = Join-Path $env:RUNNER_TEMP 'smoke.err'
+          if (Test-Path $errPath) { $lines += Get-Content $errPath }
+          $lines | ForEach-Object { Write-Host $_ }
+          Copy-Item $log, $errPath smoke-out.txt -ErrorAction SilentlyContinue
+          # Annotations видны без auth — выкладываем хвост лога при провале
+          if ($p.ExitCode -ne 0) {
+            $tail = ($lines | Select-Object -Last 40) -join '%0A'
+            Write-Host "::error title=Smoke exit $($p.ExitCode)::$tail"
+          }
+          exit $p.ExitCode
 
       - name: Upload smoke log
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: smoke-log
-          path: smoke.log
+          path: smoke-out.txt
           if-no-files-found: ignore

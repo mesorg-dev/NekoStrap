@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 namespace NekoStrap.Wpf.Controls;
 
@@ -30,6 +31,7 @@ public class FeatureExpander : Decorator
     public event EventHandler? IsOnChanged;
 
     private readonly CheckBox _toggle;
+    private readonly TextBlock _titleText;
     private readonly TextBlock _hintText;
     private readonly TextBlock _gear;
     private readonly Border _optsHost;
@@ -40,8 +42,17 @@ public class FeatureExpander : Decorator
 
     public FeatureExpander()
     {
-        // Декор: по умолчанию Child пуст; содержимое страницы приходит как Child (XAML).
-        _titleText = MakeTitle();
+        _titleText = new TextBlock
+        {
+            FontFamily = TryFindResource("UiFont") as FontFamily ?? new FontFamily("Segoe UI"),
+            FontSize = 12.5,
+            FontWeight = FontWeights.SemiBold,
+            Foreground = TryFindResource("FgBrush") as Brush ?? Brushes.White,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+        };
+        _titleText.SetBinding(TextBlock.TextProperty,
+            new System.Windows.Data.Binding(nameof(Title)) { Source = this });
+
         _hintText = new TextBlock
         {
             Style = TryFindResource("Mono") as Style,
@@ -51,6 +62,7 @@ public class FeatureExpander : Decorator
         };
         _hintText.SetBinding(TextBlock.TextProperty,
             new System.Windows.Data.Binding(nameof(Hint)) { Source = this });
+        UpdateHintVisibility(Hint);
 
         _gear = new TextBlock
         {
@@ -119,20 +131,14 @@ public class FeatureExpander : Decorator
             Child = stack,
         };
 
-        Loaded += (_, _) => EnsureBuilt();
+        // Поменять Child во время Measure (Loaded) нельзя — переносим контент
+        // страницы в chrome на Background, когда layout уже отпустил дерево.
+        Loaded += (_, _) =>
+        {
+            if (_built) return;
+            Dispatcher.BeginInvoke(new Action(EnsureBuilt), DispatcherPriority.Background);
+        };
     }
-
-    private readonly TextBlock _titleText;
-
-    private TextBlock MakeTitle() => new()
-    {
-        FontFamily = TryFindResource("UiFont") as FontFamily ?? new FontFamily("Segoe UI"),
-        FontSize = 12.5,
-        FontWeight = FontWeights.SemiBold,
-        Foreground = TryFindResource("FgBrush") as Brush ?? Brushes.White,
-        TextTrimming = TextTrimming.CharacterEllipsis,
-        // привязка к Title проставляется ниже в EnsureBuilt/ctor
-    };
 
     /// <summary>Переносим content страницы внутрь chrome и ставим его как Child декора.</summary>
     private void EnsureBuilt()
@@ -140,12 +146,9 @@ public class FeatureExpander : Decorator
         if (_built) return;
         _built = true;
         var options = Child;
-        // Важно: сначала отвязать options от декора (Child = chrome),
-        // иначе WPF: «already the logical child of another element».
-        Child = _chrome;
+        Child = null;
         _optsHost.Child = options;
-        _titleText.SetBinding(TextBlock.TextProperty,
-            new System.Windows.Data.Binding(nameof(Title)) { Source = this });
+        Child = _chrome;
         _sync = true;
         _toggle.IsChecked = IsOn;
         _sync = false;
@@ -180,8 +183,13 @@ public class FeatureExpander : Decorator
     private static void OnHintChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if (d is not FeatureExpander fe) return;
-        bool empty = string.IsNullOrEmpty(e.NewValue as string);
-        fe._hintText.Visibility = empty ? Visibility.Collapsed : Visibility.Visible;
+        fe.UpdateHintVisibility(e.NewValue as string);
+    }
+
+    private void UpdateHintVisibility(string? hint)
+    {
+        bool empty = string.IsNullOrEmpty(hint);
+        _hintText.Visibility = empty ? Visibility.Collapsed : Visibility.Visible;
     }
 
     private static void OnIsOnChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)

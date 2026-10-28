@@ -28,6 +28,11 @@ internal static class Program
     private static int Main()
     {
         Console.OutputEncoding = System.Text.Encoding.UTF8;
+        AppDomain.CurrentDomain.UnhandledException += (_, a) =>
+        {
+            Console.WriteLine("UNHANDLED " + a.ExceptionObject);
+            if (a.ExceptionObject is Exception ex) Console.WriteLine(Flatten(ex));
+        };
         try
         {
             // Загружает Theme.xaml (FindResource в страницах иначе упадёт).
@@ -61,8 +66,11 @@ internal static class Program
             {
                 if (pages.Count != 8) throw new Exception("нашлось " + pages.Count);
             });
-            win.Measure(new Size(1120, 700));
-            win.Arrange(new Rect(0, 0, 1120, 700));
+            Check("MainWindow Measure/Arrange", () =>
+            {
+                win.Measure(new Size(1120, 700));
+                win.Arrange(new Rect(0, 0, 1120, 700));
+            });
             foreach (System.Collections.DictionaryEntry kv in pages)
             {
                 var page = (UserControl)kv.Value!;
@@ -72,6 +80,8 @@ internal static class Program
                     host.Content = page;
                     host.UpdateLayout();
                     win.UpdateLayout();
+                    // Flush deferred Loaded/EnsureBuilt у FeatureExpander.
+                    win.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Background);
                 });
             }
 

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NekoStrap — UI превью (3 варианта)</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font: 15px/1.5 ui-sans-serif, system-ui, sans-serif; background: #0a0a0a; color: #eaeaea; min-height: 100vh; padding: 24px; }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  p.sub { color: #888; margin-bottom: 24px; font-size: 13px; }
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); max-width: 960px; }
+  a.card { display: block; text-decoration: none; color: inherit; border: 1px solid #2a2a2a; background: #111; padding: 18px; transition: border-color .15s; }
+  a.card:hover { border-color: #eaeaea; }
+  a.card b { display: block; font-size: 16px; margin-bottom: 6px; }
+  a.card span { color: #888; font-size: 13px; }
+  a.card .tag { display: inline-block; margin-top: 10px; font: 11px ui-monospace, monospace; border: 1px solid #333; padding: 2px 8px; color: #ccc; }
+  footer { margin-top: 28px; color: #666; font-size: 12px; font-family: ui-monospace, monospace; }
+</style>
+</head>
+<body>
+  <h1>NekoStrap — превью интерфейса</h1>
+  <p class="sub">Выбери вариант. Всё кликабельно: навигация, «Играть», флаги, моды, чат, Ctrl+K — палитра.</p>
+  <div class="grid">
+    <a class="card" href="a-mono/">
+      <b>A · Mono</b>
+      <span>Чёрно-белый, брутальный моноширинный, жёсткие рамки, максимум контраста.</span>
+      <div class="tag">открыть →</div>
+    </a>
+    <a class="card" href="b-frame/">
+      <b>B · Frame</b>
+      <span>Минимализм: тонкие линии, воздух, тихие серые, только нужное.</span>
+      <div class="tag">открыть →</div>
+    </a>
+    <a class="card" href="c-touch/">
+      <b>C · Touch</b>
+      <span>Удобный: крупные цели, скругления, ясная иерархия, всё под палец/мышь.</span>
+      <div class="tag">открыть →</div>
+    </a>
+  </div>
+  <footer>ui-preview · python3 -m http.server · http://localhost:8080</footer>
+</body>
+</html>

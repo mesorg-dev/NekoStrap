@@ -1,7 +1,8 @@
 <UserControl x:Class="NekoStrap.Wpf.Pages.ChatPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:l="clr-namespace:NekoStrap.Wpf">
+             xmlns:l="clr-namespace:NekoStrap.Wpf"
+             xmlns:ctrl="clr-namespace:NekoStrap.Wpf.Controls">
   <StackPanel>
     <TextBlock Style="{StaticResource H1}" Text="{l:L Nav_Chat}" Margin="0,0,0,6"/>
     <TextBlock Style="{StaticResource Body}" TextWrapping="Wrap" Text="{l:L Chat_Sub}" Margin="0,0,0,10"/>
@@ -126,30 +127,23 @@
                Foreground="{DynamicResource FgDimBrush}" TextWrapping="Wrap" Text="{l:L Chat_NotInGame}"/>
 
     <!-- Настройки чата: раньше жили в Настройках, теперь рядом с чатом -->
-    <Border Style="{StaticResource Card}" Margin="0,12,0,0">
+    <ctrl:FeatureExpander x:Name="ChatEnabledFeature" Margin="0,12,0,0"
+                          Title="{l:L Set_Chat_L}" Hint="{l:L Set_Chat_D}">
       <StackPanel>
-        <TextBlock Style="{StaticResource H2}" FontSize="13" Text="{l:L Chat_SetTitle}" Margin="0,0,0,8"/>
-        <CheckBox x:Name="ChatEnabledBox" Style="{StaticResource Switch}" Margin="0,0,0,6">
-          <StackPanel>
-            <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_Chat_L}"/>
-            <TextBlock Style="{StaticResource Mono}" Text="{l:L Set_Chat_D}"/>
-          </StackPanel>
-        </CheckBox>
-        <CheckBox x:Name="ChatDmBox" Style="{StaticResource Switch}" Margin="0,0,0,6">
+        <CheckBox x:Name="ChatDmBox" Style="{StaticResource Switch}" Margin="0,0,0,4">
           <StackPanel>
             <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_ChatDm_L}"/>
             <TextBlock Style="{StaticResource Mono}" Text="{l:L Set_ChatDm_D}"/>
           </StackPanel>
         </CheckBox>
-        <CheckBox x:Name="ChatOverlayBox" Style="{StaticResource Switch}" Margin="0,0,0,10">
-          <StackPanel>
-            <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_ChatOverlay_L}"/>
-            <TextBlock Style="{StaticResource Mono}" Text="{l:L Set_ChatOverlay_D}"/>
-          </StackPanel>
-        </CheckBox>
+        <ctrl:FeatureExpander x:Name="ChatOverlayFeature" Margin="0,2,0,0"
+                              Title="{l:L Set_ChatOverlay_L}" Hint="{l:L Set_ChatOverlay_D}">
+          <TextBlock Style="{StaticResource Mono}" TextWrapping="Wrap"
+                     Text="{l:L Set_ChatOverlay_D}"/>
+        </ctrl:FeatureExpander>
         <Button Style="{StaticResource PrimaryButton}" Content="{l:L Btn_SaveSettings}"
-                Width="220" Height="44" HorizontalAlignment="Left" Margin="0,12,0,0" Click="SaveButton_Click"/>
+                Width="220" Height="40" HorizontalAlignment="Left" Margin="0,10,0,0" Click="SaveButton_Click"/>
       </StackPanel>
-    </Border>
+    </ctrl:FeatureExpander>
   </StackPanel>
 </UserControl>

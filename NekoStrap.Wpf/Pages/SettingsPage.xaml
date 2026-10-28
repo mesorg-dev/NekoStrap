@@ -1,28 +1,23 @@
 <UserControl x:Class="NekoStrap.Wpf.Pages.SettingsPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:l="clr-namespace:NekoStrap.Wpf">
+             xmlns:l="clr-namespace:NekoStrap.Wpf"
+             xmlns:ctrl="clr-namespace:NekoStrap.Wpf.Controls">
   <StackPanel>
     <TextBlock Style="{StaticResource H1}" Text="{l:L Nav_Settings}" Margin="0,0,0,6"/>
     <TextBlock Style="{StaticResource Body}" Text="{l:L Set_Sub}" Margin="0,0,0,10"/>
 
     <!-- ===== Основное ===== -->
     <TextBlock Style="{StaticResource H2}" FontSize="14" Text="{l:L Set_Sec_Main}" Margin="0,0,0,8"/>
-    <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+    <Border Style="{StaticResource Card}" Margin="0,0,0,12" Padding="16">
       <StackPanel>
-        <CheckBox x:Name="CloseOnLaunchBox" Style="{StaticResource Switch}" Margin="0,0,0,6">
+        <CheckBox x:Name="CloseOnLaunchBox" Style="{StaticResource Switch}" Margin="0,0,0,4">
           <StackPanel>
             <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_CloseOnLaunch_L}"/>
             <TextBlock Style="{StaticResource Mono}" Text="{l:L Set_CloseOnLaunch_D}"/>
           </StackPanel>
         </CheckBox>
-        <CheckBox x:Name="SoundsBox" Style="{StaticResource Switch}" Margin="0,0,0,6">
-          <StackPanel>
-            <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_Sounds_L}"/>
-            <TextBlock Style="{StaticResource Mono}" Text="{l:L Set_Sounds_D}"/>
-          </StackPanel>
-        </CheckBox>
-        <CheckBox x:Name="AutoUpdateBox" Style="{StaticResource Switch}" Margin="0,0,0,6">
+        <CheckBox x:Name="AutoUpdateBox" Style="{StaticResource Switch}" Margin="0,0,0,4">
           <StackPanel>
             <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_AutoUpdate_L}"/>
             <TextBlock Style="{StaticResource Mono}" Text="{l:L Set_AutoUpdate_D}"/>
@@ -34,155 +29,140 @@
             <TextBlock Style="{StaticResource Mono}" Text="{l:L Set_RobloxBgL_D}"/>
           </StackPanel>
         </CheckBox>
-        <Rectangle Height="1" Fill="{StaticResource LineBrush}" Margin="0,8,0,8"/>
-        <TextBlock Style="{StaticResource Body}" Text="{l:L Set_RobloxPath}" Margin="0,0,0,6"/>
+        <Rectangle Height="1" Fill="{StaticResource LineBrush}" Margin="0,4,0,6"/>
+        <TextBlock Style="{StaticResource Body}" Text="{l:L Set_RobloxPath}" Margin="0,0,0,4"/>
         <DockPanel LastChildFill="True">
-          <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_Browse}" Width="110" Height="36"
-                  DockPanel.Dock="Right" Margin="10,0,0,0" Click="BrowseButton_Click"/>
-          <TextBox x:Name="PathBox" Style="{StaticResource DarkInput}" Height="36" VerticalContentAlignment="Center"/>
+          <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_Browse}" Width="110" Height="32"
+                  DockPanel.Dock="Right" Margin="8,0,0,0" Click="BrowseButton_Click"/>
+          <TextBox x:Name="PathBox" Style="{StaticResource DarkInput}" Height="32" VerticalContentAlignment="Center"/>
         </DockPanel>
       </StackPanel>
     </Border>
 
-    <!-- ===== Discord ===== -->
+    <!-- ===== Discord: тумблер → раскрываются опции ===== -->
     <TextBlock Style="{StaticResource H2}" FontSize="14" Text="{l:L Set_Sec_Discord}" Margin="0,0,0,8"/>
-    <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+    <ctrl:FeatureExpander x:Name="DiscordFeature" Margin="0,0,0,12"
+                          Title="{l:L Set_Discord_L}" Hint="{l:L Set_Discord_D}">
       <StackPanel>
-        <CheckBox x:Name="DiscordRpcBox" Style="{StaticResource Switch}" Margin="0,0,0,6">
-          <StackPanel>
-            <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_Discord_L}"/>
-            <TextBlock Style="{StaticResource Mono}" Text="{l:L Set_Discord_D}"/>
-          </StackPanel>
-        </CheckBox>
-        <CheckBox x:Name="DiscordNameBox" Style="{StaticResource Switch}" Margin="0,0,0,6">
+        <CheckBox x:Name="DiscordNameBox" Style="{StaticResource Switch}" Margin="0,0,0,3">
           <StackPanel>
             <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_DiscordName_L}"/>
             <TextBlock Style="{StaticResource Mono}" Text="{l:L Set_DiscordName_D}"/>
           </StackPanel>
         </CheckBox>
-        <CheckBox x:Name="DiscordServerBox" Style="{StaticResource Switch}" Margin="0,0,0,6">
+        <CheckBox x:Name="DiscordServerBox" Style="{StaticResource Switch}" Margin="0,0,0,3">
           <StackPanel>
             <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_DiscordServer_L}"/>
             <TextBlock Style="{StaticResource Mono}" Text="{l:L Set_DiscordServer_D}"/>
           </StackPanel>
         </CheckBox>
-        <CheckBox x:Name="DiscordIconBox" Style="{StaticResource Switch}" Margin="0,0,0,6">
+        <CheckBox x:Name="DiscordIconBox" Style="{StaticResource Switch}" Margin="0,0,0,3">
           <StackPanel>
             <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_DiscordIcon_L}"/>
             <TextBlock Style="{StaticResource Mono}" Text="{l:L Set_DiscordIcon_D}"/>
           </StackPanel>
         </CheckBox>
-        <CheckBox x:Name="DiscordTimeBox" Style="{StaticResource Switch}" Margin="0,0,0,6">
+        <CheckBox x:Name="DiscordTimeBox" Style="{StaticResource Switch}" Margin="0,0,0,3">
           <StackPanel>
             <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_DiscordTime_L}"/>
             <TextBlock Style="{StaticResource Mono}" Text="{l:L Set_DiscordTime_D}"/>
           </StackPanel>
         </CheckBox>
-        <CheckBox x:Name="DiscordBtnBox" Style="{StaticResource Switch}" Margin="0,0,0,6">
+        <ctrl:FeatureExpander x:Name="DiscordBtnFeature" Margin="0,2,0,0"
+                              Title="{l:L Set_DiscordBtn_L}" Hint="{l:L Set_DiscordBtn_D}">
           <StackPanel>
-            <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_DiscordBtn_L}"/>
-            <TextBlock Style="{StaticResource Mono}" Text="{l:L Set_DiscordBtn_D}"/>
+            <TextBlock Style="{StaticResource Body}" Text="{l:L Set_DiscordAsset_L}" Margin="0,0,0,4"/>
+            <TextBox x:Name="DiscordAssetBox" Style="{StaticResource DarkInput}" Height="30"
+                     VerticalContentAlignment="Center" Margin="0,0,0,4"/>
+            <TextBlock Style="{StaticResource Mono}" Text="{l:L Set_DiscordAsset_D}" Margin="0,0,0,2"/>
           </StackPanel>
-        </CheckBox>
-        <CheckBox x:Name="DiscordAllowJoinBox" Style="{StaticResource Switch}" Margin="0,0,0,4">
+        </ctrl:FeatureExpander>
+        <CheckBox x:Name="DiscordAllowJoinBox" Style="{StaticResource Switch}" Margin="0,4,0,2">
           <StackPanel>
             <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_DiscordJoin_L}"/>
             <TextBlock Style="{StaticResource Mono}" Text="{l:L Set_DiscordJoin_D}"/>
           </StackPanel>
         </CheckBox>
-        <TextBlock Style="{StaticResource Mono}" FontStyle="Italic" TextWrapping="Wrap" Margin="0,0,0,8"
+        <TextBlock Style="{StaticResource Mono}" FontStyle="Italic" TextWrapping="Wrap" Margin="0,2,0,0"
                    Foreground="{DynamicResource FgDimBrush}" Text="{l:L Set_DiscordJoinNote}"/>
-        <TextBlock Style="{StaticResource Body}" Text="{l:L Set_DiscordAsset_L}" Margin="0,0,0,6"/>
-        <TextBox x:Name="DiscordAssetBox" Style="{StaticResource DarkInput}" Height="34"
-                 VerticalContentAlignment="Center" Margin="0,0,0,6"/>
-        <TextBlock Style="{StaticResource Mono}" Text="{l:L Set_DiscordAsset_D}" Margin="0,0,0,2"/>
       </StackPanel>
-    </Border>
+    </ctrl:FeatureExpander>
 
     <!-- ===== Игра ===== -->
     <TextBlock Style="{StaticResource H2}" FontSize="14" Text="{l:L Set_Sec_Game}" Margin="0,0,0,8"/>
-    <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+    <ctrl:FeatureExpander x:Name="FpsFeature" Margin="0,0,0,6"
+                          Title="{l:L Set_Fps_L}" Hint="{l:L Set_Fps_D}">
       <StackPanel>
-        <CheckBox x:Name="FpsBox2" Style="{StaticResource Switch}" Margin="0,0,0,6">
-          <StackPanel>
-            <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_Fps_L}"/>
-            <TextBlock Style="{StaticResource Mono}" Text="{l:L Set_Fps_D}"/>
-          </StackPanel>
-        </CheckBox>
-        <TextBox x:Name="FpsValueBox" Style="{StaticResource DarkInput}" Width="100" Height="34"
-                 VerticalContentAlignment="Center" HorizontalAlignment="Left" Margin="0,0,0,4"
+        <TextBox x:Name="FpsValueBox" Style="{StaticResource DarkInput}" Width="100" Height="30"
+                 VerticalContentAlignment="Center" HorizontalAlignment="Left" Margin="0,0,0,2"
                  TextChanged="FpsValueBox_TextChanged"/>
         <TextBlock x:Name="FpsRangeHint" Style="{StaticResource Mono}" FontStyle="Italic"
-                   Text="{l:L Set_Fps_Range}" Margin="0,0,0,8"/>
-        <Rectangle Height="1" Fill="{StaticResource LineBrush}" Margin="0,4,0,8"/>
-        <TextBlock Style="{StaticResource Body}" Text="{l:L Set_Threads_L}" Margin="0,0,0,6"/>
-        <ComboBox x:Name="ThreadsCombo" Style="{StaticResource DarkCombo}" Width="120" Margin="0,0,0,6"
+                   Text="{l:L Set_Fps_Range}" Margin="0,0,0,2"/>
+      </StackPanel>
+    </ctrl:FeatureExpander>
+    <Border Style="{StaticResource Card}" Margin="0,0,0,12" Padding="16">
+      <StackPanel>
+        <TextBlock Style="{StaticResource Body}" Text="{l:L Set_Threads_L}" Margin="0,0,0,4"/>
+        <ComboBox x:Name="ThreadsCombo" Style="{StaticResource DarkCombo}" Width="120" Margin="0,0,0,2"
                   HorizontalAlignment="Left" SelectionChanged="ThreadsCombo_SelectionChanged"/>
-        <TextBlock Style="{StaticResource Mono}" Text="{l:L Set_Threads_D}"/>
-        <TextBlock Style="{StaticResource Body}" Text="{l:L Set_Prio_L}" Margin="0,10,0,6"/>
-        <ComboBox x:Name="PriorityCombo" Style="{StaticResource DarkCombo}" Width="220" Margin="0,0,0,6"
+        <TextBlock Style="{StaticResource Mono}" Text="{l:L Set_Threads_D}" Margin="0,0,0,6"/>
+        <TextBlock Style="{StaticResource Body}" Text="{l:L Set_Prio_L}" Margin="0,0,0,4"/>
+        <ComboBox x:Name="PriorityCombo" Style="{StaticResource DarkCombo}" Width="220" Margin="0,0,0,2"
                   HorizontalAlignment="Left" SelectionChanged="PriorityCombo_SelectionChanged"/>
         <TextBlock Style="{StaticResource Mono}" TextWrapping="Wrap" Text="{l:L Set_Prio_D}"/>
       </StackPanel>
     </Border>
 
-    <!-- ===== Трей и уведомления ===== -->
+    <!-- ===== Трей: тумблер → опции ===== -->
     <TextBlock Style="{StaticResource H2}" FontSize="14" Text="{l:L Set_Sec_Tray}" Margin="0,0,0,8"/>
-    <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+    <ctrl:FeatureExpander x:Name="TrayFeature" Margin="0,0,0,12"
+                          Title="{l:L Set_MinTray_L}" Hint="{l:L Set_MinTray_D}">
       <StackPanel>
-        <CheckBox x:Name="MinimizeToTrayBox" Style="{StaticResource Switch}" Margin="0,0,0,6">
-          <StackPanel>
-            <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_MinTray_L}"/>
-            <TextBlock Style="{StaticResource Mono}" Text="{l:L Set_MinTray_D}"/>
-          </StackPanel>
-        </CheckBox>
-        <CheckBox x:Name="CloseToTrayBox" Style="{StaticResource Switch}" Margin="0,0,0,6">
+        <CheckBox x:Name="CloseToTrayBox" Style="{StaticResource Switch}" Margin="0,0,0,3">
           <StackPanel>
             <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_CloseTray_L}"/>
             <TextBlock Style="{StaticResource Mono}" Text="{l:L Set_CloseTray_D}"/>
           </StackPanel>
         </CheckBox>
-        <CheckBox x:Name="NotificationsBox" Style="{StaticResource Switch}" Margin="0,0,0,6">
+        <CheckBox x:Name="NotificationsBox" Style="{StaticResource Switch}" Margin="0,0,0,3">
           <StackPanel>
             <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_Notify_L}"/>
             <TextBlock Style="{StaticResource Mono}" Text="{l:L Set_Notify_D}"/>
           </StackPanel>
         </CheckBox>
-        <CheckBox x:Name="RobloxNoTrayBox" Style="{StaticResource Switch}" Margin="0,0,0,6">
+        <CheckBox x:Name="RobloxNoTrayBox" Style="{StaticResource Switch}" Margin="0,0,0,3">
           <StackPanel>
             <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_NoTray_L}"/>
             <TextBlock Style="{StaticResource Mono}" Text="{l:L Set_NoTray_D}"/>
           </StackPanel>
         </CheckBox>
-        <CheckBox x:Name="RobloxNoStartupBox" Style="{StaticResource Switch}">
+        <CheckBox x:Name="RobloxNoStartupBox" Style="{StaticResource Switch}" Margin="0,0,0,2">
           <StackPanel>
             <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_NoStartup_L}"/>
             <TextBlock Style="{StaticResource Mono}" Text="{l:L Set_NoStartup_D}"/>
           </StackPanel>
         </CheckBox>
       </StackPanel>
-    </Border>
+    </ctrl:FeatureExpander>
 
     <!-- ===== Кастомизация ===== -->
     <TextBlock Style="{StaticResource H2}" FontSize="14" Text="{l:L Set_Sec_Custom}" Margin="0,0,0,8"/>
 
-    <!-- Звуки интерфейса: свой wav + громкость на каждый -->
-    <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+    <!-- Звуки: тумблер → строки звуков -->
+    <ctrl:FeatureExpander x:Name="SoundsFeature" Margin="0,0,0,6"
+                          Title="{l:L Set_Sounds_L}" Hint="{l:L Set_SoundsDesc}">
       <StackPanel>
-        <TextBlock Style="{StaticResource H2}" FontSize="13" Text="{l:L Set_Sounds_L}" Margin="0,0,0,4"/>
-        <TextBlock Style="{StaticResource Body}" TextWrapping="Wrap" Margin="0,0,0,10"
-                   Text="{l:L Set_SoundsDesc}"/>
         <StackPanel x:Name="SoundsPanel"/>
       </StackPanel>
-    </Border>
+    </ctrl:FeatureExpander>
 
-    <!-- Внешний вид: шрифты и цвета текста -->
-    <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+    <!-- Внешний вид: шрифты и цвета -->
+    <Border Style="{StaticResource Card}" Margin="0,0,0,6" Padding="16">
       <StackPanel>
-        <TextBlock Style="{StaticResource H2}" FontSize="13" Text="{l:L Set_AppearTitle}" Margin="0,0,0,4"/>
-        <TextBlock Style="{StaticResource Body}" TextWrapping="Wrap" Margin="0,0,0,10"
+        <TextBlock Style="{StaticResource H2}" FontSize="13" Text="{l:L Set_AppearTitle}" Margin="0,0,0,2"/>
+        <TextBlock Style="{StaticResource Body}" TextWrapping="Wrap" Margin="0,0,0,6"
                    Text="{l:L Set_AppearDesc}"/>
-        <Grid Margin="0,0,0,6">
+        <Grid Margin="0,0,0,4">
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="150"/>
             <ColumnDefinition Width="*"/>
@@ -193,24 +173,24 @@
             <RowDefinition Height="Auto"/>
           </Grid.RowDefinitions>
           <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource Body}" VerticalAlignment="Center" Text="{l:L Set_FontHeading}"/>
-          <ComboBox x:Name="HeadingFontCombo" Grid.Row="0" Grid.Column="1" Style="{StaticResource DarkCombo}" Margin="0,0,0,8" SelectionChanged="AppearanceControl_Changed"/>
+          <ComboBox x:Name="HeadingFontCombo" Grid.Row="0" Grid.Column="1" Style="{StaticResource DarkCombo}" Margin="0,0,0,6" SelectionChanged="AppearanceControl_Changed"/>
           <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource Body}" VerticalAlignment="Center" Text="{l:L Set_FontBody}"/>
-          <ComboBox x:Name="BodyFontCombo" Grid.Row="1" Grid.Column="1" Style="{StaticResource DarkCombo}" Margin="0,0,0,8" SelectionChanged="AppearanceControl_Changed"/>
+          <ComboBox x:Name="BodyFontCombo" Grid.Row="1" Grid.Column="1" Style="{StaticResource DarkCombo}" Margin="0,0,0,6" SelectionChanged="AppearanceControl_Changed"/>
           <TextBlock Grid.Row="2" Grid.Column="0" Style="{StaticResource Body}" VerticalAlignment="Center" Text="{l:L Set_FontMono}"/>
           <ComboBox x:Name="MonoFontCombo" Grid.Row="2" Grid.Column="1" Style="{StaticResource DarkCombo}" SelectionChanged="AppearanceControl_Changed"/>
         </Grid>
         <StackPanel x:Name="ColorsPanel"/>
-        <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_ResetTheme}" Width="210" Height="36"
+        <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_ResetTheme}" Width="210" Height="32"
                 HorizontalAlignment="Left" Margin="0,4,0,0" Click="AppearanceResetButton_Click"/>
       </StackPanel>
     </Border>
 
     <!-- Обои -->
-    <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+    <Border Style="{StaticResource Card}" Margin="0,0,0,6" Padding="16">
       <StackPanel>
-        <TextBlock Style="{StaticResource H2}" FontSize="13" Text="{l:L Set_WallTitle}" Margin="0,0,0,8"/>
-        <DockPanel LastChildFill="True" Margin="0,0,0,8">
-          <Grid Width="160" Height="90" DockPanel.Dock="Left" Margin="0,0,12,0">
+        <TextBlock Style="{StaticResource H2}" FontSize="13" Text="{l:L Set_WallTitle}" Margin="0,0,0,6"/>
+        <DockPanel LastChildFill="True" Margin="0,0,0,6">
+          <Grid Width="140" Height="80" DockPanel.Dock="Left" Margin="0,0,10,0">
             <Image x:Name="WallpaperImage" Stretch="UniformToFill"/>
             <Border Background="{StaticResource LineSoftBrush}" Visibility="Collapsed" x:Name="WallpaperFallbackBg">
               <TextBlock Text="{l:L Set_WallNone}" FontFamily="{DynamicResource MonoFont}" FontSize="12" FontWeight="Bold"
@@ -220,158 +200,136 @@
           </Grid>
           <StackPanel VerticalAlignment="Top">
             <TextBlock x:Name="WallpaperPathLabel" Style="{StaticResource Mono}"
-                       Text="{l:L Set_WallEmpty}" TextTrimming="CharacterEllipsis" Margin="0,0,0,8"/>
+                       Text="{l:L Set_WallEmpty}" TextTrimming="CharacterEllipsis" Margin="0,0,0,6"/>
             <StackPanel Orientation="Horizontal">
-              <Button Style="{StaticResource PrimaryButton}" Content="{l:L Btn_PickFile}" Width="150" Height="36" Click="WallpaperPickButton_Click"/>
-              <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_Reset}" Width="130" Height="36" Margin="10,0,0,0" Click="WallpaperResetButton_Click"/>
+              <Button Style="{StaticResource PrimaryButton}" Content="{l:L Btn_PickFile}" Width="140" Height="32" Click="WallpaperPickButton_Click"/>
+              <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_Reset}" Width="110" Height="32" Margin="8,0,0,0" Click="WallpaperResetButton_Click"/>
             </StackPanel>
           </StackPanel>
         </DockPanel>
-        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
-          <TextBlock Style="{StaticResource Body}" Text="{l:L Set_Blur}" Margin="0,0,10,0"/>
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
+          <TextBlock Style="{StaticResource Body}" Text="{l:L Set_Blur}" Margin="0,0,8,0"/>
           <TextBlock x:Name="WallpaperBlurValue" Style="{StaticResource MonoBright}" Text="0%"/>
         </StackPanel>
         <Slider x:Name="WallpaperBlurBar" Style="{StaticResource ThemedSlider}" ValueChanged="WallpaperBlurBar_Changed"/>
-        <StackPanel Orientation="Horizontal" Margin="0,6,0,2">
-          <TextBlock Style="{StaticResource Body}" Text="{l:L Set_Dim}" Margin="0,0,10,0"/>
+        <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+          <TextBlock Style="{StaticResource Body}" Text="{l:L Set_Dim}" Margin="0,0,8,0"/>
           <TextBlock x:Name="WallpaperDimValue" Style="{StaticResource MonoBright}" Text="78%"/>
         </StackPanel>
         <Slider x:Name="WallpaperDimBar" Style="{StaticResource ThemedSlider}" Value="78" ValueChanged="WallpaperDimBar_Changed"/>
-        <TextBlock Style="{StaticResource Mono}" FontStyle="Italic" TextWrapping="Wrap" Margin="0,6,0,0"
+        <TextBlock Style="{StaticResource Mono}" FontStyle="Italic" TextWrapping="Wrap" Margin="0,4,0,0"
                    Text="{l:L Set_WallNote}"/>
       </StackPanel>
     </Border>
 
-    <!-- Стекло -->
-    <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+    <!-- Стекло: тумблер → слайдеры -->
+    <ctrl:FeatureExpander x:Name="GlassFeature" Margin="0,0,0,6"
+                          Title="{l:L Set_Glass_L}" Hint="{l:L Set_Glass_D}">
       <StackPanel>
-        <TextBlock Style="{StaticResource H2}" FontSize="13" Text="{l:L Set_GlassTitle}" Margin="0,0,0,8"/>
-        <CheckBox x:Name="GlassCheckBox" Style="{StaticResource Switch}" Margin="0,0,0,8">
-          <StackPanel>
-            <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{StaticResource FgBrush}" Text="{l:L Set_Glass_L}"/>
-            <TextBlock Style="{StaticResource Mono}" Text="{l:L Set_Glass_D}"/>
-          </StackPanel>
-        </CheckBox>
-        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-          <Button x:Name="GlassTintedButton" Style="{StaticResource PrimaryButton}" Content="{l:L Btn_GlassTinted}" Width="150" Height="34" Click="GlassTintedButton_Click"/>
-          <Button x:Name="GlassClearButton" Style="{StaticResource OutlineButton}" Content="{l:L Btn_GlassClear}" Width="150" Height="34" Margin="10,0,0,0" Click="GlassClearButton_Click"/>
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+          <Button x:Name="GlassTintedButton" Style="{StaticResource PrimaryButton}" Content="{l:L Btn_GlassTinted}" Width="140" Height="30" Click="GlassTintedButton_Click"/>
+          <Button x:Name="GlassClearButton" Style="{StaticResource OutlineButton}" Content="{l:L Btn_GlassClear}" Width="140" Height="30" Margin="8,0,0,0" Click="GlassClearButton_Click"/>
         </StackPanel>
-        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
-          <TextBlock Style="{StaticResource Body}" Text="{l:L Set_Opacity}" Margin="0,0,10,0"/>
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
+          <TextBlock Style="{StaticResource Body}" Text="{l:L Set_Opacity}" Margin="0,0,8,0"/>
           <TextBlock x:Name="GlassOpacityValue" Style="{StaticResource MonoBright}" Text="85%"/>
         </StackPanel>
         <Slider x:Name="GlassOpacityBar" Style="{StaticResource ThemedSlider}" Value="85" ValueChanged="GlassOpacityBar_Changed"/>
-        <StackPanel Orientation="Horizontal" Margin="0,6,0,2">
-          <TextBlock Style="{StaticResource Body}" Text="{l:L Set_GlassDim}" Margin="0,0,10,0"/>
+        <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+          <TextBlock Style="{StaticResource Body}" Text="{l:L Set_GlassDim}" Margin="0,0,8,0"/>
           <TextBlock x:Name="GlassDimValue" Style="{StaticResource MonoBright}" Text="100%"/>
         </StackPanel>
         <Slider x:Name="GlassDimBar" Style="{StaticResource ThemedSlider}" Value="100" ValueChanged="GlassDimBar_Changed"/>
-        <StackPanel Orientation="Horizontal" Margin="0,6,0,2">
-          <TextBlock Style="{StaticResource Body}" Text="{l:L Set_GlassBlur}" Margin="0,0,10,0"/>
+        <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+          <TextBlock Style="{StaticResource Body}" Text="{l:L Set_GlassBlur}" Margin="0,0,8,0"/>
           <TextBlock x:Name="GlassBlurValue" Style="{StaticResource MonoBright}" Text="50%"/>
         </StackPanel>
         <Slider x:Name="GlassBlurBar" Style="{StaticResource ThemedSlider}" Value="50" ValueChanged="GlassBlurBar_Changed"/>
-        <TextBlock Style="{StaticResource Mono}" FontStyle="Italic" TextWrapping="Wrap" Margin="0,6,0,0"
+        <TextBlock Style="{StaticResource Mono}" FontStyle="Italic" TextWrapping="Wrap" Margin="0,4,0,0"
                    Text="{l:L Set_GlassNote}"/>
       </StackPanel>
-    </Border>
+    </ctrl:FeatureExpander>
 
-    <!-- Оверлей производительности поверх игры -->
-    <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+    <!-- Оверлей FPS: тумблер → метрики -->
+    <ctrl:FeatureExpander x:Name="PerfFeature" Margin="0,0,0,12"
+                          Title="{l:L Set_Perf_L}" Hint="{l:L Set_Perf_D}">
       <StackPanel>
-        <TextBlock Style="{StaticResource H2}" FontSize="13" Text="{l:L Set_PerfTitle}" Margin="0,0,0,4"/>
-        <TextBlock Style="{StaticResource Body}" TextWrapping="Wrap" Margin="0,0,0,8"
-                   Text="{l:L Set_PerfDesc}"/>
-        <CheckBox x:Name="PerfOverlayBox" Style="{StaticResource Switch}" Margin="0,0,0,8">
-          <StackPanel>
-            <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_Perf_L}"/>
-            <TextBlock Style="{StaticResource Mono}" TextWrapping="Wrap" Text="{l:L Set_Perf_D}"/>
-          </StackPanel>
-        </CheckBox>
-        <TextBlock Style="{StaticResource H2}" FontSize="12" Text="{l:L Set_PerfMetrics}" Margin="0,0,0,4"/>
-        <CheckBox x:Name="PerfPingBox" Style="{StaticResource Switch}" Margin="0,0,0,4">
+        <TextBlock Style="{StaticResource H2}" FontSize="12" Text="{l:L Set_PerfMetrics}" Margin="0,0,0,2"/>
+        <CheckBox x:Name="PerfPingBox" Style="{StaticResource Switch}" Margin="0,0,0,2">
           <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_PerfPing_L}"/>
         </CheckBox>
-        <CheckBox x:Name="PerfCpuBox" Style="{StaticResource Switch}" Margin="0,0,0,4">
+        <CheckBox x:Name="PerfCpuBox" Style="{StaticResource Switch}" Margin="0,0,0,2">
           <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_PerfCpu_L}"/>
         </CheckBox>
-        <CheckBox x:Name="PerfRamBox" Style="{StaticResource Switch}" Margin="0,0,0,4">
+        <CheckBox x:Name="PerfRamBox" Style="{StaticResource Switch}" Margin="0,0,0,2">
           <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_PerfRam_L}"/>
         </CheckBox>
-        <CheckBox x:Name="PerfGpuBox" Style="{StaticResource Switch}" Margin="0,0,0,4">
+        <CheckBox x:Name="PerfGpuBox" Style="{StaticResource Switch}" Margin="0,0,0,2">
           <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_PerfGpu_L}"/>
         </CheckBox>
-        <CheckBox x:Name="PerfServerBox" Style="{StaticResource Switch}" Margin="0,0,0,4">
+        <CheckBox x:Name="PerfServerBox" Style="{StaticResource Switch}" Margin="0,0,0,2">
           <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_PerfServer_L}"/>
         </CheckBox>
-        <CheckBox x:Name="PerfTimeBox" Style="{StaticResource Switch}" Margin="0,0,0,4">
+        <CheckBox x:Name="PerfTimeBox" Style="{StaticResource Switch}" Margin="0,0,0,2">
           <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_PerfTime_L}"/>
         </CheckBox>
-        <CheckBox x:Name="PerfGlassBox" Style="{StaticResource Switch}" Margin="0,6,0,4">
+        <CheckBox x:Name="PerfGlassBox" Style="{StaticResource Switch}" Margin="0,2,0,2">
           <StackPanel>
             <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_PerfGlass_L}"/>
             <TextBlock Style="{StaticResource Mono}" TextWrapping="Wrap" Text="{l:L Set_PerfGlass_D}"/>
           </StackPanel>
         </CheckBox>
-        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
-          <TextBlock Style="{StaticResource Body}" Text="{l:L Set_PerfOpacity}" Margin="0,0,10,0"/>
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
+          <TextBlock Style="{StaticResource Body}" Text="{l:L Set_PerfOpacity}" Margin="0,0,8,0"/>
           <TextBlock x:Name="PerfOpacityValue" Style="{StaticResource MonoBright}" Text="90%"/>
         </StackPanel>
         <Slider x:Name="PerfOpacityBar" Style="{StaticResource ThemedSlider}" Minimum="20" Maximum="100"
                 Value="90" ValueChanged="PerfOpacityBar_Changed"/>
         <Button x:Name="PerfShowButton" Style="{StaticResource OutlineButton}" Content="{l:L Btn_PerfShow}"
-                Width="240" Height="34" Margin="0,10,0,0" Click="PerfShowButton_Click"/>
+                Width="240" Height="30" Margin="0,6,0,0" Click="PerfShowButton_Click"/>
       </StackPanel>
-    </Border>
+    </ctrl:FeatureExpander>
 
     <!-- ===== Система ===== -->
     <TextBlock Style="{StaticResource H2}" FontSize="14" Text="{l:L Set_Sec_System}" Margin="0,0,0,8"/>
 
     <!-- Язык -->
-    <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+    <Border Style="{StaticResource Card}" Margin="0,0,0,6" Padding="16">
       <StackPanel>
-        <TextBlock Style="{StaticResource H2}" FontSize="13" Text="{l:L Set_LangTitle}" Margin="0,0,0,4"/>
-        <TextBlock Style="{StaticResource Body}" TextWrapping="Wrap" Margin="0,0,0,10"
+        <TextBlock Style="{StaticResource H2}" FontSize="13" Text="{l:L Set_LangTitle}" Margin="0,0,0,2"/>
+        <TextBlock Style="{StaticResource Body}" TextWrapping="Wrap" Margin="0,0,0,6"
                    Text="{l:L Set_LangDesc}"/>
         <StackPanel Orientation="Horizontal">
-          <Button x:Name="LangAutoButton" Style="{StaticResource PrimaryButton}" Content="{l:L Btn_LangAuto}" Width="120" Height="34" Click="LangAutoButton_Click"/>
-          <Button x:Name="LangRuButton" Style="{StaticResource OutlineButton}" Content="Русский" Width="120" Height="34" Margin="10,0,0,0" Click="LangRuButton_Click"/>
-          <Button x:Name="LangEnButton" Style="{StaticResource OutlineButton}" Content="English" Width="120" Height="34" Margin="10,0,0,0" Click="LangEnButton_Click"/>
+          <Button x:Name="LangAutoButton" Style="{StaticResource PrimaryButton}" Content="{l:L Btn_LangAuto}" Width="110" Height="30" Click="LangAutoButton_Click"/>
+          <Button x:Name="LangRuButton" Style="{StaticResource OutlineButton}" Content="Русский" Width="110" Height="30" Margin="8,0,0,0" Click="LangRuButton_Click"/>
+          <Button x:Name="LangEnButton" Style="{StaticResource OutlineButton}" Content="English" Width="110" Height="30" Margin="8,0,0,0" Click="LangEnButton_Click"/>
         </StackPanel>
       </StackPanel>
     </Border>
 
     <!-- CDN -->
-    <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+    <Border Style="{StaticResource Card}" Margin="0,0,0,6" Padding="16">
       <StackPanel>
-        <TextBlock Style="{StaticResource H2}" FontSize="13" Text="{l:L Set_CdnTitle}" Margin="0,0,0,6"/>
-        <TextBlock Style="{StaticResource Body}" TextWrapping="Wrap" Margin="0,0,0,8"
+        <TextBlock Style="{StaticResource H2}" FontSize="13" Text="{l:L Set_CdnTitle}" Margin="0,0,0,2"/>
+        <TextBlock Style="{StaticResource Body}" TextWrapping="Wrap" Margin="0,0,0,4"
                    Text="{l:L Set_CdnDesc}"/>
         <TextBlock x:Name="CdnStatus" FontFamily="{DynamicResource MonoFont}" FontSize="12"
-                   Foreground="{DynamicResource FgDimBrush}" Text="{l:L Common_StatusCheck}" Margin="0,0,0,8"/>
+                   Foreground="{DynamicResource FgDimBrush}" Text="{l:L Common_StatusCheck}" Margin="0,0,0,6"/>
         <StackPanel Orientation="Horizontal">
-          <Button Style="{StaticResource PrimaryButton}" Content="{l:L Btn_CdnOn}" Width="170" Height="38" Click="CdnOnButton_Click"/>
-          <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_CdnOff}" Width="150" Height="38" Margin="10,0,0,0" Click="CdnOffButton_Click"/>
+          <Button Style="{StaticResource PrimaryButton}" Content="{l:L Btn_CdnOn}" Width="160" Height="34" Click="CdnOnButton_Click"/>
+          <Button Style="{StaticResource OutlineButton}" Content="{l:L Btn_CdnOff}" Width="140" Height="34" Margin="8,0,0,0" Click="CdnOffButton_Click"/>
         </StackPanel>
       </StackPanel>
     </Border>
 
-    <!-- Телеметрия -->
-    <Border Style="{StaticResource Card}" Margin="0,0,0,12">
-      <StackPanel>
-        <TextBlock Style="{StaticResource H2}" FontSize="13" Text="{l:L Set_Telemetry_L}" Margin="0,0,0,4"/>
-        <CheckBox x:Name="TelemetryBlockBox" Style="{StaticResource Switch}" Margin="0,0,0,6">
-          <StackPanel>
-            <TextBlock FontFamily="{DynamicResource UiFont}" FontSize="12.5" Foreground="{DynamicResource FgBrush}" Text="{l:L Set_Telemetry_L}"/>
-            <TextBlock Style="{StaticResource Mono}" TextWrapping="Wrap" Text="{l:L Set_Telemetry_D}"/>
-          </StackPanel>
-        </CheckBox>
-        <TextBlock x:Name="TelemetryStatus" Style="{StaticResource Mono}" FontStyle="Italic"
-                   TextWrapping="Wrap" Margin="0,2,0,0"/>
-      </StackPanel>
-    </Border>
+    <!-- Телеметрия: тумблер → статус -->
+    <ctrl:FeatureExpander x:Name="TelemetryFeature" Margin="0,0,0,12"
+                          Title="{l:L Set_Telemetry_L}" Hint="{l:L Set_Telemetry_D}">
+      <TextBlock x:Name="TelemetryStatus" Style="{StaticResource Mono}" FontStyle="Italic"
+                 TextWrapping="Wrap" Margin="0,0,0,0"/>
+    </ctrl:FeatureExpander>
 
     <Button Style="{StaticResource PrimaryButton}" Content="{l:L Btn_SaveSettings}"
-            Width="220" Height="44" HorizontalAlignment="Left" Click="SaveButton_Click"/>
+            Width="220" Height="40" HorizontalAlignment="Left" Click="SaveButton_Click"/>
   </StackPanel>
 </UserControl>

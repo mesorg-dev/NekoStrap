@@ -1,0 +1,25 @@
+name: ci
+
+# Сборка + дымовой тест на каждый push/PR: ловим сломанный UI до релиза.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Build solution
+        run: dotnet build NekoStrap.sln -c Release --nologo
+
+      - name: Smoke tests (UI + logic)
+        run: dotnet run --project NekoStrap.Smoke -c Release --no-build

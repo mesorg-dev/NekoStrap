@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NekoStrap · C Touch</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <header class="titlebar">
+    <span class="brand"><span class="logo-chip">N</span> NekoStrap</span>
+    <span class="crumb" data-role="page-title">Главная</span>
+    <span class="spacer"></span>
+    <button class="winbtn" title="Свернуть">—</button>
+    <button class="winbtn" title="Развернуть">□</button>
+    <button class="winbtn close" title="Закрыть">×</button>
+  </header>
+
+  <aside class="sidebar">
+    <nav>
+      <button class="nav on" data-nav="home"><i>⌂</i><em>Главная</em></button>
+      <button class="nav" data-nav="mods"><i>▦</i><em>Моды</em></button>
+      <button class="nav" data-nav="flags"><i>⚙</i><em>Флаги</em></button>
+      <button class="nav" data-nav="versions"><i>≡</i><em>Версии</em></button>
+      <button class="nav" data-nav="history"><i>◷</i><em>История</em></button>
+      <button class="nav" data-nav="chat"><i>✎</i><em>Чат</em></button>
+      <button class="nav" data-nav="settings"><i>⚒</i><em>Настройки</em></button>
+      <button class="nav" data-nav="about"><i>?</i><em>О нас</em></button>
+    </nav>
+    <div class="footer"><span class="dot"></span> ready</div>
+  </aside>
+
+  <main class="content" data-role="page"></main>
+</div>
+
+<div class="toasts" data-role="toasts"></div>
+
+<div class="palette" data-role="palette" hidden>
+  <div class="palette-box">
+    <input placeholder="Команда… (играть, флаги, тема)">
+    <div class="palette-list">
+      <div data-page="home">Главная</div>
+      <div data-page="mods">Моды</div>
+      <div data-page="flags">FastFlags</div>
+      <div data-page="versions">Версии</div>
+      <div data-page="history">История</div>
+      <div data-page="chat">Чат</div>
+      <div data-page="settings">Настройки</div>
+      <div data-page="about">О программе</div>
+    </div>
+  </div>
+</div>
+
+<script src="../shared/common.js"></script>
+<script>NekoUI.boot(document);</script>
+</body>
+</html>

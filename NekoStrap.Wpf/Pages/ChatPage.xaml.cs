@@ -147,9 +147,9 @@ public partial class ChatPage : UserControl
 
     // ================= Настройки =================
 
-    public CheckBox ChatEnabledCheck => ChatEnabledBox;
+    public CheckBox ChatEnabledCheck => ChatEnabledFeature.ToggleCheck;
     public CheckBox ChatDmCheck => ChatDmBox;
-    public CheckBox ChatOverlayCheck => ChatOverlayBox;
+    public CheckBox ChatOverlayCheck => ChatOverlayFeature.ToggleCheck;
 
     /// <summary>Какая комната активна: true = общий, false = сервер.</summary>
     public void SetRoomMode(bool global)

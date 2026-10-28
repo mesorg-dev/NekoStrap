@@ -47,12 +47,13 @@ public partial class SettingsPage : UserControl
     public SettingsPage()
     {
         InitializeComponent();
-        SoundsBox.Checked += (_, _) => ClickSound.Enabled = SoundsBox.IsChecked == true;
-        SoundsBox.Unchecked += (_, _) => ClickSound.Enabled = SoundsBox.IsChecked == true;
-        TelemetryBlockBox.Checked += (_, _) => { if (!_sync) TelemetryBlockChanged?.Invoke(true); };
-        TelemetryBlockBox.Unchecked += (_, _) => { if (!_sync) TelemetryBlockChanged?.Invoke(false); };
-        PerfOverlayBox.Checked += (_, _) => { if (!_sync) PerfOverlayChanged?.Invoke(true); };
-        PerfOverlayBox.Unchecked += (_, _) => { if (!_sync) PerfOverlayChanged?.Invoke(false); };
+        // Тумблеры-фичи живут внутри FeatureExpander — вешаемся на их Toggle
+        SoundsFeature.ToggleCheck.Checked += (_, _) => ClickSound.Enabled = SoundsFeature.IsOn;
+        SoundsFeature.ToggleCheck.Unchecked += (_, _) => ClickSound.Enabled = SoundsFeature.IsOn;
+        TelemetryFeature.ToggleCheck.Checked += (_, _) => { if (!_sync) TelemetryBlockChanged?.Invoke(true); };
+        TelemetryFeature.ToggleCheck.Unchecked += (_, _) => { if (!_sync) TelemetryBlockChanged?.Invoke(false); };
+        PerfFeature.ToggleCheck.Checked += (_, _) => { if (!_sync) PerfOverlayChanged?.Invoke(true); };
+        PerfFeature.ToggleCheck.Unchecked += (_, _) => { if (!_sync) PerfOverlayChanged?.Invoke(false); };
         PerfGlassBox.Checked += (_, _) => { if (!_sync) PerfGlassChanged?.Invoke(true); };
         PerfGlassBox.Unchecked += (_, _) => { if (!_sync) PerfGlassChanged?.Invoke(false); };
         Action perfMetrics = () => { if (!_sync) PerfMetricsChanged?.Invoke(); };
@@ -534,25 +535,25 @@ public partial class SettingsPage : UserControl
     }
 
     public CheckBox CloseOnLaunchCheck => CloseOnLaunchBox;
-    public CheckBox DiscordRpcCheck => DiscordRpcBox;
+    public CheckBox DiscordRpcCheck => DiscordFeature.ToggleCheck;
     public CheckBox DiscordNameCheck => DiscordNameBox;
     public CheckBox DiscordServerCheck => DiscordServerBox;
     public CheckBox DiscordIconCheck => DiscordIconBox;
     public CheckBox DiscordTimeCheck => DiscordTimeBox;
-    public CheckBox DiscordBtnCheck => DiscordBtnBox;
+    public CheckBox DiscordBtnCheck => DiscordBtnFeature.ToggleCheck;
     public CheckBox DiscordAllowJoinCheck => DiscordAllowJoinBox;
-    public CheckBox SoundsCheck => SoundsBox;
+    public CheckBox SoundsCheck => SoundsFeature.ToggleCheck;
     public CheckBox AutoUpdateCheck => AutoUpdateBox;
     public CheckBox RobloxBgUpdateCheck => RobloxBgUpdateBox;
-    public CheckBox FpsCheck => FpsBox2;
-    public CheckBox MinimizeToTrayCheck => MinimizeToTrayBox;
+    public CheckBox FpsCheck => FpsFeature.ToggleCheck;
+    public CheckBox MinimizeToTrayCheck => TrayFeature.ToggleCheck;
     public CheckBox CloseToTrayCheck => CloseToTrayBox;
     public CheckBox NotificationsCheck => NotificationsBox;
     public CheckBox RobloxNoTrayCheck => RobloxNoTrayBox;
     public CheckBox RobloxNoStartupCheck => RobloxNoStartupBox;
-    public CheckBox GlassCheck => GlassCheckBox;
-    public CheckBox TelemetryBlockCheck => TelemetryBlockBox;
-    public CheckBox PerfOverlayCheck => PerfOverlayBox;
+    public CheckBox GlassCheck => GlassFeature.ToggleCheck;
+    public CheckBox TelemetryBlockCheck => TelemetryFeature.ToggleCheck;
+    public CheckBox PerfOverlayCheck => PerfFeature.ToggleCheck;
     public CheckBox PerfPingCheck => PerfPingBox;
     public CheckBox PerfCpuCheck => PerfCpuBox;
     public CheckBox PerfRamCheck => PerfRamBox;
@@ -577,7 +578,7 @@ public partial class SettingsPage : UserControl
     public void SetTelemetryBlock(bool on)
     {
         _sync = true;
-        TelemetryBlockBox.IsChecked = on;
+        TelemetryFeature.IsOn = on;
         _sync = false;
     }
 
@@ -590,7 +591,7 @@ public partial class SettingsPage : UserControl
         _sync = true;
         try
         {
-            PerfOverlayBox.IsChecked = overlay;
+            PerfFeature.IsOn = overlay;
             PerfPingBox.IsChecked = ping;
             PerfCpuBox.IsChecked = cpu;
             PerfRamBox.IsChecked = ram;
@@ -779,7 +780,7 @@ public partial class SettingsPage : UserControl
         _sync = true;
         try
         {
-            GlassCheckBox.IsChecked = enabled;
+            GlassFeature.IsOn = enabled;
             GlassOpacityBar.Value = Math.Clamp(opacity, 0, 100);
             GlassOpacityValue.Text = ((int)GlassOpacityBar.Value) + "%";
             GlassBlurBar.Value = Math.Clamp(blur, 0, 100);

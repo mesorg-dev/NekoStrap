@@ -310,7 +310,8 @@ internal static class Program
                 if (perf.RamMb <= 0)
                     throw new Exception("RAM не измерилась");
                 perf.Update(self);
-                if (perf.CpuPercent < 0 || perf.CpuPercent > 100)
+                // -1 = счётчик недоступен (CI-раннер без PDH); иначе только 0..100.
+                if (perf.CpuPercent != -1 && (perf.CpuPercent < 0 || perf.CpuPercent > 100))
                     throw new Exception("CPU вне диапазона: " + perf.CpuPercent);
                 if (perf.GpuPercent != -1 && (perf.GpuPercent < 0 || perf.GpuPercent > 100))
                     throw new Exception("GPU вне диапазона: " + perf.GpuPercent);

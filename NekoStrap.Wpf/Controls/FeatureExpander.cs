@@ -36,7 +36,7 @@ public class FeatureExpander : Decorator
     private readonly TextBlock _titleText;
     private readonly TextBlock _hintText;
     private readonly Border _gearBox;
-    private readonly Path _gearIcon;
+    private readonly System.Windows.Shapes.Path _gearIcon;
     private readonly Border _optsHost;
     private readonly Border _accent;
     private readonly Border _chrome;
@@ -74,7 +74,7 @@ public class FeatureExpander : Decorator
 
         var gearGeom = TryFindResource("IconSettings") as Geometry
                        ?? Geometry.Parse("M9,2 A7,7 0 1,0 9,16 A7,7 0 1,0 9,2");
-        _gearIcon = new Path
+        _gearIcon = new System.Windows.Shapes.Path
         {
             Data = gearGeom,
             Stroke = TryFindResource("FgDimmerBrush") as Brush ?? Brushes.Gray,

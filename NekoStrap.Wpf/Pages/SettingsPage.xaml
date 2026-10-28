@@ -9,7 +9,7 @@
 
     <!-- ===== Основное ===== -->
     <TextBlock Style="{StaticResource H2}" FontSize="14" Text="{l:L Set_Sec_Main}" Margin="0,0,0,8"/>
-    <Border Style="{StaticResource Card}" Margin="0,0,0,12" Padding="16">
+    <Border Style="{StaticResource CardMono}" Margin="0,0,0,12" Padding="16">
       <StackPanel>
         <CheckBox x:Name="CloseOnLaunchBox" Style="{StaticResource Switch}" Margin="0,0,0,4">
           <StackPanel>
@@ -41,7 +41,7 @@
 
     <!-- ===== Discord: тумблер → раскрываются опции ===== -->
     <TextBlock Style="{StaticResource H2}" FontSize="14" Text="{l:L Set_Sec_Discord}" Margin="0,0,0,8"/>
-    <ctrl:FeatureExpander x:Name="DiscordFeature" Margin="0,0,0,12"
+    <ctrl:FeatureExpander x:Name="DiscordFeature" Margin="0,0,0,6"
                           Title="{l:L Set_Discord_L}" Hint="{l:L Set_Discord_D}">
       <StackPanel>
         <CheckBox x:Name="DiscordNameBox" Style="{StaticResource Switch}" Margin="0,0,0,3">
@@ -100,7 +100,7 @@
                    Text="{l:L Set_Fps_Range}" Margin="0,0,0,2"/>
       </StackPanel>
     </ctrl:FeatureExpander>
-    <Border Style="{StaticResource Card}" Margin="0,0,0,12" Padding="16">
+    <Border Style="{StaticResource CardMono}" Margin="0,0,0,12" Padding="16">
       <StackPanel>
         <TextBlock Style="{StaticResource Body}" Text="{l:L Set_Threads_L}" Margin="0,0,0,4"/>
         <ComboBox x:Name="ThreadsCombo" Style="{StaticResource DarkCombo}" Width="120" Margin="0,0,0,2"
@@ -115,7 +115,7 @@
 
     <!-- ===== Трей: тумблер → опции ===== -->
     <TextBlock Style="{StaticResource H2}" FontSize="14" Text="{l:L Set_Sec_Tray}" Margin="0,0,0,8"/>
-    <ctrl:FeatureExpander x:Name="TrayFeature" Margin="0,0,0,12"
+    <ctrl:FeatureExpander x:Name="TrayFeature" Margin="0,0,0,6"
                           Title="{l:L Set_MinTray_L}" Hint="{l:L Set_MinTray_D}">
       <StackPanel>
         <CheckBox x:Name="CloseToTrayBox" Style="{StaticResource Switch}" Margin="0,0,0,3">
@@ -157,7 +157,7 @@
     </ctrl:FeatureExpander>
 
     <!-- Внешний вид: шрифты и цвета -->
-    <Border Style="{StaticResource Card}" Margin="0,0,0,6" Padding="16">
+    <Border Style="{StaticResource CardMono}" Margin="0,0,0,6" Padding="16">
       <StackPanel>
         <TextBlock Style="{StaticResource H2}" FontSize="13" Text="{l:L Set_AppearTitle}" Margin="0,0,0,2"/>
         <TextBlock Style="{StaticResource Body}" TextWrapping="Wrap" Margin="0,0,0,6"
@@ -186,7 +186,7 @@
     </Border>
 
     <!-- Обои -->
-    <Border Style="{StaticResource Card}" Margin="0,0,0,6" Padding="16">
+    <Border Style="{StaticResource CardMono}" Margin="0,0,0,6" Padding="16">
       <StackPanel>
         <TextBlock Style="{StaticResource H2}" FontSize="13" Text="{l:L Set_WallTitle}" Margin="0,0,0,6"/>
         <DockPanel LastChildFill="True" Margin="0,0,0,6">
@@ -251,7 +251,7 @@
     </ctrl:FeatureExpander>
 
     <!-- Оверлей FPS: тумблер → метрики -->
-    <ctrl:FeatureExpander x:Name="PerfFeature" Margin="0,0,0,12"
+    <ctrl:FeatureExpander x:Name="PerfFeature" Margin="0,0,0,6"
                           Title="{l:L Set_Perf_L}" Hint="{l:L Set_Perf_D}">
       <StackPanel>
         <TextBlock Style="{StaticResource H2}" FontSize="12" Text="{l:L Set_PerfMetrics}" Margin="0,0,0,2"/>
@@ -294,7 +294,7 @@
     <TextBlock Style="{StaticResource H2}" FontSize="14" Text="{l:L Set_Sec_System}" Margin="0,0,0,8"/>
 
     <!-- Язык -->
-    <Border Style="{StaticResource Card}" Margin="0,0,0,6" Padding="16">
+    <Border Style="{StaticResource CardMono}" Margin="0,0,0,6" Padding="16">
       <StackPanel>
         <TextBlock Style="{StaticResource H2}" FontSize="13" Text="{l:L Set_LangTitle}" Margin="0,0,0,2"/>
         <TextBlock Style="{StaticResource Body}" TextWrapping="Wrap" Margin="0,0,0,6"
@@ -308,7 +308,7 @@
     </Border>
 
     <!-- CDN -->
-    <Border Style="{StaticResource Card}" Margin="0,0,0,6" Padding="16">
+    <Border Style="{StaticResource CardMono}" Margin="0,0,0,6" Padding="16">
       <StackPanel>
         <TextBlock Style="{StaticResource H2}" FontSize="13" Text="{l:L Set_CdnTitle}" Margin="0,0,0,2"/>
         <TextBlock Style="{StaticResource Body}" TextWrapping="Wrap" Margin="0,0,0,4"
@@ -323,7 +323,7 @@
     </Border>
 
     <!-- Телеметрия: тумблер → статус -->
-    <ctrl:FeatureExpander x:Name="TelemetryFeature" Margin="0,0,0,12"
+    <ctrl:FeatureExpander x:Name="TelemetryFeature" Margin="0,0,0,6"
                           Title="{l:L Set_Telemetry_L}" Hint="{l:L Set_Telemetry_D}">
       <TextBlock x:Name="TelemetryStatus" Style="{StaticResource Mono}" FontStyle="Italic"
                  TextWrapping="Wrap" Margin="0,0,0,0"/>

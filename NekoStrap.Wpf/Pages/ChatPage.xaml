@@ -7,7 +7,7 @@
     <TextBlock Style="{StaticResource H1}" Text="{l:L Nav_Chat}" Margin="0,0,0,6"/>
     <TextBlock Style="{StaticResource Body}" TextWrapping="Wrap" Text="{l:L Chat_Sub}" Margin="0,0,0,10"/>
 
-    <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+    <Border Style="{StaticResource CardMono}" Margin="0,0,0,12">
       <DockPanel LastChildFill="True">
         <!-- Статус + режим -->
         <DockPanel DockPanel.Dock="Top" LastChildFill="False" Margin="0,0,0,8">
@@ -127,7 +127,7 @@
                Foreground="{DynamicResource FgDimBrush}" TextWrapping="Wrap" Text="{l:L Chat_NotInGame}"/>
 
     <!-- Настройки чата: раньше жили в Настройках, теперь рядом с чатом -->
-    <ctrl:FeatureExpander x:Name="ChatEnabledFeature" Margin="0,12,0,0"
+    <ctrl:FeatureExpander x:Name="ChatEnabledFeature" Margin="0,6,0,0"
                           Title="{l:L Set_Chat_L}" Hint="{l:L Set_Chat_D}">
       <StackPanel>
         <CheckBox x:Name="ChatDmBox" Style="{StaticResource Switch}" Margin="0,0,0,4">
